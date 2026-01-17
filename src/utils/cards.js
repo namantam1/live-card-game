@@ -69,5 +69,5 @@ export const sortHand = (hand) => {
 export const getCardImagePath = (card) => {
   const rankMap = { 'A': 'A', 'J': 'J', 'Q': 'Q', 'K': 'K' };
   const fileRank = rankMap[card.rank] || card.rank;
-  return `/cards/${fileRank}-${card.suit}.svg`;
+  return `${import.meta.env.BASE_URL}cards/${fileRank}-${card.suit}.svg`;
 };

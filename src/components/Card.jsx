@@ -42,7 +42,7 @@ const Card = ({ card, onClick, disabled, isPlayable, faceDown = false, small = f
         className={`${baseSize} rounded shadow-md`}
       >
         <img
-          src="/cards/back.svg"
+          src={`${import.meta.env.BASE_URL}cards/back.svg`}
           alt="Card back"
           className="w-full h-full"
         />

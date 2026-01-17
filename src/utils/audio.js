@@ -42,7 +42,7 @@ let bgMusic = null;
 
 export const startBackgroundMusic = () => {
   if (!bgMusic) {
-    bgMusic = new Audio('/audio/bgm.mp3');
+    bgMusic = new Audio(`${import.meta.env.BASE_URL}audio/bgm.mp3`);
     bgMusic.loop = true;
     bgMusic.volume = 0.3;
   }
