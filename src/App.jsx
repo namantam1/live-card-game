@@ -3,7 +3,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Spade, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 
 // Utils
-import { createAudioContext, playCardSound, playTrumpSound, startBackgroundMusic, stopBackgroundMusic } from './utils/audio';
+import { createAudioContext, playCardSound, playTrumpSound, startBackgroundMusic, stopBackgroundMusic, initVisibilityListener } from './utils/audio';
 import { createDeck, shuffleDeck, findWinner, getCardValue, sortHand } from './utils/cards';
 
 // Components
@@ -208,6 +208,12 @@ export default function App() {
       setCurrentTurn((playerIndex + 1) % 4);
     }
   }, [gamePhase, currentTurn, players, currentTrick, leadSuit, trickNumber, calculateRoundScore, playSoundEffect]);
+
+  // Initialize visibility listener for background music
+  useEffect(() => {
+    const cleanup = initVisibilityListener();
+    return cleanup;
+  }, []);
 
   // Bot card play
   useEffect(() => {

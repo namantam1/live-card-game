@@ -39,6 +39,7 @@ export const playTrumpSound = (audioContext) => {
 
 // Background music using HTML5 Audio
 let bgMusic = null;
+let isPageVisible = true;
 
 export const startBackgroundMusic = () => {
   if (!bgMusic) {
@@ -46,7 +47,9 @@ export const startBackgroundMusic = () => {
     bgMusic.loop = true;
     bgMusic.volume = 0.3;
   }
-  bgMusic.play().catch(() => {});
+  if (isPageVisible) {
+    bgMusic.play().catch(() => {});
+  }
   return bgMusic;
 };
 
@@ -55,4 +58,35 @@ export const stopBackgroundMusic = () => {
     bgMusic.pause();
     bgMusic.currentTime = 0;
   }
+};
+
+export const pauseBackgroundMusic = () => {
+  if (bgMusic && !bgMusic.paused) {
+    bgMusic.pause();
+  }
+};
+
+export const resumeBackgroundMusic = () => {
+  if (bgMusic && bgMusic.paused && isPageVisible) {
+    bgMusic.play().catch(() => {});
+  }
+};
+
+// Handle page visibility changes
+export const initVisibilityListener = () => {
+  const handleVisibilityChange = () => {
+    isPageVisible = !document.hidden;
+    if (document.hidden) {
+      pauseBackgroundMusic();
+    } else {
+      resumeBackgroundMusic();
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Return cleanup function
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
 };
