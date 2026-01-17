@@ -9,7 +9,7 @@ const InlineBiddingUI = ({ onBid }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="absolute bottom-[42%] left-1/2 -translate-x-1/2 z-30 w-[70%] max-w-[250px]"
+      className="absolute bottom-[40%] left-1/2 -translate-x-1/2 z-30 w-[70%] max-w-[250px]"
     >
       <div className="bg-slate-800/95 backdrop-blur-sm p-2 rounded-lg border border-slate-600/50 shadow-xl">
         <div className="grid grid-cols-8 gap-0.5 mb-1.5">
