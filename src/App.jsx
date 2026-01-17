@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {  AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Spade, Heart, Diamond, Club, Trophy, Target, Play, RotateCcw } from 'lucide-react';
 
 // ============================================
@@ -129,7 +129,7 @@ const Card = ({ card, onClick, disabled, isPlayable, isSelected, faceDown = fals
 
   if (faceDown) {
     return (
-      <motion.div
+      <Motion.div
         variants={cardVariants}
         initial="initial"
         animate="animate"
@@ -142,14 +142,14 @@ const Card = ({ card, onClick, disabled, isPlayable, isSelected, faceDown = fals
           border border-indigo-300/30">
           <Spade size={small ? 12 : 16} className="text-indigo-200" fill="currentColor" />
         </div>
-      </motion.div>
+      </Motion.div>
     );
   }
 
   const suitColor = getSuitColor(card.suit);
 
   return (
-    <motion.button
+    <Motion.button
       variants={cardVariants}
       initial="initial"
       animate="animate"
@@ -182,7 +182,7 @@ const Card = ({ card, onClick, disabled, isPlayable, isSelected, faceDown = fals
         <span className="text-xs sm:text-sm font-bold">{card.rank}</span>
         <SuitIcon suit={card.suit} size={small ? 10 : 12} />
       </div>
-    </motion.button>
+    </Motion.button>
   );
 };
 
@@ -229,7 +229,7 @@ const Player = ({ player, position, isCurrentTurn, showCards, onCardPlay, leadSu
   return (
     <div className={`absolute ${positionStyles[position]} flex items-center gap-2 sm:gap-4 p-2 sm:p-4`}>
       {/* Player Info */}
-      <motion.div
+      <Motion.div
         animate={{
           scale: isCurrentTurn ? 1.05 : 1,
           boxShadow: isCurrentTurn ? '0 0 20px rgba(16, 185, 129, 0.5)' : 'none'
@@ -246,7 +246,7 @@ const Player = ({ player, position, isCurrentTurn, showCards, onCardPlay, leadSu
           <span className="text-emerald-400">Won: {player.tricksWon}</span>
         </div>
         <div className="text-xs text-yellow-400">Score: {player.score.toFixed(1)}</div>
-      </motion.div>
+      </Motion.div>
 
       {/* Cards */}
       {player.hand && player.hand.length > 0 && (
@@ -270,7 +270,7 @@ const Player = ({ player, position, isCurrentTurn, showCards, onCardPlay, leadSu
 
       {/* Played Card Indicator */}
       {playedCard && (
-        <motion.div
+        <Motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="absolute"
@@ -281,7 +281,7 @@ const Player = ({ player, position, isCurrentTurn, showCards, onCardPlay, leadSu
           }}
         >
           <Card card={playedCard} isPlayable={false} disabled />
-        </motion.div>
+        </Motion.div>
       )}
     </div>
   );
@@ -295,13 +295,13 @@ const BiddingModal = ({ onBid, currentBids }) => {
   const [selectedBid, setSelectedBid] = useState(1);
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 pt-8"
     >
-      <motion.div
+      <Motion.div
         initial={{ scale: 0.8, opacity: 0, y: -20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.8, opacity: 0, y: -20 }}
@@ -334,7 +334,7 @@ const BiddingModal = ({ onBid, currentBids }) => {
         {/* Bid Selection */}
         <div className="grid grid-cols-5 gap-2 mb-6">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((bid) => (
-            <motion.button
+            <Motion.button
               key={bid}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
@@ -346,11 +346,11 @@ const BiddingModal = ({ onBid, currentBids }) => {
               `}
             >
               {bid}
-            </motion.button>
+            </Motion.button>
           ))}
         </div>
 
-        <motion.button
+        <Motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onBid(selectedBid)}
@@ -359,9 +359,9 @@ const BiddingModal = ({ onBid, currentBids }) => {
             hover:from-emerald-600 hover:to-emerald-700 transition-all"
         >
           Confirm Bid: {selectedBid}
-        </motion.button>
-      </motion.div>
-    </motion.div>
+        </Motion.button>
+      </Motion.div>
+    </Motion.div>
   );
 };
 
@@ -371,13 +371,13 @@ const BiddingModal = ({ onBid, currentBids }) => {
 
 const RoundSummaryModal = ({ players, roundNumber, onContinue }) => {
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
     >
-      <motion.div
+      <Motion.div
         initial={{ scale: 0.8, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.8, opacity: 0, y: 20 }}
@@ -391,7 +391,7 @@ const RoundSummaryModal = ({ players, roundNumber, onContinue }) => {
 
         <div className="space-y-3 mb-6">
           {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
-            <motion.div
+            <Motion.div
               key={player.id}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -421,11 +421,11 @@ const RoundSummaryModal = ({ players, roundNumber, onContinue }) => {
                 </p>
                 <p className="text-sm text-slate-400">Total: {player.score.toFixed(1)}</p>
               </div>
-            </motion.div>
+            </Motion.div>
           ))}
         </div>
 
-        <motion.button
+        <Motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onContinue}
@@ -435,9 +435,9 @@ const RoundSummaryModal = ({ players, roundNumber, onContinue }) => {
         >
           <Play size={20} />
           Continue to Round {roundNumber + 1}
-        </motion.button>
-      </motion.div>
-    </motion.div>
+        </Motion.button>
+      </Motion.div>
+    </Motion.div>
   );
 };
 
@@ -450,20 +450,20 @@ const GameOverModal = ({ players, onRestart }) => {
   const winner = sortedPlayers[0];
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
     >
-      <motion.div
+      <Motion.div
         initial={{ scale: 0.8, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.8, opacity: 0, y: 20 }}
         className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 sm:p-8 rounded-2xl
           border border-slate-600/50 shadow-2xl max-w-lg w-full mx-4"
       >
-        <motion.div
+        <Motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', delay: 0.2 }}
@@ -471,14 +471,14 @@ const GameOverModal = ({ players, onRestart }) => {
         >
           <div className="relative">
             <Trophy className="text-yellow-400" size={64} />
-            <motion.div
+            <Motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               className="absolute inset-0 rounded-full border-4 border-dashed border-yellow-400/30"
               style={{ width: '120%', height: '120%', top: '-10%', left: '-10%' }}
             />
           </div>
-        </motion.div>
+        </Motion.div>
 
         <h2 className="text-3xl font-bold text-center text-white mb-2">Game Over!</h2>
         <p className="text-center text-yellow-400 text-xl mb-6">
@@ -487,7 +487,7 @@ const GameOverModal = ({ players, onRestart }) => {
 
         <div className="space-y-3 mb-6">
           {sortedPlayers.map((player, index) => (
-            <motion.div
+            <Motion.div
               key={player.id}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -507,11 +507,11 @@ const GameOverModal = ({ players, onRestart }) => {
               <p className={`text-xl font-bold ${index === 0 ? 'text-yellow-400' : 'text-slate-300'}`}>
                 {player.score.toFixed(1)}
               </p>
-            </motion.div>
+            </Motion.div>
           ))}
         </div>
 
-        <motion.button
+        <Motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onRestart}
@@ -521,9 +521,9 @@ const GameOverModal = ({ players, onRestart }) => {
         >
           <RotateCcw size={20} />
           Play Again
-        </motion.button>
-      </motion.div>
-    </motion.div>
+        </Motion.button>
+      </Motion.div>
+    </Motion.div>
   );
 };
 
@@ -544,7 +544,7 @@ const TrickArea = ({ currentTrick, leadSuit }) => {
     <div className="absolute inset-0 pointer-events-none">
       {/* Lead Suit Indicator */}
       {leadSuit && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2
@@ -553,7 +553,7 @@ const TrickArea = ({ currentTrick, leadSuit }) => {
         >
           <span className="text-slate-400 text-sm">Lead:</span>
           <SuitIcon suit={leadSuit} size={18} className={getSuitColor(leadSuit)} />
-        </motion.div>
+        </Motion.div>
       )}
 
       {/* Played Cards - All in center */}
@@ -562,7 +562,7 @@ const TrickArea = ({ currentTrick, leadSuit }) => {
           {currentTrick.map((play) => {
             const offset = centerOffsets[play.player];
             return (
-              <motion.div
+              <Motion.div
                 key={play.card.id}
                 initial={{
                   scale: 0.5,
@@ -582,7 +582,7 @@ const TrickArea = ({ currentTrick, leadSuit }) => {
                 className="absolute -translate-x-1/2 -translate-y-1/2"
               >
                 <Card card={play.card} isPlayable={false} disabled />
-              </motion.div>
+              </Motion.div>
             );
           })}
         </AnimatePresence>
@@ -859,22 +859,22 @@ export default function App() {
         {/* Start Screen */}
         <AnimatePresence>
           {gamePhase === 'start' && (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center z-50"
             >
               <div className="text-center">
-                <motion.div
+                <Motion.div
                   animate={{ rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
                   <Spade size={80} className="text-indigo-400 mx-auto mb-6" fill="currentColor" />
-                </motion.div>
+                </Motion.div>
                 <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Call Break</h1>
                 <p className="text-slate-400 mb-8">A classic trick-taking card game</p>
-                <motion.button
+                <Motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={startGame}
@@ -884,9 +884,9 @@ export default function App() {
                 >
                   <Play size={24} />
                   Start Game
-                </motion.button>
+                </Motion.button>
               </div>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
@@ -930,19 +930,19 @@ export default function App() {
         {/* Dealing Animation */}
         <AnimatePresence>
           {gamePhase === 'dealing' && !dealingComplete && (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center"
             >
-              <motion.div
+              <Motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                 className="relative"
               >
                 {[0, 1, 2, 3].map((i) => (
-                  <motion.div
+                  <Motion.div
                     key={i}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -953,18 +953,18 @@ export default function App() {
                     }}
                   >
                     <Card faceDown small />
-                  </motion.div>
+                  </Motion.div>
                 ))}
-              </motion.div>
+              </Motion.div>
               <p className="absolute bottom-1/3 text-white text-lg">Dealing cards...</p>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Reset Button */}
       {gamePhase !== 'start' && (
-        <motion.button
+        <Motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.05 }}
@@ -976,7 +976,7 @@ export default function App() {
         >
           <RotateCcw size={18} />
           Reset
-        </motion.button>
+        </Motion.button>
       )}
 
       {/* Bidding Modal */}
@@ -992,7 +992,7 @@ export default function App() {
       {/* AI Bidding Indicator */}
       <AnimatePresence>
         {gamePhase === 'bidding' && biddingPlayer > 0 && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -1002,7 +1002,7 @@ export default function App() {
             <p className="text-white">
               <span className="text-indigo-400 font-semibold">{players[biddingPlayer]?.name}</span> is bidding...
             </p>
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
 
