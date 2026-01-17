@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="169.075" height="244.64" viewBox="0 0 169.075 244.64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="169.075" height="244.64" rx="12" fill="#1e3a5f"/>
+  <rect x="8" y="8" width="153.075" height="228.64" rx="8" fill="none" stroke="#4a90d9" stroke-width="2"/>
+  <rect x="16" y="16" width="137.075" height="212.64" rx="6" fill="#2563eb"/>
+  <pattern id="diamonds" patternUnits="userSpaceOnUse" width="20" height="20" patternTransform="rotate(45)">
+    <rect width="20" height="20" fill="#2563eb"/>
+    <rect x="0" y="0" width="10" height="10" fill="#1d4ed8"/>
+    <rect x="10" y="10" width="10" height="10" fill="#1d4ed8"/>
+  </pattern>
+  <rect x="16" y="16" width="137.075" height="212.64" rx="6" fill="url(#diamonds)"/>
+  <circle cx="84.5" cy="122.32" r="30" fill="#1e3a5f" stroke="#4a90d9" stroke-width="2"/>
+  <text x="84.5" y="132" text-anchor="middle" font-family="serif" font-size="36" font-weight="bold" fill="#4a90d9">♠</text>
+</svg>
