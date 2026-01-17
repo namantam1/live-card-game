@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { Spade, Play, RotateCcw, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { Spade, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 
 // Utils
 import { createAudioContext, playCardSound, playTrumpSound, startBackgroundMusic, stopBackgroundMusic } from './utils/audio';
@@ -37,31 +37,6 @@ export default function App() {
   // Audio state
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioContextRef = useRef(null);
-
-  // Fullscreen state
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Toggle fullscreen
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(() => {});
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(() => {});
-    }
-  }, []);
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
   // Initialize audio context on first interaction
   const initAudio = useCallback(() => {
@@ -344,19 +319,19 @@ export default function App() {
                   animate={{ rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <Spade size={80} className="text-indigo-400 mx-auto mb-6" fill="currentColor" />
+                  <Spade size={48} className="text-indigo-400 mx-auto mb-4 sm:mb-6 sm:w-20 sm:h-20" fill="currentColor" />
                 </Motion.div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Call Break</h1>
-                <p className="text-slate-400 mb-8">A classic trick-taking card game</p>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">Call Break</h1>
+                <p className="text-slate-400 text-sm sm:text-base mb-4 sm:mb-8">A classic trick-taking card game</p>
                 <Motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={startGame}
-                  className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500
-                    text-white font-bold text-lg rounded-xl shadow-lg shadow-indigo-500/30
+                  className="px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-indigo-500 to-purple-500
+                    text-white font-bold text-sm sm:text-lg rounded-xl shadow-lg shadow-indigo-500/30
                     hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center gap-2 mx-auto"
                 >
-                  <Play size={24} />
+                  <Play size={20} className="sm:w-6 sm:h-6" />
                   Start Game
                 </Motion.button>
               </div>
@@ -439,17 +414,6 @@ export default function App() {
       {/* Control Buttons */}
       {gamePhase !== 'start' && (
         <div className="fixed top-4 right-4 flex gap-2 z-50">
-          <Motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleFullscreen}
-            className="p-2 bg-slate-800/80 backdrop-blur-sm
-              text-white rounded-lg border border-slate-600/50
-              hover:bg-slate-700/80 transition-all"
-          >
-            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-          </Motion.button>
           <Motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
