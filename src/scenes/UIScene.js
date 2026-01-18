@@ -4,11 +4,15 @@ import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.js';
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });
+    this.isMultiplayer = false;
+    this.networkManager = null;
   }
 
   init(data) {
     this.gameManager = data.gameManager;
     this.audioManager = data.audioManager;
+    this.isMultiplayer = data.isMultiplayer || false;
+    this.networkManager = data.networkManager || null;
   }
 
   create() {
@@ -268,9 +272,9 @@ export default class UIScene extends Phaser.Scene {
     this.divider = this.add.graphics();
     this.scoreboard.add(this.divider);
 
-    // Player score entries (emoji + score)
+    // Player score entries (emoji + bid/tricks + score)
     this.playerScoreEntries = [];
-    const players = this.gameManager.getPlayers();
+    const players = this.getPlayersData();
 
     players.forEach((player, index) => {
       const entry = {
@@ -278,24 +282,49 @@ export default class UIScene extends Phaser.Scene {
           fontFamily: 'Arial, sans-serif',
           fontSize: '18px',
         }).setOrigin(0, 0.5),
+        bidTricks: this.add.text(0, 0, '-/-', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '11px',
+          color: '#94a3b8',
+        }).setOrigin(0, 0.5),
         score: this.add.text(0, 0, '0.0', {
           fontFamily: 'Arial, sans-serif',
           fontSize: '13px',
           fontStyle: 'bold',
           color: '#22c55e',
         }).setOrigin(0, 0.5),
-        player: player,
+        playerId: this.isMultiplayer ? player.id : index,
       };
-      this.scoreboard.add([entry.emoji, entry.score]);
+      this.scoreboard.add([entry.emoji, entry.bidTricks, entry.score]);
       this.playerScoreEntries.push(entry);
     });
 
     this.updateScoreboard();
   }
 
+  getPlayersData() {
+    if (this.isMultiplayer && this.networkManager) {
+      return this.networkManager.getPlayers();
+    } else if (this.gameManager) {
+      return this.gameManager.getPlayers();
+    }
+    return [];
+  }
+
+  getCurrentRound() {
+    if (this.isMultiplayer && this.networkManager) {
+      const state = this.networkManager.getState();
+      return state?.currentRound || 1;
+    } else if (this.gameManager) {
+      return this.gameManager.getCurrentRound();
+    }
+    return 1;
+  }
+
   updateScoreboard() {
-    const players = this.gameManager.getPlayers();
-    const round = this.gameManager.getCurrentRound();
+    const players = this.getPlayersData();
+    const round = this.getCurrentRound();
+    const phase = this.getPhase();
 
     // Update round indicator
     this.roundIndicator.setText(`R${round}/${TOTAL_ROUNDS}`);
@@ -317,19 +346,46 @@ export default class UIScene extends Phaser.Scene {
 
     // Position each player entry
     this.playerScoreEntries.forEach((entry, index) => {
-      const player = entry.player;
+      const player = players[index];
+      if (!player) return;
+
       const score = player.score;
+      const bid = player.bid || 0;
+      const tricksWon = player.tricksWon || 0;
 
       entry.emoji.setX(xOffset);
       entry.emoji.setY(0);
       xOffset += entry.emoji.width + 4;
+
+      // Show bid/tricks during playing phase, or just bid during bidding
+      if (phase === 'playing' || phase === PHASE.PLAYING) {
+        entry.bidTricks.setText(`${tricksWon}/${bid}`);
+        // Color based on progress towards bid
+        if (tricksWon >= bid && bid > 0) {
+          entry.bidTricks.setColor('#22c55e'); // Green - met bid
+        } else if (tricksWon > 0) {
+          entry.bidTricks.setColor('#f59e0b'); // Orange - in progress
+        } else {
+          entry.bidTricks.setColor('#94a3b8'); // Gray
+        }
+      } else if ((phase === 'bidding' || phase === PHASE.BIDDING) && bid > 0) {
+        entry.bidTricks.setText(`B:${bid}`);
+        entry.bidTricks.setColor('#6366f1'); // Purple for bid
+      } else {
+        entry.bidTricks.setText('-/-');
+        entry.bidTricks.setColor('#94a3b8');
+      }
+      entry.bidTricks.setX(xOffset);
+      entry.bidTricks.setY(0);
+      xOffset += entry.bidTricks.width + 6;
 
       entry.score.setText(score.toFixed(1));
       entry.score.setX(xOffset);
       entry.score.setY(0);
 
       // Color based on ranking and score
-      if (player === topPlayer && score > 0) {
+      const isTopPlayer = this.isMultiplayer ? player.id === topPlayer?.id : player === topPlayer;
+      if (isTopPlayer && score > 0) {
         entry.score.setColor('#facc15'); // Yellow for leader
       } else if (score >= 0) {
         entry.score.setColor('#22c55e'); // Green for positive
@@ -349,6 +405,15 @@ export default class UIScene extends Phaser.Scene {
     this.scoreboardBg.fillRoundedRect(0, -height / 2, totalWidth, height, height / 2);
     this.scoreboardBg.lineStyle(1, 0x475569, 0.5);
     this.scoreboardBg.strokeRoundedRect(0, -height / 2, totalWidth, height, height / 2);
+  }
+
+  getPhase() {
+    if (this.isMultiplayer && this.networkManager) {
+      return this.networkManager.getPhase();
+    } else if (this.gameManager) {
+      return this.gameManager.getPhase();
+    }
+    return 'waiting';
   }
 
   createBiddingUI() {
@@ -448,7 +513,11 @@ export default class UIScene extends Phaser.Scene {
 
   onBidSelected(bid) {
     this.hideBiddingUI();
-    this.gameScene.onHumanBid(bid);
+    if (this.isMultiplayer) {
+      this.gameScene.onMultiplayerBid(bid);
+    } else {
+      this.gameScene.onHumanBid(bid);
+    }
   }
 
   createModals() {
@@ -647,6 +716,27 @@ export default class UIScene extends Phaser.Scene {
   }
 
   setupEventListeners() {
+    if (this.isMultiplayer) {
+      this.setupMultiplayerEventListeners();
+    } else {
+      this.setupSoloEventListeners();
+    }
+
+    // Common event listeners
+    // Round complete
+    this.gameScene.events.on('roundComplete', (data) => {
+      this.updateScoreboard();
+      this.time.delayedCall(500, () => this.showRoundModal(data));
+    });
+
+    // Game complete
+    this.gameScene.events.on('gameComplete', (data) => {
+      this.updateScoreboard();
+      this.time.delayedCall(500, () => this.showGameOverModal(data));
+    });
+  }
+
+  setupSoloEventListeners() {
     // Listen for phase changes from game scene
     this.gameScene.events.on('phaseChanged', (phase) => {
       if (phase === PHASE.BIDDING) {
@@ -668,17 +758,83 @@ export default class UIScene extends Phaser.Scene {
         }
       }
     });
+  }
 
-    // Round complete
-    this.gameScene.events.on('roundComplete', (data) => {
+  setupMultiplayerEventListeners() {
+    // Listen for phase changes - show bidding UI when it's our turn
+    this.gameScene.events.on('phaseChanged', (phase) => {
       this.updateScoreboard();
-      this.time.delayedCall(500, () => this.showRoundModal(data));
+      if (phase === 'bidding') {
+        // Check if it's our turn to bid
+        if (this.networkManager.isMyTurn()) {
+          this.showBiddingUI();
+        }
+      }
     });
 
-    // Game complete
-    this.gameScene.events.on('gameComplete', (data) => {
-      this.updateScoreboard();
-      this.time.delayedCall(500, () => this.showGameOverModal(data));
+    // Turn change - show bidding UI if it's bidding phase and our turn
+    this.networkManager.on('turnChange', ({ playerId, isMyTurn }) => {
+      const phase = this.networkManager.getPhase();
+      if (phase === 'bidding' && isMyTurn) {
+        this.time.delayedCall(300, () => this.showBiddingUI());
+      }
     });
+
+    // Score updates
+    this.networkManager.on('playerScoreChange', () => {
+      this.updateScoreboard();
+    });
+
+    // Bid placed
+    this.networkManager.on('playerBid', () => {
+      this.updateScoreboard();
+    });
+
+    // Tricks won update
+    this.networkManager.on('playerTricksWon', () => {
+      this.updateScoreboard();
+    });
+  }
+
+  // Update showRoundModal to handle multiplayer data format
+  showRoundModalMultiplayer(data) {
+    this.roundModalContent.removeAll(true);
+
+    // Player results
+    data.scores.forEach((player, index) => {
+      const y = -60 + index * 35;
+
+      const name = this.add.text(-150, y, `${player.name}`, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        color: '#ffffff',
+      });
+
+      const result = this.add.text(0, y, `${player.tricks}/${player.bid}`, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        color: '#94a3b8',
+      }).setOrigin(0.5);
+
+      const score = this.add.text(150, y, player.roundScore >= 0 ? `+${player.roundScore.toFixed(1)}` : `${player.roundScore.toFixed(1)}`, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: player.roundScore >= 0 ? '#22c55e' : '#ef4444',
+      }).setOrigin(1, 0);
+
+      this.roundModalContent.add([name, result, score]);
+    });
+
+    // Continue button
+    const button = this.createModalButton(0, 100, 'Continue', () => {
+      this.hideRoundModal();
+      this.gameScene.continueToNextRoundMultiplayer();
+    });
+    this.roundModalContent.add(button);
+
+    this.roundModal.setVisible(true);
+    this.roundModal.alpha = 0;
+    this.tweens.add({ targets: this.roundModal, alpha: 1, duration: 300 });
   }
 }

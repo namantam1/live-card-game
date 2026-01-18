@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
+import LobbyScene from './scenes/LobbyScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 
@@ -8,6 +9,9 @@ const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
+  dom: {
+    createContainer: true,
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -22,7 +26,7 @@ const config = {
       height: 1080,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, UIScene],
+  scene: [BootScene, MenuScene, LobbyScene, GameScene, UIScene],
   input: {
     activePointers: 3,
     touch: {

@@ -8,6 +8,13 @@ import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.js';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
+    this.isMultiplayer = false;
+    this.networkManager = null;
+  }
+
+  init(data) {
+    this.isMultiplayer = data?.isMultiplayer || false;
+    this.networkManager = data?.networkManager || null;
   }
 
   create() {
@@ -22,8 +29,6 @@ export default class GameScene extends Phaser.Scene {
     // Start background music (user already clicked "Start Game" so gesture is satisfied)
     this.audioManager.startBackgroundMusic();
 
-    this.gameManager = new GameManager(this);
-
     // Create background
     this.createBackground();
 
@@ -32,6 +37,19 @@ export default class GameScene extends Phaser.Scene {
 
     // Create trump indicator
     this.createTrumpIndicator();
+
+    // Create trick area
+    this.trickArea = new TrickArea(this);
+
+    if (this.isMultiplayer) {
+      this.setupMultiplayer();
+    } else {
+      this.setupSoloGame();
+    }
+  }
+
+  setupSoloGame() {
+    this.gameManager = new GameManager(this);
 
     // Create players
     this.players = [];
@@ -56,9 +74,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.gameManager.setPlayers(this.players);
-
-    // Create trick area
-    this.trickArea = new TrickArea(this);
     this.gameManager.setTrickArea(this.trickArea);
 
     // Setup event listeners
@@ -68,10 +83,223 @@ export default class GameScene extends Phaser.Scene {
     this.scene.launch('UIScene', {
       gameManager: this.gameManager,
       audioManager: this.audioManager,
+      isMultiplayer: false,
     });
 
     // Start the game
     this.gameManager.startGame();
+  }
+
+  setupMultiplayer() {
+    if (!this.networkManager) {
+      console.error('No network manager provided for multiplayer!');
+      this.scene.start('MenuScene');
+      return;
+    }
+
+    // Create players from network state
+    this.players = [];
+    const networkPlayers = this.networkManager.getPlayers();
+    const localId = this.networkManager.playerId;
+
+    // Sort by seat index and create player objects
+    networkPlayers.forEach((netPlayer, index) => {
+      const isLocal = netPlayer.id === localId;
+      const player = new Player(
+        this,
+        netPlayer.seatIndex,
+        netPlayer.name,
+        netPlayer.emoji,
+        isLocal // isHuman = isLocal in multiplayer
+      );
+      this.players.push(player);
+
+      // Store network ID mapping
+      player.networkId = netPlayer.id;
+
+      // Listen for card play events from local player
+      if (isLocal) {
+        player.hand.on('cardPlayed', (cardData, cardObject) => {
+          this.onMultiplayerCardPlayed(cardData);
+        });
+      }
+    });
+
+    // Setup network event listeners
+    this.setupNetworkListeners();
+
+    // Launch UI scene
+    this.scene.launch('UIScene', {
+      gameManager: null, // No local game manager in multiplayer
+      audioManager: this.audioManager,
+      isMultiplayer: true,
+      networkManager: this.networkManager,
+    });
+
+    // Deal initial hand if already dealt
+    this.syncHandFromServer();
+  }
+
+  setupNetworkListeners() {
+    // Phase change
+    this.networkManager.on('phaseChange', ({ phase, previousPhase }) => {
+      this.events.emit('phaseChanged', phase);
+
+      if (phase === 'playing') {
+        this.updateRoundText();
+      }
+
+      if (phase === 'roundEnd') {
+        const players = this.networkManager.getPlayers();
+        const scores = players.map(p => ({
+          name: p.name,
+          bid: p.bid,
+          tricks: p.tricksWon,
+          roundScore: p.roundScore,
+          totalScore: p.score,
+        }));
+        this.events.emit('roundComplete', { scores });
+      }
+
+      if (phase === 'gameOver') {
+        const players = this.networkManager.getPlayers();
+        const winner = players.reduce((a, b) => a.score > b.score ? a : b);
+        this.audioManager.playWinSound();
+        this.events.emit('gameComplete', { winner: winner.name, scores: players });
+      }
+    });
+
+    // Turn change
+    this.networkManager.on('turnChange', ({ playerId, isMyTurn }) => {
+      this.players.forEach(p => {
+        if (p.networkId === playerId) {
+          p.showTurnIndicator();
+          if (isMyTurn) {
+            // Enable card selection for local player with proper validation
+            const leadSuit = this.networkManager.getLeadSuit();
+            const phase = this.networkManager.getPhase();
+            if (phase === 'playing') {
+              p.hand.updatePlayableCards(leadSuit);
+            }
+          }
+        } else {
+          p.hideTurnIndicator();
+          p.hand.disableAllCards();
+        }
+      });
+    });
+
+    // Card added to hand
+    this.networkManager.on('cardAdded', ({ card, index }) => {
+      const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+      if (localPlayer) {
+        localPlayer.hand.addCard(card);
+      }
+    });
+
+    // Card played by any player
+    this.networkManager.on('cardPlayed', ({ playerId, card }) => {
+      this.audioManager.playCardSound();
+
+      // Try to find player in local array first
+      let player = this.players.find(p => p.networkId === playerId);
+      let seatIndex;
+      let removedCard = null;
+
+      if (player) {
+        // Player class uses 'index' property, not 'seatIndex'
+        seatIndex = player.index;
+        // Remove card from player's hand (if visible)
+        if (player.networkId === this.networkManager.playerId) {
+          removedCard = player.hand.removeCard(card.id);
+        }
+      } else {
+        // Player not in local array (likely a bot added after scene start)
+        // Get seat index from network state
+        const networkPlayer = this.networkManager.getPlayer(playerId);
+        seatIndex = networkPlayer ? networkPlayer.seatIndex : 0;
+      }
+
+      // Add card to trick area (pass the removed card for animation)
+      this.trickArea.playCard(card, seatIndex, removedCard);
+    });
+
+    // Trick cleared
+    this.networkManager.on('trickCleared', () => {
+      this.trickArea.clear();
+    });
+
+    // Trick winner
+    this.networkManager.on('trickWinner', (winnerId) => {
+      const winner = this.players.find(p => p.networkId === winnerId);
+      if (winner && winner.nameLabel) {
+        this.tweens.add({
+          targets: winner.nameLabel,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 200,
+          yoyo: true,
+        });
+      }
+      // For bots not in players array, just collect the trick without animation
+    });
+
+    // Player bid
+    this.networkManager.on('playerBid', ({ playerId, bid }) => {
+      const player = this.players.find(p => p.networkId === playerId);
+      if (player) {
+        const playerIndex = this.players.indexOf(player);
+        this.events.emit('bidPlaced', { playerIndex, bid });
+      } else {
+        // Bot player - get seat index from network state for UI update
+        const networkPlayer = this.networkManager.getPlayer(playerId);
+        if (networkPlayer) {
+          this.events.emit('bidPlaced', { playerIndex: networkPlayer.seatIndex, bid });
+        }
+      }
+    });
+
+    // Round change
+    this.networkManager.on('roundChange', (round) => {
+      this.updateRoundText();
+    });
+
+    // Lead suit changed - update playable cards if it's our turn
+    this.networkManager.on('leadSuitChange', (leadSuit) => {
+      if (this.networkManager.isMyTurn() && this.networkManager.getPhase() === 'playing') {
+        const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+        if (localPlayer) {
+          localPlayer.hand.updatePlayableCards(leadSuit);
+        }
+      }
+    });
+
+    // Error handling
+    this.networkManager.on('error', (data) => {
+      console.error('Network error:', data);
+    });
+
+    // Room left
+    this.networkManager.on('roomLeft', () => {
+      this.scene.stop('UIScene');
+      this.scene.start('MenuScene');
+    });
+  }
+
+  syncHandFromServer() {
+    // Get current hand from server and display
+    const hand = this.networkManager.getMyHand();
+    const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+
+    if (localPlayer && hand.length > 0) {
+      // For initial sync, set cards without animation to avoid glitches
+      localPlayer.hand.setCards(hand, false);
+    }
+  }
+
+  onMultiplayerCardPlayed(cardData) {
+    // Send card play to server
+    this.networkManager.sendPlayCard(cardData.id);
   }
 
   createBackground() {
@@ -246,7 +474,15 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updateRoundText() {
-    const round = this.gameManager.getCurrentRound();
+    let round;
+    if (this.isMultiplayer && this.networkManager) {
+      const state = this.networkManager.getState();
+      round = state?.currentRound || 1;
+    } else if (this.gameManager) {
+      round = this.gameManager.getCurrentRound();
+    } else {
+      round = 1;
+    }
     this.roundText.setText(`Round ${round}/${TOTAL_ROUNDS}`);
   }
 
@@ -323,12 +559,37 @@ export default class GameScene extends Phaser.Scene {
   // Called from UIScene to restart game
   restartGame() {
     this.trickArea.clear();
-    this.gameManager.restartGame();
+    if (this.isMultiplayer && this.networkManager) {
+      this.networkManager.sendRestart();
+    } else if (this.gameManager) {
+      this.gameManager.restartGame();
+    }
+  }
+
+  // Called from UIScene to continue to next round (multiplayer)
+  continueToNextRoundMultiplayer() {
+    if (this.networkManager) {
+      this.networkManager.sendNextRound();
+    }
+  }
+
+  // Called from UIScene when human places bid (multiplayer)
+  onMultiplayerBid(bid) {
+    if (this.networkManager) {
+      this.networkManager.sendBid(bid);
+    }
   }
 
   // Called from UIScene to return to menu
   returnToMenu() {
     this.audioManager.destroy();
+
+    // Clean up multiplayer connection
+    if (this.isMultiplayer && this.networkManager) {
+      this.networkManager.removeAllListeners();
+      this.networkManager.leaveRoom();
+    }
+
     this.scene.stop('UIScene');
     this.scene.start('MenuScene');
   }

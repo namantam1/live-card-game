@@ -74,3 +74,9 @@ export const EVENTS = {
   TURN_CHANGED: 'turnChanged',
   PHASE_CHANGED: 'phaseChanged',
 };
+
+// Server configuration
+export const SERVER = {
+  // Use environment variable in production, fallback to localhost for development
+  URL: import.meta.env.VITE_SERVER_URL || 'ws://localhost:2567',
+};

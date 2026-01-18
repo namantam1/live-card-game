@@ -136,6 +136,8 @@ export default class Hand extends Phaser.GameObjects.Container {
           x: targetX,
           y: targetY,
           rotation: targetRotation,
+          scaleX: 1,
+          scaleY: 1,
           duration: 200,
           ease: 'Quad.easeOut',
         });
@@ -143,6 +145,7 @@ export default class Hand extends Phaser.GameObjects.Container {
         card.x = targetX;
         card.y = targetY;
         card.rotation = targetRotation;
+        card.setScale(1);
       }
 
       card.originalY = targetY;
@@ -165,8 +168,43 @@ export default class Hand extends Phaser.GameObjects.Container {
     this.cards.forEach(card => card.setPlayable(false));
   }
 
-  removeCard(cardData) {
-    const index = this.cards.findIndex(c => c.cardData.id === cardData.id);
+  enableInteraction() {
+    // Enable all cards as playable (validation will happen on server)
+    this.cards.forEach(card => card.setPlayable(true));
+  }
+
+  addCard(cardData, animate = true) {
+    const faceDown = !this.isHuman;
+    const { width, height } = this.scene.cameras.main;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Create card at center (deck position) or at hand position
+    const card = new Card(this.scene, animate ? centerX : this.x, animate ? centerY : this.y, cardData, faceDown);
+
+    if (animate) {
+      card.setScale(0.3);
+    }
+
+    this.cards.push(card);
+
+    // Setup click handler for human cards
+    if (this.isHuman) {
+      card.on('cardClicked', (data) => {
+        this.emit('cardPlayed', data, card);
+      });
+    }
+
+    // Rearrange all cards
+    this.arrangeCards(animate);
+
+    return card;
+  }
+
+  removeCard(cardDataOrId) {
+    // Accept either cardData object or card ID string
+    const cardId = typeof cardDataOrId === 'string' ? cardDataOrId : cardDataOrId.id;
+    const index = this.cards.findIndex(c => c.cardData.id === cardId);
     if (index === -1) return null;
 
     const card = this.cards.splice(index, 1)[0];

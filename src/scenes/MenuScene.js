@@ -24,8 +24,23 @@ export default class MenuScene extends Phaser.Scene {
       color: '#94a3b8',
     }).setOrigin(0.5);
 
-    // Start button
-    this.createStartButton(centerX, centerY + 60);
+    // Solo Play button
+    this.createButton(centerX, centerY + 50, 'Solo Play (vs Bots)', () => {
+      this.sound.stopAll();
+      this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('GameScene', { isMultiplayer: false });
+      });
+    });
+
+    // Multiplayer button
+    this.createButton(centerX, centerY + 120, 'Multiplayer', () => {
+      this.sound.stopAll();
+      this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('LobbyScene');
+      });
+    }, 0x8b5cf6);
 
     // Floating cards animation
     this.createFloatingCards();
@@ -75,27 +90,26 @@ export default class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
   }
 
-  createStartButton(x, y) {
-    // Button background
-    const buttonWidth = 200;
+  createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
+    const buttonWidth = 220;
     const buttonHeight = 50;
 
     const button = this.add.container(x, y);
 
-    // Gradient button background
+    // Button background
     const bg = this.add.graphics();
-    bg.fillGradientStyle(COLORS.PRIMARY, COLORS.SECONDARY, COLORS.PRIMARY, COLORS.SECONDARY);
+    bg.fillStyle(bgColor, 1);
     bg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 12);
 
     // Button text
-    const text = this.add.text(0, 0, '\u25B6  Start Game', {
+    const btnText = this.add.text(0, 0, text, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '20px',
+      fontSize: '18px',
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
 
-    button.add([bg, text]);
+    button.add([bg, btnText]);
 
     // Make interactive
     const hitArea = new Phaser.Geom.Rectangle(
@@ -133,15 +147,10 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     button.on('pointerup', () => {
-      // Stop any existing music before transitioning
-      this.sound.stopAll();
-
-      // Transition to game
-      this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('GameScene');
-      });
+      callback();
     });
+
+    return button;
   }
 
   createFloatingCards() {

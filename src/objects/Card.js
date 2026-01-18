@@ -41,6 +41,10 @@ export default class Card extends Phaser.GameObjects.Container {
 
       // Auto-popout playable cards (lift them up)
       if (!wasPlayable && !skipAnimation) {
+        // Ensure originalY is set properly
+        if (this.originalY === undefined || this.originalY === 0) {
+          this.originalY = this.y;
+        }
         this.scene.tweens.add({
           targets: this,
           y: this.originalY - CARD.HOVER_LIFT,
@@ -56,6 +60,10 @@ export default class Card extends Phaser.GameObjects.Container {
 
       // Return to original position if was playable (but skip if card is being played)
       if (wasPlayable && !this.isFaceDown && !skipAnimation) {
+        // Ensure originalY is set properly
+        if (this.originalY === undefined || this.originalY === 0) {
+          this.originalY = this.y;
+        }
         this.scene.tweens.add({
           targets: this,
           y: this.originalY,

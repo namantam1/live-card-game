@@ -11,6 +11,8 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     this.playedCards = [];
 
     // Card positions for each player (relative to center)
+    // Card size is 56x78 at scale 0.7
+    // Diamond pattern: each player's card faces toward center
     this.cardOffsets = [
       { x: 0, y: 50, rotation: 0 },      // Player 0 (bottom)
       { x: -70, y: 0, rotation: -5 },    // Player 1 (left)
@@ -22,6 +24,12 @@ export default class TrickArea extends Phaser.GameObjects.Container {
   }
 
   async playCard(cardData, playerIndex, fromCard = null) {
+    // Handle invalid or undefined playerIndex
+    if (playerIndex === undefined || playerIndex === null || playerIndex < 0 || playerIndex >= this.cardOffsets.length) {
+      console.warn(`TrickArea: Invalid playerIndex ${playerIndex}, defaulting to 0`);
+      playerIndex = 0;
+    }
+
     const offset = this.cardOffsets[playerIndex];
     const targetX = this.x + offset.x;
     const targetY = this.y + offset.y;
