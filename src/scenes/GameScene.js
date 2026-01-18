@@ -410,7 +410,7 @@ export default class GameScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
-    const tableWidth = Math.min(width, height) * 0.7;
+    const tableWidth = Math.min(width, height) * 0.8;
     const tableHeight = tableWidth * 0.55;
 
     const graphics = this.add.graphics();

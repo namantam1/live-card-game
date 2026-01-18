@@ -9,6 +9,7 @@ import {
   getResponsiveConfig,
   getFontSize
 } from '../config/uiConfig.js';
+import Button from '../utils/Button.js';
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -200,66 +201,19 @@ export default class UIScene extends Phaser.Scene {
 
   createActionButton(x, y, label, isDanger, callback) {
     const { width, height } = this.cameras.main;
-    const container = this.add.container(x, y);
-    const btnWidth = 180;
-    const btnHeight = 44;
-    const radius = btnHeight / 2; // Fully rounded (pill shape)
 
-    // Shadow
-    const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.3);
-    shadow.fillRoundedRect(-btnWidth / 2 + 3, -btnHeight / 2 + 4, btnWidth, btnHeight, radius);
-
-    const bg = this.add.graphics();
-    const drawBg = (hover = false) => {
-      bg.clear();
-      if (isDanger) {
-        bg.fillStyle(hover ? 0xb91c1c : 0x991b1b, 1);
-      } else {
-        bg.fillStyle(hover ? 0x7c3aed : 0x6366f1, 1);
-      }
-      bg.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, radius);
-    };
-    drawBg();
-
-    const labelText = this.add.text(0, 0, label, {
-      fontFamily: 'Arial, sans-serif',
+    const button = Button.createActionButton(this, x, y, {
+      width: 180,
+      height: 44,
+      text: label,
+      onClick: callback,
+      isDanger,
       fontSize: getFontSize('actionButton', width, height),
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    container.add([shadow, bg, labelText]);
-    container.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true
+      audioManager: this.audioManager
     });
 
-    container.on('pointerover', () => {
-      drawBg(true);
-      this.tweens.add({ targets: container, scaleX: 1.03, scaleY: 1.03, duration: 100 });
-    });
-    container.on('pointerout', () => {
-      drawBg(false);
-      this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 100 });
-    });
-    container.on('pointerdown', () => {
-      this.audioManager.playButtonSound();
-      this.tweens.add({ targets: container, scaleX: 0.97, scaleY: 0.97, duration: 50 });
-    });
-    container.on('pointerup', () => {
-      this.tweens.add({
-        targets: container,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 50,
-        onComplete: () => callback()
-      });
-    });
-
-    this.settingsOverlay.add(container);
-    return container;
+    this.settingsOverlay.add(button);
+    return button;
   }
 
   showSettingsOverlay() {
@@ -454,7 +408,7 @@ export default class UIScene extends Phaser.Scene {
     const totalButtonWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
     const padding = 20; // Horizontal padding
     const bgWidth = totalButtonWidth + (padding * 2);
-    const bgHeight = 80;
+    const bgHeight = 100;
 
     // Background - centered
     const bg = this.add.graphics();
@@ -464,7 +418,7 @@ export default class UIScene extends Phaser.Scene {
     bg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
 
     // Title - centered horizontally
-    const title = this.add.text(0, -25, 'Place Your Bid', {
+    const title = this.add.text(0, -30, 'Place Your Bid', {
       fontFamily: 'Arial, sans-serif',
       fontSize: config.titleFontSize,
       fontStyle: 'bold',
@@ -480,48 +434,15 @@ export default class UIScene extends Phaser.Scene {
     for (let i = 1; i <= MAX_BID; i++) {
       const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
 
-      const button = this.add.container(x, 10);
-
-      const btnBg = this.add.graphics();
-      btnBg.fillStyle(COLORS.PRIMARY, 1);
-      btnBg.fillRoundedRect(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight, config.borderRadius);
-
-      const btnText = this.add.text(0, 0, `${i}`, {
-        fontFamily: 'Arial, sans-serif',
+      const button = Button.createBidButton(this, x, 10, {
+        width: config.buttonWidth,
+        height: config.buttonHeight,
+        text: `${i}`,
+        onClick: () => this.onBidSelected(i),
+        bgColor: COLORS.PRIMARY,
+        borderRadius: config.borderRadius,
         fontSize: config.fontSize,
-        fontStyle: 'bold',
-        color: '#ffffff',
-      }).setOrigin(0.5);
-
-      button.add([btnBg, btnText]);
-
-      // Make interactive with responsive hit area for better mobile touch
-      button.setInteractive({
-        hitArea: new Phaser.Geom.Rectangle(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-        useHandCursor: true
-      });
-
-      button.on('pointerover', () => {
-        this.tweens.add({ targets: button, scaleY: 1.2, duration: 100 });
-      });
-
-      button.on('pointerout', () => {
-        this.tweens.add({ targets: button, scaleY: 1, duration: 100 });
-      });
-
-      button.on('pointerdown', () => {
-        this.audioManager.playButtonSound();
-        this.tweens.add({ targets: button, scaleY: 0.9, duration: 50 });
-      });
-
-      button.on('pointerup', () => {
-        this.tweens.add({
-          targets: button,
-          scaleY: 1,
-          duration: 50,
-          onComplete: () => this.onBidSelected(i)
-        });
+        audioManager: this.audioManager
       });
 
       this.biddingUI.add(button);
@@ -723,51 +644,20 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createModalButton(x, y, text, callback) {
-    const container = this.add.container(x, y);
-
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(COLORS.PRIMARY, COLORS.SECONDARY, COLORS.PRIMARY, COLORS.SECONDARY);
-    bg.fillRoundedRect(-60, -18, 120, 36, 8);
-
-    const btnText = this.add.text(0, 0, text, {
-      fontFamily: 'Arial, sans-serif',
+    return Button.createGradient(this, x, y, {
+      width: 120,
+      height: 36,
+      text,
+      onClick: callback,
+      primaryColor: COLORS.PRIMARY,
+      secondaryColor: COLORS.SECONDARY,
+      borderRadius: 8,
       fontSize: '14px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    container.add([bg, btnText]);
-
-    container.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-60, -18, 120, 36),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true
+      hoverScale: 1.05,
+      pressScale: 0.95,
+      playSound: true,
+      audioManager: this.audioManager
     });
-
-    container.on('pointerover', () => {
-      this.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 100 });
-    });
-
-    container.on('pointerout', () => {
-      this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 100 });
-    });
-
-    container.on('pointerdown', () => {
-      this.audioManager.playButtonSound();
-      this.tweens.add({ targets: container, scaleX: 0.95, scaleY: 0.95, duration: 50 });
-    });
-
-    container.on('pointerup', () => {
-      this.tweens.add({
-        targets: container,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 50,
-        onComplete: () => callback()
-      });
-    });
-
-    return container;
   }
 
   setupEventListeners() {

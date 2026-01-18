@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, ANIMATION, SERVER } from '../utils/constants.js';
 import NetworkManager from '../managers/NetworkManager.js';
+import Button from '../utils/Button.js';
 
 export default class LobbyScene extends Phaser.Scene {
   constructor() {
@@ -249,56 +250,17 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
-    const buttonWidth = 200;
-    const buttonHeight = 45;
-
-    const container = this.add.container(x, y);
-
-    // Button background
-    const bg = this.add.graphics();
-    bg.fillStyle(bgColor, 1);
-    bg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 10);
-
-    // Button text
-    const btnText = this.add.text(0, 0, text, {
-      fontFamily: 'Arial, sans-serif',
+    return Button.create(this, x, y, {
+      width: 200,
+      height: 45,
+      text,
+      onClick: callback,
+      bgColor,
+      borderRadius: 10,
       fontSize: '18px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    container.add([bg, btnText]);
-
-    // Make interactive with better mobile touch support
-    container.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true
+      hoverScale: 1.05,
+      pressScale: 0.95
     });
-
-    container.on('pointerover', () => {
-      this.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 100 });
-    });
-
-    container.on('pointerout', () => {
-      this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 100 });
-    });
-
-    container.on('pointerdown', () => {
-      this.tweens.add({ targets: container, scaleX: 0.95, scaleY: 0.95, duration: 50 });
-    });
-
-    container.on('pointerup', () => {
-      this.tweens.add({
-        targets: container,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 50,
-        onComplete: () => callback()
-      });
-    });
-
-    return container;
   }
 
   async connectToServer() {

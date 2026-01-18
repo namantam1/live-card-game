@@ -48,20 +48,20 @@ export const CARD_CONFIG = {
 // Bidding buttons
 export const BIDDING_CONFIG = {
   DESKTOP: {
-    buttonWidth: 45,
-    buttonHeight: 36,
-    buttonSpacing: 6,
-    borderRadius: 6,
-    fontSize: '16px',
-    titleFontSize: '18px',
+    buttonWidth: 60,
+    buttonHeight: 50,
+    buttonSpacing: 10,
+    borderRadius: 10,
+    fontSize: '20px',
+    titleFontSize: '22px',
   },
   MOBILE: {
-    buttonWidth: 45,        // Larger for easier tapping
-    buttonHeight: 36,
-    buttonSpacing: 6,
-    borderRadius: 6,
-    fontSize: '16px',
-    titleFontSize: '18px',
+    buttonWidth: 60,        // Larger for easier tapping
+    buttonHeight: 50,
+    buttonSpacing: 10,
+    borderRadius: 10,
+    fontSize: '20px',
+    titleFontSize: '22px',
   },
 };
 
@@ -129,7 +129,7 @@ export const FONT_CONFIG = {
     settingsLabel: '15px',
 
     // Action buttons
-    actionButton: '14px',
+    actionButton: '20px',
   },
   MOBILE: {
     // Game UI
@@ -155,7 +155,7 @@ export const FONT_CONFIG = {
     settingsLabel: '22px',
 
     // Action buttons
-    actionButton: '16px',
+    actionButton: '20px',
   },
 };
 

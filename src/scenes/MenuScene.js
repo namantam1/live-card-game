@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, ANIMATION } from '../utils/constants.js';
 import { getFontSize } from '../config/uiConfig.js';
+import Button from '../utils/Button.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -95,76 +96,18 @@ export default class MenuScene extends Phaser.Scene {
 
   createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
     const { width, height } = this.cameras.main;
-    const buttonWidth = 220;
-    const buttonHeight = 50;
 
-    const button = this.add.container(x, y);
-
-    // Button background
-    const bg = this.add.graphics();
-    bg.fillStyle(bgColor, 1);
-    bg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 12);
-
-    // Button text with responsive font size
-    const btnText = this.add.text(0, 0, text, {
-      fontFamily: 'Arial, sans-serif',
+    return Button.create(this, x, y, {
+      width: 220,
+      height: 50,
+      text,
+      onClick: callback,
+      bgColor,
+      borderRadius: 12,
       fontSize: getFontSize('menuButton', width, height),
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    button.add([bg, btnText]);
-
-    // Make interactive with larger hit area for better mobile touch
-    const hitArea = new Phaser.Geom.Rectangle(
-      -buttonWidth / 2, -buttonHeight / 2,
-      buttonWidth, buttonHeight
-    );
-    button.setInteractive({
-      hitArea: hitArea,
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true
+      hoverScale: 1.05,
+      pressScale: 0.95
     });
-
-    // Hover effects
-    button.on('pointerover', () => {
-      this.tweens.add({
-        targets: button,
-        scaleX: 1.05,
-        scaleY: 1.05,
-        duration: 100,
-      });
-    });
-
-    button.on('pointerout', () => {
-      this.tweens.add({
-        targets: button,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 100,
-      });
-    });
-
-    button.on('pointerdown', () => {
-      this.tweens.add({
-        targets: button,
-        scaleX: 0.95,
-        scaleY: 0.95,
-        duration: 50,
-      });
-    });
-
-    button.on('pointerup', () => {
-      this.tweens.add({
-        targets: button,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 50,
-        onComplete: () => callback()
-      });
-    });
-
-    return button;
   }
 
   createFloatingCards() {
