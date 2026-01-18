@@ -15,6 +15,11 @@ export default class Hand extends Phaser.GameObjects.Container {
     this.cards = [];
     this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
 
+    // Calculate responsive card scale based on screen size
+    const isMobile = width < 600 || height < 500;
+    this.cardScale = isMobile ? 0.55 : CARD.SCALE; // Smaller cards on mobile
+    this.handOverlap = isMobile ? CARD.HAND_OVERLAP * 0.7 : CARD.HAND_OVERLAP;
+
     scene.add.existing(this);
   }
 
@@ -45,7 +50,7 @@ export default class Hand extends Phaser.GameObjects.Container {
 
       // Create card at center (deck position)
       const card = new Card(this.scene, centerX, centerY, cardData, faceDown);
-      card.setScale(0.3);
+      card.setScale(0.3 * this.cardScale / CARD.SCALE); // Scale relative to base scale
 
       // Calculate target position in hand
       const targetPos = this.getCardPosition(i, cardDataArray.length);
@@ -57,8 +62,8 @@ export default class Hand extends Phaser.GameObjects.Container {
           x: this.x + targetPos.x,
           y: this.y + targetPos.y,
           rotation: this.rotation + targetPos.rotation,
-          scaleX: 1,
-          scaleY: 1,
+          scaleX: this.cardScale,
+          scaleY: this.cardScale,
           duration: ANIMATION.CARD_DEAL,
           ease: 'Quad.easeOut',
           onComplete: resolve,
@@ -94,7 +99,7 @@ export default class Hand extends Phaser.GameObjects.Container {
   }
 
   getCardPosition(index, total) {
-    const overlap = this.isHuman ? CARD.HAND_OVERLAP : CARD.HAND_OVERLAP * 0.4;
+    const overlap = this.isHuman ? this.handOverlap : this.handOverlap * 0.4;
     const totalSpan = (total - 1) * overlap;
     const startOffset = -totalSpan / 2;
 
@@ -136,8 +141,8 @@ export default class Hand extends Phaser.GameObjects.Container {
           x: targetX,
           y: targetY,
           rotation: targetRotation,
-          scaleX: 1,
-          scaleY: 1,
+          scaleX: this.cardScale,
+          scaleY: this.cardScale,
           duration: 200,
           ease: 'Quad.easeOut',
         });
@@ -145,7 +150,7 @@ export default class Hand extends Phaser.GameObjects.Container {
         card.x = targetX;
         card.y = targetY;
         card.rotation = targetRotation;
-        card.setScale(1);
+        card.setScale(this.cardScale);
       }
 
       card.originalY = targetY;
@@ -215,6 +220,18 @@ export default class Hand extends Phaser.GameObjects.Container {
     return card;
   }
 
+  removeFirstCard() {
+    // Remove the first card (used for remote players with placeholder cards)
+    if (this.cards.length === 0) return null;
+
+    const card = this.cards.shift();
+
+    // Rearrange remaining cards
+    this.arrangeCards(true);
+
+    return card;
+  }
+
   getCardByData(cardData) {
     return this.cards.find(c => c.cardData.id === cardData.id);
   }
@@ -226,5 +243,38 @@ export default class Hand extends Phaser.GameObjects.Container {
 
   getCardData() {
     return this.cards.map(c => c.cardData);
+  }
+
+  /**
+   * Update the number of face-down placeholder cards (for remote players)
+   * @param {number} count - Number of cards to display
+   */
+  updateCardCount(count) {
+    if (this.isHuman) return; // Only for non-human players
+
+    const currentCount = this.cards.length;
+
+    if (count === currentCount) return;
+
+    if (count > currentCount) {
+      // Add placeholder cards
+      const cardsToAdd = count - currentCount;
+      for (let i = 0; i < cardsToAdd; i++) {
+        // Create a dummy card object for placeholder
+        const dummyCard = { id: `placeholder_${Date.now()}_${i}`, suit: '', rank: '', value: 0 };
+        const card = new Card(this.scene, this.x, this.y, dummyCard, true);
+        this.cards.push(card);
+      }
+    } else {
+      // Remove cards
+      const cardsToRemove = currentCount - count;
+      for (let i = 0; i < cardsToRemove; i++) {
+        const card = this.cards.pop();
+        if (card) card.destroy();
+      }
+    }
+
+    // Rearrange all cards
+    this.arrangeCards(false);
   }
 }

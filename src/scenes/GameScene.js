@@ -102,28 +102,42 @@ export default class GameScene extends Phaser.Scene {
     const networkPlayers = this.networkManager.getPlayers();
     const localId = this.networkManager.playerId;
 
-    // Sort by seat index and create player objects
-    networkPlayers.forEach((netPlayer, index) => {
+    // Find local player's seat index
+    const localPlayer = networkPlayers.find(p => p.id === localId);
+    const localSeatIndex = localPlayer ? localPlayer.seatIndex : 0;
+
+    // Create player objects with relative positioning
+    // Local player should always be at position 0 (bottom)
+    networkPlayers.forEach((netPlayer) => {
       const isLocal = netPlayer.id === localId;
+
+      // Calculate relative position: local player at 0 (bottom), others clockwise
+      const relativePosition = (netPlayer.seatIndex - localSeatIndex + 4) % 4;
+
       const player = new Player(
         this,
-        netPlayer.seatIndex,
+        relativePosition,
         netPlayer.name,
         netPlayer.emoji,
         isLocal // isHuman = isLocal in multiplayer
       );
       this.players.push(player);
 
-      // Store network ID mapping
+      // Store network ID and absolute seat index for server communication
       player.networkId = netPlayer.id;
+      player.absoluteSeatIndex = netPlayer.seatIndex;
 
       // Listen for card play events from local player
       if (isLocal) {
-        player.hand.on('cardPlayed', (cardData, cardObject) => {
+        player.hand.on('cardPlayed', (cardData) => {
           this.onMultiplayerCardPlayed(cardData);
         });
       }
     });
+
+    // Sort players by relative position for consistent array indexing
+    // This ensures players[0] is always local player (bottom)
+    this.players.sort((a, b) => a.index - b.index);
 
     // Setup network event listeners
     this.setupNetworkListeners();
@@ -142,7 +156,7 @@ export default class GameScene extends Phaser.Scene {
 
   setupNetworkListeners() {
     // Phase change
-    this.networkManager.on('phaseChange', ({ phase, previousPhase }) => {
+    this.networkManager.on('phaseChange', ({ phase }) => {
       this.events.emit('phaseChanged', phase);
 
       if (phase === 'playing') {
@@ -204,7 +218,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Card added to hand
-    this.networkManager.on('cardAdded', ({ card, index }) => {
+    this.networkManager.on('cardAdded', ({ card }) => {
       const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
       if (localPlayer) {
         localPlayer.hand.addCard(card);
@@ -215,27 +229,31 @@ export default class GameScene extends Phaser.Scene {
     this.networkManager.on('cardPlayed', ({ playerId, card }) => {
       this.audioManager.playCardSound();
 
-      // Try to find player in local array first
+      // Find player in local array
       let player = this.players.find(p => p.networkId === playerId);
-      let seatIndex;
+      let relativePosition;
       let removedCard = null;
 
       if (player) {
-        // Player class uses 'index' property, not 'seatIndex'
-        seatIndex = player.index;
-        // Remove card from player's hand (if visible)
+        // Use relative position for visual display
+        relativePosition = player.index;
+
+        // Remove card from player's hand for animation
         if (player.networkId === this.networkManager.playerId) {
+          // Local player - remove the actual card
           removedCard = player.hand.removeCard(card.id);
+        } else {
+          // Remote player - remove any placeholder card for animation
+          removedCard = player.hand.removeFirstCard();
         }
       } else {
-        // Player not in local array (likely a bot added after scene start)
-        // Get seat index from network state
-        const networkPlayer = this.networkManager.getPlayer(playerId);
-        seatIndex = networkPlayer ? networkPlayer.seatIndex : 0;
+        // Player not in local array (shouldn't happen in multiplayer, but fallback)
+        console.warn(`Player ${playerId} not found in local players array`);
+        relativePosition = 0;
       }
 
-      // Add card to trick area (pass the removed card for animation)
-      this.trickArea.playCard(card, seatIndex, removedCard);
+      // Add card to trick area using relative position for visual placement
+      this.trickArea.playCard(card, relativePosition, removedCard);
     });
 
     // Trick cleared
@@ -246,14 +264,19 @@ export default class GameScene extends Phaser.Scene {
     // Trick winner
     this.networkManager.on('trickWinner', (winnerId) => {
       const winner = this.players.find(p => p.networkId === winnerId);
-      if (winner && winner.nameLabel) {
-        this.tweens.add({
-          targets: winner.nameLabel,
-          scaleX: 1.2,
-          scaleY: 1.2,
-          duration: 200,
-          yoyo: true,
-        });
+      if (winner) {
+        // Update tricks won count
+        winner.addTrick();
+
+        if (winner.nameLabel) {
+          this.tweens.add({
+            targets: winner.nameLabel,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 200,
+            yoyo: true,
+          });
+        }
       }
       // For bots not in players array, just collect the trick without animation
     });
@@ -262,19 +285,22 @@ export default class GameScene extends Phaser.Scene {
     this.networkManager.on('playerBid', ({ playerId, bid }) => {
       const player = this.players.find(p => p.networkId === playerId);
       if (player) {
+        // Update the local player's bid and stats display
+        player.setBid(bid);
         const playerIndex = this.players.indexOf(player);
         this.events.emit('bidPlaced', { playerIndex, bid });
       } else {
-        // Bot player - get seat index from network state for UI update
-        const networkPlayer = this.networkManager.getPlayer(playerId);
-        if (networkPlayer) {
-          this.events.emit('bidPlaced', { playerIndex: networkPlayer.seatIndex, bid });
-        }
+        // This shouldn't happen in multiplayer - all players should be in the array
+        console.warn(`Player ${playerId} not found for bid event`);
       }
     });
 
     // Round change
-    this.networkManager.on('roundChange', (round) => {
+    this.networkManager.on('roundChange', () => {
+      // Reset all players for new round
+      this.players.forEach(player => {
+        player.reset();
+      });
       this.updateRoundText();
     });
 
@@ -293,6 +319,14 @@ export default class GameScene extends Phaser.Scene {
       console.error('Network error:', data);
     });
 
+    // Remote player hand changes (for visual card backs)
+    this.networkManager.on('remoteHandChanged', ({ playerId, handCount }) => {
+      const player = this.players.find(p => p.networkId === playerId);
+      if (player) {
+        player.hand.updateCardCount(handCount);
+      }
+    });
+
     // Room left
     this.networkManager.on('roomLeft', () => {
       this.scene.stop('UIScene');
@@ -308,6 +342,34 @@ export default class GameScene extends Phaser.Scene {
     if (localPlayer && hand.length > 0) {
       // For initial sync, set cards without animation to avoid glitches
       localPlayer.hand.setCards(hand, false);
+    }
+
+    // Sync card counts for all remote players (show card backs)
+    const state = this.networkManager.getState();
+    if (state) {
+      state.players.forEach((player, sessionId) => {
+        if (sessionId !== this.networkManager.playerId) {
+          const handCount = player.hand.length;
+          if (handCount > 0) {
+            const localPlayerObj = this.players.find(p => p.networkId === sessionId);
+            if (localPlayerObj) {
+              localPlayerObj.hand.updateCardCount(handCount);
+            }
+          }
+        }
+      });
+
+      // Check if we joined during bidding phase and it's our turn
+      // This handles the case where a player joins after the game started
+      const phase = state.phase;
+      const isMyTurn = state.currentTurn === this.networkManager.playerId;
+
+      if (phase === 'bidding' && isMyTurn) {
+        // Emit phase changed event to trigger bidding UI
+        this.time.delayedCall(500, () => {
+          this.events.emit('phaseChanged', phase);
+        });
+      }
     }
   }
 
@@ -522,7 +584,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Card played
-    this.gameManager.on(EVENTS.CARD_PLAYED, ({ playerIndex, card }) => {
+    this.gameManager.on(EVENTS.CARD_PLAYED, () => {
       this.audioManager.playCardSound();
     });
 

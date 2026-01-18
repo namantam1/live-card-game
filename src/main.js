@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import CanvasInputPlugin from 'phaser3-rex-plugins/plugins/canvasinput-plugin.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import LobbyScene from './scenes/LobbyScene.js';
@@ -11,6 +12,13 @@ const config = {
   backgroundColor: '#1a1a2e',
   dom: {
     createContainer: true,
+  },
+  plugins: {
+    global: [{
+      key: 'rexCanvasInputPlugin',
+      plugin: CanvasInputPlugin,
+      start: true
+    }]
   },
   scale: {
     mode: Phaser.Scale.FIT,

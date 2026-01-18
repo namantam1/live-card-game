@@ -9,8 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "colyseus.js": "^0.15.0",
     "phaser": "^3.80.1",
-    "colyseus.js": "^0.15.0"
+    "phaser3-rex-plugins": "^1.80.17"
   },
   "devDependencies": {
     "vite": "^5.4.2"

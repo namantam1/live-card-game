@@ -78,8 +78,9 @@ export default class LobbyScene extends Phaser.Scene {
       color: '#cbd5e1',
     }).setOrigin(0.5);
 
-    // Name input field (using DOM element)
-    this.nameInput = this.createInputField(centerX, centerY - 30, 250, 'Your Name');
+    // Name input field (using rexUI InputText)
+    this.nameInput = this.createInputField(centerX, centerY - 30, 200, 'Your Name');
+    this.nameInput.setDepth(100); // Ensure it renders above other elements
 
     // Create Room button
     const createBtn = this.createButton(centerX, centerY + 50, 'Create Room', () => {
@@ -88,6 +89,11 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Join Room button
     const joinBtn = this.createButton(centerX, centerY + 120, 'Join Room', () => {
+      const name = this.nameInput.text.trim();
+      if (!name) {
+        this.connectionStatus.setText('Please enter your name first').setColor('#ef4444');
+        return;
+      }
       this.showJoinView();
     });
 
@@ -126,6 +132,8 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Room code input
     this.roomCodeInput = this.createInputField(centerX, centerY - 10, 200, 'XXXX', true);
+    this.roomCodeInput.setDepth(100); // Ensure it renders above other elements
+    this.roomCodeInput.setVisible(false); // Hidden initially
 
     // Join button
     const joinBtn = this.createButton(centerX, centerY + 70, 'Join', () => {
@@ -198,39 +206,46 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   createInputField(x, y, width, placeholder, uppercase = false) {
-    // Create an HTML input element
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = placeholder;
-    input.maxLength = uppercase ? 4 : 20;
-    input.style.cssText = `
-      position: absolute;
-      width: ${width}px;
-      height: 40px;
-      padding: 0 15px;
-      font-size: 18px;
-      font-family: Arial, sans-serif;
-      background: rgba(30, 41, 59, 0.9);
-      border: 2px solid #475569;
-      border-radius: 8px;
-      color: #ffffff;
-      outline: none;
-      text-align: center;
-      ${uppercase ? 'text-transform: uppercase;' : ''}
-    `;
-
-    input.addEventListener('focus', () => {
-      input.style.borderColor = '#6366f1';
+    // Create rexUI CanvasInput (truly canvas-based)
+    const canvasInput = this.add.rexCanvasInput(x, y, width, 45, {
+      background: {
+        color: 0x1e293b,
+        stroke: 0x475569,
+        strokeThickness: 2,
+        cornerRadius: 8,
+        'focus.stroke': 0x6366f1,
+      },
+      style: {
+        fontSize: '18px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+      },
+      wrap: {
+        hAlign: 'center',
+        vAlign: 'center',
+      },
+      text: '',
+      placeholder: placeholder,
+      placeholderColor: '#94a3b8',
+      maxLength: uppercase ? 4 : 20,
     });
 
-    input.addEventListener('blur', () => {
-      input.style.borderColor = '#475569';
-    });
+    // Transform to uppercase if needed
+    if (uppercase) {
+      canvasInput.on('textchange', function (canvasInput) {
+        if (!canvasInput.text) return;
+        const cursorPos = canvasInput.cursorPosition;
+        const upper = canvasInput.text.toUpperCase();
+        if (canvasInput.text !== upper) {
+          canvasInput.setText(upper);
+          canvasInput.setCursorPosition(cursorPos);
+        }
+      });
+    }
 
-    // Add to DOM
-    this.add.dom(x, y, input);
+    canvasInput.setOrigin(0.5);
 
-    return input;
+    return canvasInput;
   }
 
   createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
@@ -336,6 +351,8 @@ export default class LobbyScene extends Phaser.Scene {
     this.menuContainer.setVisible(true);
     this.joinContainer.setVisible(false);
     this.waitingContainer.setVisible(false);
+    this.nameInput.setVisible(true);
+    this.roomCodeInput.setVisible(false);
     this.joinError.setText('');
   }
 
@@ -344,6 +361,8 @@ export default class LobbyScene extends Phaser.Scene {
     this.menuContainer.setVisible(false);
     this.joinContainer.setVisible(true);
     this.waitingContainer.setVisible(false);
+    this.nameInput.setVisible(false);
+    this.roomCodeInput.setVisible(true);
     this.joinError.setText('');
   }
 
@@ -352,12 +371,14 @@ export default class LobbyScene extends Phaser.Scene {
     this.menuContainer.setVisible(false);
     this.joinContainer.setVisible(false);
     this.waitingContainer.setVisible(true);
+    this.nameInput.setVisible(false);
+    this.roomCodeInput.setVisible(false);
     this.readyBtn.setVisible(true);
     this.updatePlayersList();
   }
 
   async handleCreateRoom() {
-    const name = this.nameInput.value.trim();
+    const name = this.nameInput.text.trim();
     if (!name) {
       this.connectionStatus.setText('Please enter your name').setColor('#ef4444');
       return;
@@ -380,8 +401,8 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   async handleJoinRoom() {
-    const name = this.nameInput.value.trim();
-    const code = this.roomCodeInput.value.trim().toUpperCase();
+    const name = this.nameInput.text.trim();
+    const code = this.roomCodeInput.text.trim().toUpperCase();
 
     if (!name) {
       this.joinError.setText('Please enter your name first');
@@ -421,8 +442,16 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   async handleLeaveRoom() {
-    await this.networkManager.leaveRoom();
-    this.showMenuView();
+    try {
+      await this.networkManager.leaveRoom();
+      // Reset input fields
+      this.nameInput.setText('');
+      this.roomCodeInput.setText('');
+      this.showMenuView();
+    } catch (error) {
+      console.error('Error leaving room:', error);
+      this.showMenuView();
+    }
   }
 
   updatePlayersList() {
@@ -489,12 +518,12 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   shutdown() {
-    // Clean up DOM elements
-    if (this.nameInput && this.nameInput.parentNode) {
-      this.nameInput.parentNode.removeChild(this.nameInput);
+    // Clean up input text objects
+    if (this.nameInput) {
+      this.nameInput.destroy();
     }
-    if (this.roomCodeInput && this.roomCodeInput.parentNode) {
-      this.roomCodeInput.parentNode.removeChild(this.roomCodeInput);
+    if (this.roomCodeInput) {
+      this.roomCodeInput.destroy();
     }
   }
 }

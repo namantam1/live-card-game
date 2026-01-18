@@ -10,8 +10,11 @@ export default class TrickArea extends Phaser.GameObjects.Container {
 
     this.playedCards = [];
 
+    // Calculate responsive card scale for trick area
+    const isMobile = width < 600 || height < 500;
+    this.trickCardScale = isMobile ? 0.55 : 0.7; // Match Hand scaling
+
     // Card positions for each player (relative to center)
-    // Card size is 56x78 at scale 0.7
     // Diamond pattern: each player's card faces toward center
     this.cardOffsets = [
       { x: 0, y: 50, rotation: 0 },      // Player 0 (bottom)
@@ -43,10 +46,15 @@ export default class TrickArea extends Phaser.GameObjects.Container {
       // Prepare card for play - kills any existing tweens and cleans up state
       card.prepareForPlay();
 
-      // If card was face down (bot), flip it first
+      // If card was face down (placeholder or bot), update it with actual card data and flip
       if (card.isFaceDown) {
+        // Update card data to the actual card being played
+        card.cardData = cardData;
         await card.flip(false);
       }
+
+      // Normalize scale to match trick area scale (in case hand scale differs)
+      card.setScale(this.trickCardScale);
 
       // Animate to center
       await card.animateToWithBounce(targetX, targetY, ANIMATION.CARD_TO_CENTER);
@@ -54,11 +62,12 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     } else {
       // Create new card at center position
       card = new Card(this.scene, targetX, targetY, cardData, false);
+      card.setScale(this.trickCardScale); // Use consistent scale
       card.rotation = Phaser.Math.DegToRad(offset.rotation);
     }
 
     // Play sound
-    this.playCardSound(cardData);
+    this.playCardSound();
 
     this.playedCards.push({
       playerIndex,
@@ -72,10 +81,12 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     return card;
   }
 
-  playCardSound(cardData) {
-    // Check if it's a trump play (spades when lead is different)
+  playCardSound() {
     // Simple beep sound using Web Audio
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();

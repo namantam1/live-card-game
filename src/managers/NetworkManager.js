@@ -183,16 +183,25 @@ export default class NetworkManager {
         this.emit('playerConnection', { playerId: sessionId, isConnected: value });
       });
 
-      // Hand changes (for local player only)
-      if (sessionId === this.playerId) {
-        player.hand.onAdd((card, index) => {
+      // Hand changes
+      player.hand.onAdd((card, index) => {
+        if (sessionId === this.playerId) {
+          // For local player, emit the actual card
           this.emit('cardAdded', { card: this.cardToObject(card), index });
-        });
+        } else {
+          // For remote players, emit hand count change for visual update
+          this.emit('remoteHandChanged', { playerId: sessionId, handCount: player.hand.length });
+        }
+      });
 
-        player.hand.onRemove((card, index) => {
+      player.hand.onRemove((card, index) => {
+        if (sessionId === this.playerId) {
           this.emit('cardRemoved', { cardId: card.id, index });
-        });
-      }
+        } else {
+          // For remote players, emit hand count change for visual update
+          this.emit('remoteHandChanged', { playerId: sessionId, handCount: player.hand.length });
+        }
+      });
     });
 
     this.room.state.players.onRemove((player, sessionId) => {
@@ -201,7 +210,7 @@ export default class NetworkManager {
     });
 
     // Current trick changes
-    this.room.state.currentTrick.onAdd((entry, index) => {
+    this.room.state.currentTrick.onAdd((entry) => {
       console.log(`NetworkManager: Card played by ${entry.playerId}`);
       this.emit('cardPlayed', {
         playerId: entry.playerId,
@@ -209,7 +218,7 @@ export default class NetworkManager {
       });
     });
 
-    this.room.state.currentTrick.onRemove((entry, index) => {
+    this.room.state.currentTrick.onRemove(() => {
       this.emit('trickCleared');
     });
 
@@ -373,7 +382,7 @@ export default class NetworkManager {
    */
   async leaveRoom() {
     if (this.room) {
-      await this.room.leave();
+      await this.room.leave(true); // Pass true to indicate consented leave
       this.room = null;
       this.roomCode = null;
       this.seatIndex = -1;

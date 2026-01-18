@@ -77,10 +77,24 @@ export class CallBreakRoom extends Room<GameState> {
     const player = this.state.players.get(client.sessionId);
     if (player) {
       player.isConnected = false;
-      console.log(`${player.name} disconnected`);
+      console.log(`${player.name} disconnected (consented: ${consented})`);
+
+      // If player intentionally left (consented), remove them immediately
+      if (consented) {
+        console.log(`${player.name} left intentionally`);
+        this.state.players.delete(client.sessionId);
+        const orderIndex = this.state.playerOrder.indexOf(client.sessionId);
+        if (orderIndex !== -1) {
+          this.state.playerOrder.splice(orderIndex, 1);
+        }
+        if (this.state.phase !== 'waiting') {
+          this.broadcast('playerLeft', { name: player.name });
+        }
+        return;
+      }
 
       try {
-        // Allow reconnection within 30 seconds
+        // Allow reconnection within 30 seconds for unintentional disconnects
         await this.allowReconnection(client, 30);
         player.isConnected = true;
         console.log(`${player.name} reconnected`);
