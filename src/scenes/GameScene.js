@@ -151,21 +151,35 @@ export default class GameScene extends Phaser.Scene {
 
       if (phase === 'roundEnd') {
         const players = this.networkManager.getPlayers();
-        const scores = players.map(p => ({
-          name: p.name,
-          bid: p.bid,
-          tricks: p.tricksWon,
-          roundScore: p.roundScore,
-          totalScore: p.score,
-        }));
-        this.events.emit('roundComplete', { scores });
+        this.events.emit('roundComplete', {
+          players: players.map(p => ({
+            name: p.name,
+            emoji: p.emoji,
+            bid: p.bid,
+            tricksWon: p.tricksWon,
+            roundScore: p.roundScore,
+            totalScore: p.score,
+          }))
+        });
       }
 
       if (phase === 'gameOver') {
         const players = this.networkManager.getPlayers();
-        const winner = players.reduce((a, b) => a.score > b.score ? a : b);
+        const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+        const winner = sortedPlayers[0];
         this.audioManager.playWinSound();
-        this.events.emit('gameComplete', { winner: winner.name, scores: players });
+        this.events.emit('gameComplete', {
+          winner: {
+            name: winner.name,
+            emoji: winner.emoji,
+            score: winner.score,
+          },
+          players: sortedPlayers.map(p => ({
+            name: p.name,
+            emoji: p.emoji,
+            score: p.score,
+          }))
+        });
       }
     });
 
@@ -553,7 +567,11 @@ export default class GameScene extends Phaser.Scene {
 
   // Called from UIScene to continue to next round
   continueToNextRound() {
-    this.gameManager.continueToNextRound();
+    if (this.isMultiplayer) {
+      this.networkManager.sendNextRound();
+    } else {
+      this.gameManager.continueToNextRound();
+    }
   }
 
   // Called from UIScene to restart game
@@ -563,13 +581,6 @@ export default class GameScene extends Phaser.Scene {
       this.networkManager.sendRestart();
     } else if (this.gameManager) {
       this.gameManager.restartGame();
-    }
-  }
-
-  // Called from UIScene to continue to next round (multiplayer)
-  continueToNextRoundMultiplayer() {
-    if (this.networkManager) {
-      this.networkManager.sendNextRound();
     }
   }
 

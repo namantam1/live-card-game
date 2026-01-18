@@ -796,45 +796,4 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  // Update showRoundModal to handle multiplayer data format
-  showRoundModalMultiplayer(data) {
-    this.roundModalContent.removeAll(true);
-
-    // Player results
-    data.scores.forEach((player, index) => {
-      const y = -60 + index * 35;
-
-      const name = this.add.text(-150, y, `${player.name}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        color: '#ffffff',
-      });
-
-      const result = this.add.text(0, y, `${player.tricks}/${player.bid}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        color: '#94a3b8',
-      }).setOrigin(0.5);
-
-      const score = this.add.text(150, y, player.roundScore >= 0 ? `+${player.roundScore.toFixed(1)}` : `${player.roundScore.toFixed(1)}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        fontStyle: 'bold',
-        color: player.roundScore >= 0 ? '#22c55e' : '#ef4444',
-      }).setOrigin(1, 0);
-
-      this.roundModalContent.add([name, result, score]);
-    });
-
-    // Continue button
-    const button = this.createModalButton(0, 100, 'Continue', () => {
-      this.hideRoundModal();
-      this.gameScene.continueToNextRoundMultiplayer();
-    });
-    this.roundModalContent.add(button);
-
-    this.roundModal.setVisible(true);
-    this.roundModal.alpha = 0;
-    this.tweens.add({ targets: this.roundModal, alpha: 1, duration: 300 });
-  }
 }
