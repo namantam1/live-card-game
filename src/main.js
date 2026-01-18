@@ -5,6 +5,7 @@ import MenuScene from './scenes/MenuScene.js';
 import LobbyScene from './scenes/LobbyScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
+import { registerServiceWorker, enforceLandscapeOnMobile } from './pwaUtils.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -58,5 +59,13 @@ document.addEventListener('visibilitychange', () => {
     game.sound.resumeAll();
   }
 });
+
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+  registerServiceWorker();
+}
+
+// Enforce landscape mode on mobile devices
+enforceLandscapeOnMobile();
 
 export default game;
