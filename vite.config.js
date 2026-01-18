@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: './',
+  base: '/live-card-game/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -25,8 +25,8 @@ export default defineConfig({
         background_color: '#1a1a2e',
         display: 'standalone',
         orientation: 'landscape',
-        start_url: '/',
-        scope: '/',
+        start_url: '/live-card-game/',
+        scope: '/live-card-game/',
         icons: [
           {
             src: 'pwa-64x64.png',
