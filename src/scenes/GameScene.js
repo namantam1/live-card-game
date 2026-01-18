@@ -4,6 +4,7 @@ import TrickArea from '../objects/TrickArea.js';
 import GameManager from '../managers/GameManager.js';
 import AudioManager from '../managers/AudioManager.js';
 import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.js';
+import { getFontSize } from '../config/uiConfig.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -504,18 +505,18 @@ export default class GameScene extends Phaser.Scene {
     bg.lineStyle(1, 0x6366f1, 0.6);
     bg.strokeRoundedRect(-50, -18, 100, 36, 18);
 
-    // Trump text
+    // Trump text with responsive font size (width, height already declared above)
     const trumpText = this.add.text(-30, 0, 'Trump', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '12px',
+      fontSize: getFontSize('trumpIndicator', width, height),
       fontStyle: 'bold',
       color: '#94a3b8',
     }).setOrigin(0, 0.5);
 
-    // Spade symbol with glow
+    // Spade symbol with glow and responsive font size
     const spadeSymbol = this.add.text(30, 0, '\u2660', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '22px',
+      fontSize: getFontSize('trumpSymbol', width, height),
       color: '#ffffff',
       shadow: {
         offsetX: 0,
@@ -539,7 +540,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.roundText = this.add.text(0, 0, '', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '11px',
+      fontSize: getFontSize('roundIndicator', width, height),
       fontStyle: 'bold',
       color: '#94a3b8',
     }).setOrigin(0.5);

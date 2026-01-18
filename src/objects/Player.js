@@ -1,5 +1,6 @@
 import Hand from './Hand.js';
 import { PLAYER_POSITIONS, COLORS } from '../utils/constants.js';
+import { TURN_INDICATOR_CONFIG, isMobile, getFontSize, getResponsiveConfig } from '../config/uiConfig.js';
 
 export default class Player {
   constructor(scene, index, name, emoji, isHuman = false) {
@@ -51,22 +52,38 @@ export default class Player {
         break;
     }
 
-    // Player name with emoji
+    // Player name with emoji using responsive font size
     this.nameLabel = this.scene.add.text(labelX, labelY, `${this.emoji} ${this.name}`, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '14px',
+      fontSize: getFontSize('playerName', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
       backgroundColor: 'rgba(30, 41, 59, 0.8)',
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5);
 
-    // Bid/tricks indicator (shown during gameplay)
-    this.statsLabel = this.scene.add.text(labelX, labelY + 20, '', {
+    // Bid/tricks indicator (shown during gameplay) with responsive font size
+    // For top and bottom players, show stats to the right of name
+    // For left and right players, show stats below name
+    let statsX, statsY, statsOrigin;
+
+    if (this.position === 'bottom' || this.position === 'top') {
+      // Position to the right of the name label
+      statsX = labelX + this.nameLabel.width / 2 + 10; // 10px gap from name
+      statsY = labelY;
+      statsOrigin = { x: 0, y: 0.5 }; // Left-aligned vertically centered
+    } else {
+      // Position below the name label (left/right players)
+      statsX = labelX;
+      statsY = labelY + 20;
+      statsOrigin = { x: 0.5, y: 0.5 }; // Center-aligned
+    }
+
+    this.statsLabel = this.scene.add.text(statsX, statsY, '', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '12px',
+      fontSize: getFontSize('playerStats', width, height),
       color: '#94a3b8',
-    }).setOrigin(0.5);
+    }).setOrigin(statsOrigin.x, statsOrigin.y);
 
     // Turn indicator
     this.turnIndicator = this.scene.add.graphics();
@@ -119,14 +136,15 @@ export default class Player {
   showTurnIndicator() {
     const { width, height } = this.scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[this.position];
+    const config = getResponsiveConfig(TURN_INDICATOR_CONFIG, width, height);
 
     this.turnIndicator.clear();
-    this.turnIndicator.lineStyle(3, COLORS.PRIMARY, 1);
+    this.turnIndicator.lineStyle(config.lineWidth, COLORS.PRIMARY, 1);
 
-    // Draw circle around player area
+    // Draw circle around player area with responsive radius
     const x = width * posConfig.x;
     const y = height * posConfig.y;
-    this.turnIndicator.strokeCircle(x, y, 80);
+    this.turnIndicator.strokeCircle(x, y, config.radius);
 
     this.turnIndicator.setVisible(true);
 

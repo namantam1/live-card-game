@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SUITS, RANKS, COLORS } from '../utils/constants.js';
+import { CARD_CONFIG } from '../config/uiConfig.js';
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -57,17 +58,17 @@ export default class BootScene extends Phaser.Scene {
   }
 
   loadAssets() {
-    // Load all card images
+    // Load all card images using centralized card dimensions from uiConfig
     for (const suit of SUITS) {
       for (const rank of RANKS) {
         const key = `card-${rank}-${suit}`;
         const path = `cards/${rank}-${suit}.svg`;
-        this.load.svg(key, path, { width: 80, height: 112 });
+        this.load.svg(key, path, { width: CARD_CONFIG.WIDTH, height: CARD_CONFIG.HEIGHT });
       }
     }
 
-    // Card back
-    this.load.svg('card-back', 'cards/back.svg', { width: 80, height: 112 });
+    // Card back using centralized card dimensions
+    this.load.svg('card-back', 'cards/back.svg', { width: CARD_CONFIG.WIDTH, height: CARD_CONFIG.HEIGHT });
 
     // Audio (optional - check if exists)
     this.load.audio('bgm', 'audio/bgm.mp3').on('loaderror', () => {

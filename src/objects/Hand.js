@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Card from './Card.js';
 import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants.js';
 import { sortHand, getValidCards } from '../utils/cards.js';
+import { CARD_CONFIG, isMobile } from '../config/uiConfig.js';
 
 export default class Hand extends Phaser.GameObjects.Container {
   constructor(scene, position, isHuman = false) {
@@ -15,10 +16,12 @@ export default class Hand extends Phaser.GameObjects.Container {
     this.cards = [];
     this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
 
-    // Calculate responsive card scale based on screen size
-    const isMobile = width < 600 || height < 500;
-    this.cardScale = isMobile ? 0.55 : CARD.SCALE; // Smaller cards on mobile
-    this.handOverlap = isMobile ? CARD.HAND_OVERLAP * 0.7 : CARD.HAND_OVERLAP;
+    // Calculate responsive card scale based on screen size using centralized config
+    const mobile = isMobile(width, height);
+    this.cardScale = mobile ? CARD_CONFIG.MOBILE_SCALE : CARD_CONFIG.DESKTOP_SCALE;
+    this.handOverlap = mobile
+      ? CARD_CONFIG.HAND_OVERLAP * CARD_CONFIG.MOBILE_OVERLAP_MULTIPLIER
+      : CARD_CONFIG.HAND_OVERLAP;
 
     scene.add.existing(this);
   }
@@ -85,7 +88,7 @@ export default class Hand extends Phaser.GameObjects.Container {
   }
 
   createCards(cardDataArray) {
-    cardDataArray.forEach((cardData, index) => {
+    cardDataArray.forEach((cardData) => {
       const faceDown = !this.isHuman;
       const card = new Card(this.scene, 0, 0, cardData, faceDown);
       this.cards.push(card);

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, ANIMATION } from '../utils/constants.js';
+import { getFontSize } from '../config/uiConfig.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -17,10 +18,10 @@ export default class MenuScene extends Phaser.Scene {
     // Title with spade icon
     this.createTitle(centerX, centerY - 100);
 
-    // Subtitle
+    // Subtitle with responsive font size
     this.add.text(centerX, centerY - 20, 'A classic trick-taking card game', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
+      fontSize: getFontSize('menuSubtitle', width, height),
       color: '#94a3b8',
     }).setOrigin(0.5);
 
@@ -64,10 +65,12 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   createTitle(x, y) {
-    // Spade icon (using text emoji for simplicity)
+    const { width, height } = this.cameras.main;
+
+    // Spade icon (using text emoji for simplicity) with responsive font size
     const spadeIcon = this.add.text(x, y - 50, '\u2660', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '64px',
+      fontSize: getFontSize('menuSpadeIcon', width, height),
       color: '#818cf8',
     }).setOrigin(0.5);
 
@@ -81,16 +84,17 @@ export default class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Title text
+    // Title text with responsive font size
     this.add.text(x, y, 'Call Break', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '48px',
+      fontSize: getFontSize('menuTitle', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
   }
 
   createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
+    const { width, height } = this.cameras.main;
     const buttonWidth = 220;
     const buttonHeight = 50;
 
@@ -101,10 +105,10 @@ export default class MenuScene extends Phaser.Scene {
     bg.fillStyle(bgColor, 1);
     bg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 12);
 
-    // Button text
+    // Button text with responsive font size
     const btnText = this.add.text(0, 0, text, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
+      fontSize: getFontSize('menuButton', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);

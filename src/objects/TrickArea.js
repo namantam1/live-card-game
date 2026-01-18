@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Card from './Card.js';
 import { ANIMATION, COLORS } from '../utils/constants.js';
 import { getCardAssetKey } from '../utils/cards.js';
+import { CARD_CONFIG, isMobile } from '../config/uiConfig.js';
 
 export default class TrickArea extends Phaser.GameObjects.Container {
   constructor(scene) {
@@ -10,9 +11,9 @@ export default class TrickArea extends Phaser.GameObjects.Container {
 
     this.playedCards = [];
 
-    // Calculate responsive card scale for trick area
-    const isMobile = width < 600 || height < 500;
-    this.trickCardScale = isMobile ? 0.55 : 0.7; // Match Hand scaling
+    // Calculate responsive card scale for trick area using centralized config
+    const mobile = isMobile(width, height);
+    this.trickCardScale = mobile ? CARD_CONFIG.MOBILE_SCALE : CARD_CONFIG.DESKTOP_SCALE;
 
     // Card positions for each player (relative to center)
     // Diamond pattern: each player's card faces toward center

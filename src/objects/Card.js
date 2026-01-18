@@ -140,11 +140,16 @@ export default class Card extends Phaser.GameObjects.Container {
   showGlow() {
     this.glow.clear();
     this.glow.lineStyle(3, COLORS.PRIMARY, 0.8);
+
+    // Use the sprite's actual display size (accounts for texture size and sprite scale)
+    const cardWidth = this.sprite.displayWidth;
+    const cardHeight = this.sprite.displayHeight;
+
     this.glow.strokeRoundedRect(
-      -CARD.WIDTH * CARD.SCALE / 2 - 2,
-      -CARD.HEIGHT * CARD.SCALE / 2 - 2,
-      CARD.WIDTH * CARD.SCALE + 4,
-      CARD.HEIGHT * CARD.SCALE + 4,
+      -cardWidth / 2,
+      -cardHeight / 2 - 2,
+      cardWidth,
+      cardHeight + 4,
       8
     );
     this.glow.setVisible(true);

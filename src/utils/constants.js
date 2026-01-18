@@ -1,3 +1,5 @@
+import { CARD_CONFIG } from '../config/uiConfig.js';
+
 // Game Constants
 export const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 export const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -30,13 +32,14 @@ export const ANIMATION = {
   SCENE_TRANSITION: 500,
 };
 
-// Card dimensions
+// Card dimensions - now imported from centralized UI config
+// You can adjust all card sizes in src/config/uiConfig.js
 export const CARD = {
-  WIDTH: 80,
-  HEIGHT: 112,
-  SCALE: 0.7,
-  HAND_OVERLAP: 35,  // Increased for better card visibility
-  HOVER_LIFT: 25,
+  WIDTH: CARD_CONFIG.WIDTH,
+  HEIGHT: CARD_CONFIG.HEIGHT,
+  SCALE: CARD_CONFIG.DESKTOP_SCALE,
+  HAND_OVERLAP: CARD_CONFIG.HAND_OVERLAP,
+  HOVER_LIFT: CARD_CONFIG.HOVER_LIFT,
 };
 
 // Colors

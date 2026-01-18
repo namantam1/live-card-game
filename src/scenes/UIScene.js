@@ -1,5 +1,14 @@
 import Phaser from 'phaser';
 import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.js';
+import {
+  SETTINGS_ICON_CONFIG,
+  SCOREBOARD_CONFIG,
+  BIDDING_CONFIG,
+  FONT_CONFIG,
+  isMobile,
+  getResponsiveConfig,
+  getFontSize
+} from '../config/uiConfig.js';
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -34,11 +43,9 @@ export default class UIScene extends Phaser.Scene {
   createControlButtons() {
     const { width, height } = this.cameras.main;
 
-    // Calculate responsive sizing
-    const isMobile = width < 600 || height < 500;
-    const iconSize = isMobile ? 24 : 18;
-    const fontSize = isMobile ? '28px' : '20px';
-    const margin = isMobile ? 40 : 28;
+    // Get responsive sizing from centralized config
+    const config = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
+    const { iconSize, fontSize, margin } = config;
 
     // Settings gear icon button - ensure it's visible with proper margin
     const settingsBtn = this.add.container(width - margin, margin);
@@ -142,11 +149,12 @@ export default class UIScene extends Phaser.Scene {
   createSettingRow(x, y, label, initialState, callback) {
     const container = this.add.container(x, y);
     let isEnabled = initialState;
+    const { width, height } = this.cameras.main;
 
-    // Label
+    // Label with responsive font size
     const labelText = this.add.text(-100, 0, label, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '15px',
+      fontSize: getFontSize('settingsLabel', width, height),
       color: '#e2e8f0',
     }).setOrigin(0, 0.5);
 
@@ -184,6 +192,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createActionButton(x, y, label, isDanger, callback) {
+    const { width, height } = this.cameras.main;
     const container = this.add.container(x, y);
     const btnWidth = 180;
     const btnHeight = 44;
@@ -208,7 +217,7 @@ export default class UIScene extends Phaser.Scene {
 
     const labelText = this.add.text(0, 0, label, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '14px',
+      fontSize: getFontSize('actionButton', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
@@ -263,23 +272,18 @@ export default class UIScene extends Phaser.Scene {
   createScoreboard() {
     const { width, height } = this.cameras.main;
 
-    // Calculate responsive sizing
-    const isMobile = width < 600 || height < 500;
-    const margin = isMobile ? 15 : 20;
-    const marginTop = isMobile ? 20 : 25;
+    // Get responsive sizing from centralized config
+    const config = getResponsiveConfig(SCOREBOARD_CONFIG, width, height);
+    const mobile = isMobile(width, height);
 
     // Modern compact horizontal scoreboard (pill-shaped)
-    this.scoreboard = this.add.container(margin, marginTop);
+    this.scoreboard = this.add.container(config.margin, config.marginTop);
     this.scoreboard.setDepth(1000); // Ensure it's always on top
 
     // Store responsive values for updates
     this.scoreboardConfig = {
-      isMobile,
-      roundFontSize: isMobile ? '16px' : '14px',
-      emojiFontSize: isMobile ? '22px' : '18px',
-      scoreFontSize: isMobile ? '16px' : '13px',
-      padding: isMobile ? 20 : 16,
-      spacing: isMobile ? 8 : 6,
+      isMobile: mobile,
+      ...config
     };
 
     // We'll rebuild the scoreboard content on each update
@@ -418,6 +422,9 @@ export default class UIScene extends Phaser.Scene {
   createBiddingUI() {
     const { width, height } = this.cameras.main;
 
+    // Get responsive bidding config
+    const config = getResponsiveConfig(BIDDING_CONFIG, width, height);
+
     // Bidding container (hidden by default) - positioned higher to avoid cards
     this.biddingUI = this.add.container(width / 2, height * 0.55);
     this.biddingUI.setVisible(false);
@@ -433,40 +440,41 @@ export default class UIScene extends Phaser.Scene {
     // Title
     const title = this.add.text(0, -25, 'Place Your Bid', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: config.titleFontSize,
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
 
     this.biddingUI.add([bg, title]);
 
-    // Bid buttons (1 to MAX_BID)
+    // Bid buttons (1 to MAX_BID) with responsive sizing
     this.bidButtons = [];
-    const buttonWidth = 36;
-    const spacing = 4;
-    const totalWidth = MAX_BID * buttonWidth + (MAX_BID - 1) * spacing;
-    const startX = -totalWidth / 2 + buttonWidth / 2;
+    const totalWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
+    const startX = -totalWidth / 2 + config.buttonWidth / 2;
 
     for (let i = 1; i <= MAX_BID; i++) {
-      const x = startX + (i - 1) * (buttonWidth + spacing);
+      const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
 
       const button = this.add.container(x, 10);
 
       const btnBg = this.add.graphics();
       btnBg.fillStyle(COLORS.PRIMARY, 1);
-      btnBg.fillRoundedRect(-buttonWidth / 2, -15, buttonWidth, 30, 5);
+      btnBg.fillRoundedRect(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight, config.borderRadius);
 
       const btnText = this.add.text(0, 0, `${i}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: config.fontSize,
         fontStyle: 'bold',
         color: '#ffffff',
       }).setOrigin(0.5);
 
       button.add([btnBg, btnText]);
 
-      // Make interactive
-      button.setInteractive(new Phaser.Geom.Rectangle(-buttonWidth / 2, -15, buttonWidth, 30), Phaser.Geom.Rectangle.Contains);
+      // Make interactive with responsive hit area
+      button.setInteractive(
+        new Phaser.Geom.Rectangle(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight),
+        Phaser.Geom.Rectangle.Contains
+      );
 
       button.on('pointerover', () => {
         this.tweens.add({ targets: button, scaleY: 1.2, duration: 100 });
@@ -550,10 +558,10 @@ export default class UIScene extends Phaser.Scene {
     bg.lineStyle(2, COLORS.PRIMARY, 0.5);
     bg.strokeRoundedRect(-200, -150, 400, 300, 20);
 
-    // Title
+    // Title with responsive font size
     const titleText = this.add.text(0, -120, title, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '24px',
+      fontSize: getFontSize('modalTitle', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
@@ -564,27 +572,28 @@ export default class UIScene extends Phaser.Scene {
   }
 
   showRoundModal(data) {
+    const { width, height } = this.cameras.main;
     this.roundModalContent.removeAll(true);
 
-    // Player results
+    // Player results with responsive font sizes
     data.players.forEach((player, index) => {
       const y = -60 + index * 35;
 
       const name = this.add.text(-150, y, `${player.name}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: getFontSize('modalContent', width, height),
         color: '#ffffff',
       });
 
       const result = this.add.text(0, y, `${player.tricksWon}/${player.bid}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: getFontSize('modalContent', width, height),
         color: '#94a3b8',
       }).setOrigin(0.5);
 
       const score = this.add.text(150, y, player.roundScore >= 0 ? `+${player.roundScore.toFixed(1)}` : `${player.roundScore.toFixed(1)}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: getFontSize('modalContent', width, height),
         fontStyle: 'bold',
         color: player.roundScore >= 0 ? '#22c55e' : '#ef4444',
       }).setOrigin(1, 0);
