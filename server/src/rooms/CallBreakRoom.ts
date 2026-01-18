@@ -173,7 +173,7 @@ export class CallBreakRoom extends Room<GameState> {
     // Start bidding after a short delay
     this.clock.setTimeout(() => {
       this.state.phase = 'bidding';
-      this.state.currentTurn = this.state.playerOrder[0];
+      this.state.currentTurn = this.state.playerOrder[0] || '';
 
       // Check if first player is a bot
       this.checkBotTurn();
@@ -185,6 +185,7 @@ export class CallBreakRoom extends Room<GameState> {
     const playerIds = Array.from(this.state.playerOrder);
 
     playerIds.forEach((playerId, index) => {
+      if (!playerId) return;
       const player = this.state.players.get(playerId);
       if (!player) return;
 
@@ -220,12 +221,12 @@ export class CallBreakRoom extends Room<GameState> {
     if (this.state.biddingPlayerIndex >= NUM_PLAYERS) {
       // All bids placed, start playing
       this.state.phase = 'playing';
-      this.state.currentTurn = this.state.playerOrder[0];
+      this.state.currentTurn = this.state.playerOrder[0] || '';
 
       // Check if first player in playing phase is a bot
       this.checkBotTurn();
     } else {
-      this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex];
+      this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if next bidder is a bot
       this.checkBotTurn();
@@ -248,6 +249,7 @@ export class CallBreakRoom extends Room<GameState> {
     if (cardIndex === -1) return;
 
     const card = player.hand[cardIndex];
+    if (!card) return;
 
     // Validate the card can be played
     const validCards = getValidCards(
@@ -282,7 +284,7 @@ export class CallBreakRoom extends Room<GameState> {
       // Next player's turn
       const currentIndex = this.state.playerOrder.indexOf(playerId);
       const nextIndex = (currentIndex + 1) % NUM_PLAYERS;
-      this.state.currentTurn = this.state.playerOrder[nextIndex];
+      this.state.currentTurn = this.state.playerOrder[nextIndex] || '';
 
       // Check if next player is a bot
       this.checkBotTurn();
@@ -323,10 +325,14 @@ export class CallBreakRoom extends Room<GameState> {
   }
 
   findTrickWinner(): string {
-    let winningEntry = this.state.currentTrick[0];
+    const firstEntry = this.state.currentTrick[0];
+    if (!firstEntry) return '';
+
+    let winningEntry = firstEntry;
 
     for (let i = 1; i < this.state.currentTrick.length; i++) {
       const entry = this.state.currentTrick[i];
+      if (!entry) continue;
       if (this.beats(entry.card, winningEntry.card)) {
         winningEntry = entry;
       }
@@ -431,6 +437,7 @@ export class CallBreakRoom extends Room<GameState> {
 
     // Count strong cards
     hand.forEach(card => {
+      if (!card) return;
       // Aces are likely to win
       if (card.value === 14) bid++;
       // Kings have good chances
@@ -453,10 +460,10 @@ export class CallBreakRoom extends Room<GameState> {
 
     if (this.state.biddingPlayerIndex >= NUM_PLAYERS) {
       this.state.phase = 'playing';
-      this.state.currentTurn = this.state.playerOrder[0];
+      this.state.currentTurn = this.state.playerOrder[0] || '';
       this.checkBotTurn();
     } else {
-      this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex];
+      this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex] || '';
       this.checkBotTurn();
     }
   }
