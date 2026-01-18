@@ -115,12 +115,16 @@ export default class MenuScene extends Phaser.Scene {
 
     button.add([bg, btnText]);
 
-    // Make interactive
+    // Make interactive with larger hit area for better mobile touch
     const hitArea = new Phaser.Geom.Rectangle(
       -buttonWidth / 2, -buttonHeight / 2,
       buttonWidth, buttonHeight
     );
-    button.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+    button.setInteractive({
+      hitArea: hitArea,
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true
+    });
 
     // Hover effects
     button.on('pointerover', () => {
@@ -151,7 +155,13 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     button.on('pointerup', () => {
-      callback();
+      this.tweens.add({
+        targets: button,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 50,
+        onComplete: () => callback()
+      });
     });
 
     return button;

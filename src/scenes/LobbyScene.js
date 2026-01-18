@@ -269,9 +269,12 @@ export default class LobbyScene extends Phaser.Scene {
 
     container.add([bg, btnText]);
 
-    // Make interactive
-    const hitArea = new Phaser.Geom.Rectangle(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight);
-    container.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+    // Make interactive with better mobile touch support
+    container.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true
+    });
 
     container.on('pointerover', () => {
       this.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 100 });
@@ -286,8 +289,13 @@ export default class LobbyScene extends Phaser.Scene {
     });
 
     container.on('pointerup', () => {
-      this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 50 });
-      callback();
+      this.tweens.add({
+        targets: container,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 50,
+        onComplete: () => callback()
+      });
     });
 
     return container;

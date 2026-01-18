@@ -23,30 +23,30 @@ export default defineConfig({
         description: 'Call Break card game - Best played in landscape mode',
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
-        display: 'standalone',
+        display: 'fullscreen',
         orientation: 'landscape',
         start_url: '/',
         scope: '/',
         icons: [
           {
-            src: 'pwa-64x64.png',
+            src: 'icon.svg',
             sizes: '64x64',
-            type: 'image/png'
+            type: 'image/svg+xml'
           },
           {
-            src: 'pwa-192x192.png',
+            src: 'icon.svg',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/svg+xml'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'icon.svg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/svg+xml'
           },
           {
-            src: 'maskable-icon-512x512.png',
+            src: 'icon.svg',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'maskable'
           }
         ]

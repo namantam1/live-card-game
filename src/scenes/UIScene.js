@@ -112,6 +112,13 @@ export default class UIScene extends Phaser.Scene {
     panel.lineStyle(1, 0x6366f1, 0.4);
     panel.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 16);
 
+    // Make panel interactive to prevent click-through to overlay
+    panel.setInteractive(new Phaser.Geom.Rectangle(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight), Phaser.Geom.Rectangle.Contains);
+    panel.on('pointerdown', (_pointer, _localX, _localY, event) => {
+      // Stop event propagation to prevent overlay from closing
+      event.stopPropagation();
+    });
+
     this.settingsOverlay.add([overlay, glow, panel]);
 
     // Settings items
@@ -223,7 +230,11 @@ export default class UIScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     container.add([shadow, bg, labelText]);
-    container.setInteractive(new Phaser.Geom.Rectangle(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight), Phaser.Geom.Rectangle.Contains);
+    container.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true
+    });
 
     container.on('pointerover', () => {
       drawBg(true);
@@ -235,7 +246,16 @@ export default class UIScene extends Phaser.Scene {
     });
     container.on('pointerdown', () => {
       this.audioManager.playButtonSound();
-      callback();
+      this.tweens.add({ targets: container, scaleX: 0.97, scaleY: 0.97, duration: 50 });
+    });
+    container.on('pointerup', () => {
+      this.tweens.add({
+        targets: container,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 50,
+        onComplete: () => callback()
+      });
     });
 
     this.settingsOverlay.add(container);
@@ -430,14 +450,20 @@ export default class UIScene extends Phaser.Scene {
     this.biddingUI.setVisible(false);
     this.biddingUI.setDepth(50);
 
-    // Background
+    // Calculate dimensions based on button config
+    const totalButtonWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
+    const padding = 20; // Horizontal padding
+    const bgWidth = totalButtonWidth + (padding * 2);
+    const bgHeight = 80;
+
+    // Background - centered
     const bg = this.add.graphics();
     bg.fillStyle(COLORS.PANEL_BG, 0.95);
-    bg.fillRoundedRect(-200, -40, 400, 80, 15);
+    bg.fillRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
     bg.lineStyle(2, COLORS.PRIMARY, 0.5);
-    bg.strokeRoundedRect(-200, -40, 400, 80, 15);
+    bg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
 
-    // Title
+    // Title - centered horizontally
     const title = this.add.text(0, -25, 'Place Your Bid', {
       fontFamily: 'Arial, sans-serif',
       fontSize: config.titleFontSize,
@@ -447,10 +473,9 @@ export default class UIScene extends Phaser.Scene {
 
     this.biddingUI.add([bg, title]);
 
-    // Bid buttons (1 to MAX_BID) with responsive sizing
+    // Bid buttons (1 to MAX_BID) with responsive sizing - centered horizontally
     this.bidButtons = [];
-    const totalWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
-    const startX = -totalWidth / 2 + config.buttonWidth / 2;
+    const startX = -totalButtonWidth / 2 + config.buttonWidth / 2;
 
     for (let i = 1; i <= MAX_BID; i++) {
       const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
@@ -470,11 +495,12 @@ export default class UIScene extends Phaser.Scene {
 
       button.add([btnBg, btnText]);
 
-      // Make interactive with responsive hit area
-      button.setInteractive(
-        new Phaser.Geom.Rectangle(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight),
-        Phaser.Geom.Rectangle.Contains
-      );
+      // Make interactive with responsive hit area for better mobile touch
+      button.setInteractive({
+        hitArea: new Phaser.Geom.Rectangle(-config.buttonWidth / 2, -config.buttonHeight / 2, config.buttonWidth, config.buttonHeight),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        useHandCursor: true
+      });
 
       button.on('pointerover', () => {
         this.tweens.add({ targets: button, scaleY: 1.2, duration: 100 });
@@ -486,7 +512,16 @@ export default class UIScene extends Phaser.Scene {
 
       button.on('pointerdown', () => {
         this.audioManager.playButtonSound();
-        this.onBidSelected(i);
+        this.tweens.add({ targets: button, scaleY: 0.9, duration: 50 });
+      });
+
+      button.on('pointerup', () => {
+        this.tweens.add({
+          targets: button,
+          scaleY: 1,
+          duration: 50,
+          onComplete: () => this.onBidSelected(i)
+        });
       });
 
       this.biddingUI.add(button);
@@ -703,7 +738,11 @@ export default class UIScene extends Phaser.Scene {
 
     container.add([bg, btnText]);
 
-    container.setInteractive(new Phaser.Geom.Rectangle(-60, -18, 120, 36), Phaser.Geom.Rectangle.Contains);
+    container.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-60, -18, 120, 36),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true
+    });
 
     container.on('pointerover', () => {
       this.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 100 });
@@ -715,7 +754,17 @@ export default class UIScene extends Phaser.Scene {
 
     container.on('pointerdown', () => {
       this.audioManager.playButtonSound();
-      callback();
+      this.tweens.add({ targets: container, scaleX: 0.95, scaleY: 0.95, duration: 50 });
+    });
+
+    container.on('pointerup', () => {
+      this.tweens.add({
+        targets: container,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 50,
+        onComplete: () => callback()
+      });
     });
 
     return container;
