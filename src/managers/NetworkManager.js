@@ -127,6 +127,14 @@ export default class NetworkManager {
     // State change listeners
     this.room.state.listen('phase', (value, previousValue) => {
       console.log(`NetworkManager: Phase changed from ${previousValue} to ${value}`);
+      
+      // Add extra validation during critical phase transitions
+      if (value === 'trickEnd') {
+        console.log('NetworkManager: Entering trickEnd phase');
+        console.log('  - Current trick count:', this.room.state.currentTrick?.length || 0);
+        console.log('  - Trick winner:', this.room.state.trickWinner || 'not set');
+      }
+      
       this.emit('phaseChange', { phase: value, previousPhase: previousValue });
     });
 

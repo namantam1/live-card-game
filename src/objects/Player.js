@@ -1,5 +1,5 @@
 import Hand from './Hand.js';
-import { PLAYER_POSITIONS, COLORS } from '../utils/constants.js';
+import { PLAYER_POSITIONS, COLORS } from '../utils/constants.ts';
 import { TURN_INDICATOR_CONFIG, isMobile, getFontSize, getResponsiveConfig } from '../config/uiConfig.js';
 
 export default class Player {

@@ -1,4 +1,4 @@
-import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT } from './constants.js';
+import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT } from './constants.ts';
 
 /**
  * Create a standard 52-card deck

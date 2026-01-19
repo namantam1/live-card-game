@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, ANIMATION, SERVER } from '../utils/constants.js';
+import { COLORS, ANIMATION, SERVER } from '../utils/constants.ts';
 import NetworkManager from '../managers/NetworkManager.js';
 import Button from '../utils/Button.js';
 

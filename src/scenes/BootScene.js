@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SUITS, RANKS, COLORS } from '../utils/constants.js';
+import { SUITS, RANKS, COLORS } from '../utils/constants.ts';
 import { CARD_CONFIG } from '../config/uiConfig.js';
 
 export default class BootScene extends Phaser.Scene {

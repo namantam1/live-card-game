@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   PHASE, EVENTS, TOTAL_ROUNDS, CARDS_PER_PLAYER, NUM_PLAYERS,
   ANIMATION, TRUMP_SUIT, MAX_BID
-} from '../utils/constants.js';
+} from '../utils/constants.ts';
 import {
   createDeck, shuffleDeck, sortHand, findTrickWinner,
   getValidCards, calculateScore

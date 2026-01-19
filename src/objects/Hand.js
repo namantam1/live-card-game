@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import Card from './Card.js';
-import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants.js';
+import Card from './Card.ts';
+import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants.ts';
 import { sortHand, getValidCards } from '../utils/cards.js';
 import { CARD_CONFIG, isMobile } from '../config/uiConfig.js';
 

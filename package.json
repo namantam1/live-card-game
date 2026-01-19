@@ -15,7 +15,9 @@
     "phaser3-rex-plugins": "^1.80.17"
   },
   "devDependencies": {
+    "@types/node": "^25.0.9",
     "@vite-pwa/assets-generator": "^1.0.2",
+    "typescript": "^5.9.3",
     "vite": "^5.4.2",
     "vite-plugin-pwa": "^1.2.0",
     "workbox-window": "^7.4.0"

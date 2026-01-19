@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import Card from './Card.js';
-import { ANIMATION, COLORS } from '../utils/constants.js';
+import Card from './Card.ts';
+import { ANIMATION, COLORS } from '../utils/constants.ts';
 import { getCardAssetKey } from '../utils/cards.js';
 import { CARD_CONFIG, isMobile } from '../config/uiConfig.js';
 

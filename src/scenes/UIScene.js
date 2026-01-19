@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.js';
+import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.ts';
 import {
   SETTINGS_ICON_CONFIG,
   SCOREBOARD_CONFIG,

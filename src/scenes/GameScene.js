@@ -3,7 +3,7 @@ import Player from '../objects/Player.js';
 import TrickArea from '../objects/TrickArea.js';
 import GameManager from '../managers/GameManager.js';
 import AudioManager from '../managers/AudioManager.js';
-import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.js';
+import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.ts';
 import { getFontSize } from '../config/uiConfig.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -318,6 +318,10 @@ export default class GameScene extends Phaser.Scene {
     // Error handling
     this.networkManager.on('error', (data) => {
       console.error('Network error:', data);
+      // Show error message to user instead of silently redirecting
+      this.events.emit('networkError', { 
+        message: `Connection error: ${data.message || 'Unknown error'}` 
+      });
     });
 
     // Remote player hand changes (for visual card backs)
@@ -329,9 +333,21 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Room left
-    this.networkManager.on('roomLeft', () => {
-      this.scene.stop('UIScene');
-      this.scene.start('MenuScene');
+    this.networkManager.on('roomLeft', (data) => {
+      console.log('Room left event received:', data);
+      
+      // Show a message before redirecting
+      const message = data?.code === 1000 
+        ? 'Disconnected from game' 
+        : 'Connection lost - returning to menu';
+      
+      this.events.emit('connectionLost', { message });
+      
+      // Delay redirect to allow user to see what happened
+      this.time.delayedCall(1500, () => {
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
+      });
     });
   }
 

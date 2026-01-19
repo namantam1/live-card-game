@@ -1,9 +1,16 @@
-import Phaser from 'phaser';
-import { CARD, ANIMATION, COLORS } from '../utils/constants.js';
+import Phaser, { Scene } from 'phaser';
+import { CARD, ANIMATION, COLORS } from '../utils/constants.ts';
 import { getCardAssetKey } from '../utils/cards.js';
 
 export default class Card extends Phaser.GameObjects.Container {
-  constructor(scene, x, y, cardData, faceDown = false) {
+  cardData: any;
+  isFaceDown: boolean;
+  isPlayable: boolean;
+  originalY: number;
+  sprite: Phaser.GameObjects.Image;
+  glow: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Scene, x: number, y: number, cardData: any, faceDown = false) {
     super(scene, x, y);
 
     this.cardData = cardData;
@@ -195,7 +202,7 @@ export default class Card extends Phaser.GameObjects.Container {
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.originalY = y;
-          resolve();
+          resolve(null);
         },
       });
     });
@@ -211,7 +218,7 @@ export default class Card extends Phaser.GameObjects.Container {
         ease: 'Back.easeOut',
         onComplete: () => {
           this.originalY = y;
-          resolve();
+          resolve(null);
         },
       });
     });

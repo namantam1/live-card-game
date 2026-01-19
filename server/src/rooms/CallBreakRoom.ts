@@ -90,6 +90,13 @@ export class CallBreakRoom extends Room<GameState> {
         if (this.state.phase !== 'waiting') {
           this.broadcast('playerLeft', { name: player.name });
         }
+        
+        // If we're in active gameplay and all human players left, end the room
+        const remainingHumans = Array.from(this.state.players.values()).filter(p => !p.isBot);
+        if (remainingHumans.length === 0 && this.state.phase !== 'waiting') {
+          console.log('All human players left, ending room');
+          await this.disconnect();
+        }
         return;
       }
 
@@ -103,6 +110,13 @@ export class CallBreakRoom extends Room<GameState> {
         console.log(`${player.name} left permanently`);
         if (this.state.phase !== 'waiting') {
           this.broadcast('playerLeft', { name: player.name });
+        }
+        
+        // If all human players are gone, end the room
+        const remainingHumans = Array.from(this.state.players.values()).filter(p => !p.isBot && p.isConnected);
+        if (remainingHumans.length === 0) {
+          console.log('All human players disconnected, ending room');
+          await this.disconnect();
         }
       }
     }
@@ -310,14 +324,29 @@ export class CallBreakRoom extends Room<GameState> {
 
     // Find winner
     const winnerId = this.findTrickWinner();
-    const winner = this.state.players.get(winnerId);
-    if (winner) {
-      winner.tricksWon++;
+    
+    // Validate winner exists
+    if (!winnerId) {
+      console.error('No trick winner found! Trick cannot be completed.');
+      // Fallback: use first player in order
+      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.phase = 'playing';
+      return;
     }
-
+    
+    const winner = this.state.players.get(winnerId);
+    if (!winner) {
+      console.error(`Winner ${winnerId} not found in players! Player may have disconnected.`);
+      // Fallback: use first available player
+      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.phase = 'playing';
+      return;
+    }
+    
+    winner.tricksWon++;
     this.state.trickWinner = winnerId;
 
-    console.log(`${winner?.name} won the trick!`);
+    console.log(`${winner.name} won the trick!`);
 
     // Wait, then clear trick and continue
     this.clock.setTimeout(() => {
@@ -339,20 +368,32 @@ export class CallBreakRoom extends Room<GameState> {
   }
 
   findTrickWinner(): string {
+    // Validate trick has entries
+    if (this.state.currentTrick.length === 0) {
+      console.error('findTrickWinner called with empty trick!');
+      return '';
+    }
+    
     const firstEntry = this.state.currentTrick[0];
-    if (!firstEntry) return '';
+    if (!firstEntry) {
+      console.error('First trick entry is undefined!');
+      return '';
+    }
 
     let winningEntry = firstEntry;
 
     for (let i = 1; i < this.state.currentTrick.length; i++) {
       const entry = this.state.currentTrick[i];
-      if (!entry) continue;
+      if (!entry) {
+        console.warn(`Trick entry at index ${i} is undefined, skipping`);
+        continue;
+      }
       if (this.beats(entry.card, winningEntry.card)) {
         winningEntry = entry;
       }
     }
 
-    return winningEntry.playerId;
+    return winningEntry.playerId || '';
   }
 
   beats(card1: Card, card2: Card): boolean {

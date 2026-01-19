@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, ANIMATION } from '../utils/constants.js';
+import { COLORS, ANIMATION } from '../utils/constants.ts';
 import { getFontSize } from '../config/uiConfig.js';
 import Button from '../utils/Button.js';
 

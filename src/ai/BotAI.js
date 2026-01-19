@@ -1,4 +1,4 @@
-import { TRUMP_SUIT, MAX_BID } from '../utils/constants.js';
+import { TRUMP_SUIT, MAX_BID } from '../utils/constants.ts';
 import { getCardValue, getValidCards } from '../utils/cards.js';
 
 /**
