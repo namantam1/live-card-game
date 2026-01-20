@@ -1,11 +1,19 @@
-import { TRUMP_SUIT, MAX_BID } from '../utils/constants.js';
-import { getCardValue, getValidCards } from '../utils/cards.js';
+import { TRUMP_SUIT, MAX_BID, Suit } from '../utils/constants';
+import { getCardValue, getValidCards } from '../utils/cards';
+import { CardType, TrickEntry } from '../types';
+
+type Context = {
+  tricksNeeded?: number;
+  tricksWon?: number;
+};
 
 /**
  * Bot AI for Call Break game
  * Provides different difficulty levels and strategies
  */
 export default class BotAI {
+  difficulty: string;
+
   constructor(difficulty = 'medium') {
     this.difficulty = difficulty;
   }
@@ -15,7 +23,7 @@ export default class BotAI {
    * @param {Array} hand - Bot's hand
    * @returns {number} - Bid amount (1-13)
    */
-  calculateBid(hand) {
+  calculateBid(hand: CardType[]): number {
     switch (this.difficulty) {
       case 'easy':
         return this.easyBid(hand);
@@ -26,13 +34,13 @@ export default class BotAI {
     }
   }
 
-  easyBid(hand) {
+  easyBid(hand: CardType[]) {
     // Simple: count high cards
     const highCards = hand.filter(c => getCardValue(c) >= 11).length;
     return Math.max(1, Math.min(MAX_BID, Math.floor(highCards / 2) + 1));
   }
 
-  mediumBid(hand) {
+  mediumBid(hand: CardType[]) {
     // Medium: consider high cards and trump count
     const highCards = hand.filter(c => getCardValue(c) >= 11).length;
     const trumps = hand.filter(c => c.suit === TRUMP_SUIT).length;
@@ -45,12 +53,12 @@ export default class BotAI {
     return Math.max(1, Math.min(MAX_BID, bid));
   }
 
-  hardBid(hand) {
+  hardBid(hand: CardType[]) {
     // Hard: more sophisticated analysis
     let expectedTricks = 0;
 
     // Group by suit
-    const suits = { spades: [], hearts: [], diamonds: [], clubs: [] };
+    const suits: Record<Suit, CardType[]> = { spades: [], hearts: [], diamonds: [], clubs: [] };
     hand.forEach(c => suits[c.suit].push(c));
 
     // Analyze each suit
@@ -90,7 +98,7 @@ export default class BotAI {
    * @param {object} context - Additional context (players, bids, etc.)
    * @returns {object} - Card to play
    */
-  chooseCard(hand, leadSuit, currentTrick = [], context = {}) {
+  chooseCard(hand: CardType[], leadSuit: Suit, currentTrick: Array<TrickEntry> = [], context: Context = {}): object {
     const validCards = getValidCards(hand, leadSuit);
 
     if (validCards.length === 1) {
@@ -107,12 +115,12 @@ export default class BotAI {
     }
   }
 
-  easyPlay(validCards, leadSuit, currentTrick) {
+  easyPlay(validCards: CardType[], leadSuit: Suit, currentTrick: TrickEntry[]) {
     // Easy: play lowest valid card
     return validCards.sort((a, b) => getCardValue(a) - getCardValue(b))[0];
   }
 
-  mediumPlay(validCards, leadSuit, currentTrick) {
+  mediumPlay(validCards: CardType[], leadSuit: Suit, currentTrick: TrickEntry[]) {
     // Medium: try to win when possible, otherwise play low
 
     if (currentTrick.length === 0) {
@@ -136,7 +144,7 @@ export default class BotAI {
     return validCards.sort((a, b) => getCardValue(a) - getCardValue(b))[0];
   }
 
-  hardPlay(validCards, leadSuit, currentTrick, context) {
+  hardPlay(validCards: CardType[], leadSuit: Suit, currentTrick: TrickEntry[], context: Context) {
     const { tricksNeeded = 1, tricksWon = 0 } = context;
 
     if (currentTrick.length === 0) {
@@ -167,7 +175,7 @@ export default class BotAI {
     return validCards.sort((a, b) => getCardValue(a) - getCardValue(b))[0];
   }
 
-  chooseLead(validCards, tricksStillNeeded) {
+  chooseLead(validCards: CardType[], tricksStillNeeded: number) {
     if (tricksStillNeeded > 0) {
       // Need tricks: lead with strong cards
       const aces = validCards.filter(c => c.rank === 'A' && c.suit !== TRUMP_SUIT);
@@ -191,7 +199,7 @@ export default class BotAI {
     return validCards.sort((a, b) => getCardValue(a) - getCardValue(b))[0];
   }
 
-  findWinningCard(trick, leadSuit) {
+  findWinningCard(trick: TrickEntry[], leadSuit: Suit) {
     let winner = trick[0].card;
 
     for (let i = 1; i < trick.length; i++) {
@@ -203,7 +211,7 @@ export default class BotAI {
     return winner;
   }
 
-  beats(card1, card2, leadSuit) {
+  beats(card1: CardType, card2: CardType, leadSuit: Suit) {
     // Trump beats non-trump
     if (card1.suit === TRUMP_SUIT && card2.suit !== TRUMP_SUIT) return true;
     if (card2.suit === TRUMP_SUIT && card1.suit !== TRUMP_SUIT) return false;

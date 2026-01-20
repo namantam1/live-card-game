@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   base: './',
+  resolve: {
+    extensions: ['.js', '.ts'],
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -11,4 +14,4 @@ export default defineConfig(({ command }) => ({
     port: 3000,
     open: true,
   },
-}));
+});

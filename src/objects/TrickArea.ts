@@ -1,10 +1,16 @@
-import Phaser from 'phaser';
-import Card from './Card.js';
-import { ANIMATION, COLORS } from '../utils/constants.js';
-import { getCardAssetKey } from '../utils/cards.js';
+import Phaser, { Scene } from 'phaser';
+import Card from './Card';
+import { ANIMATION, COLORS } from '../utils/constants';
+import { getCardAssetKey } from '../utils/cards';
+import { CardType } from '../types';
+
+interface CardOffset { x: number; y: number; rotation: number; }
 
 export default class TrickArea extends Phaser.GameObjects.Container {
-  constructor(scene) {
+  playedCards: any[];
+  cardOffsets: CardOffset[];
+
+  constructor(scene: Scene) {
     const { width, height } = scene.cameras.main;
     super(scene, width / 2, height / 2);
 
@@ -21,7 +27,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  async playCard(cardData, playerIndex, fromCard = null) {
+  async playCard(cardData: CardType, playerIndex: number, fromCard: Card | null = null) {
     const offset = this.cardOffsets[playerIndex];
     const targetX = this.x + offset.x;
     const targetY = this.y + offset.y;
@@ -64,10 +70,10 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     return card;
   }
 
-  playCardSound(cardData) {
+  playCardSound(cardData: CardType) {
     // Check if it's a trump play (spades when lead is different)
     // Simple beep sound using Web Audio
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -85,7 +91,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     oscillator.stop(audioContext.currentTime + 0.1);
   }
 
-  async collectTrick(winnerIndex) {
+  async collectTrick(winnerIndex: number) {
     const { width, height } = this.scene.cameras.main;
 
     // Determine winner position
@@ -112,7 +118,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
           ease: 'Quad.easeIn',
           onComplete: () => {
             card.destroy();
-            resolve();
+            resolve(null);
           },
         });
       });

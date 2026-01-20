@@ -1,9 +1,17 @@
-import Phaser from 'phaser';
-import { CARD, ANIMATION, COLORS } from '../utils/constants.js';
-import { getCardAssetKey } from '../utils/cards.js';
+import Phaser, { Scene } from 'phaser';
+import { CARD, ANIMATION, COLORS } from '../utils/constants';
+import { getCardAssetKey } from '../utils/cards';
+import { CardType } from '../types';
 
 export default class Card extends Phaser.GameObjects.Container {
-  constructor(scene, x, y, cardData, faceDown = false) {
+  cardData: CardType;
+  isFaceDown: boolean;
+  isPlayable: boolean;
+  originalY: number;
+  sprite: Phaser.GameObjects.Image;
+  glow: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Scene, x: number, y: number, cardData: CardType, faceDown = false) {
     super(scene, x, y);
 
     this.cardData = cardData;
@@ -30,7 +38,7 @@ export default class Card extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  setPlayable(playable, skipAnimation = false) {
+  setPlayable(playable: boolean, skipAnimation = false) {
     const wasPlayable = this.isPlayable;
     this.isPlayable = playable;
 
@@ -41,6 +49,10 @@ export default class Card extends Phaser.GameObjects.Container {
 
       // Auto-popout playable cards (lift them up)
       if (!wasPlayable && !skipAnimation) {
+        // Ensure originalY is set properly
+        if (this.originalY === undefined || this.originalY === 0) {
+          this.originalY = this.y;
+        }
         this.scene.tweens.add({
           targets: this,
           y: this.originalY - CARD.HOVER_LIFT,
@@ -56,6 +68,10 @@ export default class Card extends Phaser.GameObjects.Container {
 
       // Return to original position if was playable (but skip if card is being played)
       if (wasPlayable && !this.isFaceDown && !skipAnimation) {
+        // Ensure originalY is set properly
+        if (this.originalY === undefined || this.originalY === 0) {
+          this.originalY = this.y;
+        }
         this.scene.tweens.add({
           targets: this,
           y: this.originalY,
@@ -132,11 +148,16 @@ export default class Card extends Phaser.GameObjects.Container {
   showGlow() {
     this.glow.clear();
     this.glow.lineStyle(3, COLORS.PRIMARY, 0.8);
+
+    // Use the sprite's actual display size (accounts for texture size and sprite scale)
+    const cardWidth = this.sprite.displayWidth;
+    const cardHeight = this.sprite.displayHeight;
+
     this.glow.strokeRoundedRect(
-      -CARD.WIDTH * CARD.SCALE / 2 - 2,
-      -CARD.HEIGHT * CARD.SCALE / 2 - 2,
-      CARD.WIDTH * CARD.SCALE + 4,
-      CARD.HEIGHT * CARD.SCALE + 4,
+      -cardWidth / 2,
+      -cardHeight / 2 - 2,
+      cardWidth,
+      cardHeight + 4,
       8
     );
     this.glow.setVisible(true);
@@ -171,7 +192,7 @@ export default class Card extends Phaser.GameObjects.Container {
     });
   }
 
-  animateTo(x, y, duration = ANIMATION.CARD_PLAY, rotation = 0) {
+  animateTo(x: number, y: number, duration = ANIMATION.CARD_PLAY, rotation = 0) {
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this,
@@ -182,13 +203,13 @@ export default class Card extends Phaser.GameObjects.Container {
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.originalY = y;
-          resolve();
+          resolve(null);
         },
       });
     });
   }
 
-  animateToWithBounce(x, y, duration = ANIMATION.CARD_PLAY) {
+  animateToWithBounce(x: number, y: number, duration: number = ANIMATION.CARD_PLAY) {
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this,
@@ -198,13 +219,13 @@ export default class Card extends Phaser.GameObjects.Container {
         ease: 'Back.easeOut',
         onComplete: () => {
           this.originalY = y;
-          resolve();
+          resolve(null);
         },
       });
     });
   }
 
-  destroy() {
+  override destroy() {
     this.removeInteraction();
     super.destroy();
   }

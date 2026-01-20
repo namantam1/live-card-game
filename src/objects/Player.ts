@@ -1,8 +1,25 @@
-import Hand from './Hand.js';
-import { PLAYER_POSITIONS, COLORS } from '../utils/constants.js';
+import Hand from './Hand';
+import { PLAYER_POSITIONS, COLORS, Suit } from '../utils/constants';
+import { Scene } from 'phaser';
+import { CardType, Position } from '../types';
 
 export default class Player {
-  constructor(scene, index, name, emoji, isHuman = false) {
+  scene: Scene;
+  index: number;
+  name: string;
+  emoji: string;
+  isHuman: boolean;
+  bid: number | null;
+  tricksWon: number;
+  score: number;
+  roundScore: number;
+  handPostion: Position;
+  hand: Hand;
+  nameLabel: any;
+  statsLabel: any;
+  turnIndicator: any;
+
+  constructor(scene: Scene, index: number, name: string, emoji: string, isHuman = false) {
     this.scene = scene;
     this.index = index;
     this.name = name;
@@ -16,11 +33,11 @@ export default class Player {
     this.roundScore = 0;
 
     // Position mapping: 0=bottom (human), 1=left, 2=top, 3=right
-    const positions = ['bottom', 'left', 'top', 'right'];
-    this.position = positions[index];
+    const positions: Position[] = ['bottom', 'left', 'top', 'right'];
+    this.handPostion = positions[index];
 
     // Create hand
-    this.hand = new Hand(scene, this.position, isHuman);
+    this.hand = new Hand(scene, this.handPostion, isHuman);
 
     // Create player label
     this.createLabel();
@@ -28,25 +45,25 @@ export default class Player {
 
   createLabel() {
     const { width, height } = this.scene.cameras.main;
-    const posConfig = PLAYER_POSITIONS[this.position];
+    const posConfig = PLAYER_POSITIONS[this.handPostion];
 
     let labelX, labelY;
 
-    switch (this.position) {
+    switch (this.handPostion) {
       case 'bottom':
         labelX = width * 0.5;
-        labelY = height * posConfig.labelY;
+        labelY = height * posConfig.labelY!;
         break;
       case 'top':
         labelX = width * 0.5;
-        labelY = height * posConfig.labelY;
+        labelY = height * posConfig.labelY!;
         break;
       case 'left':
-        labelX = width * posConfig.labelX;
+        labelX = width * posConfig.labelX!;
         labelY = height * 0.5;
         break;
       case 'right':
-        labelX = width * posConfig.labelX;
+        labelX = width * posConfig.labelX!;
         labelY = height * 0.5;
         break;
     }
@@ -73,11 +90,11 @@ export default class Player {
     this.turnIndicator.setVisible(false);
   }
 
-  setCards(cardDataArray, animate = true) {
+  setCards(cardDataArray: CardType[], animate = true) {
     return this.hand.setCards(cardDataArray, animate);
   }
 
-  updatePlayableCards(leadSuit) {
+  updatePlayableCards(leadSuit: Suit) {
     this.hand.updatePlayableCards(leadSuit);
   }
 
@@ -85,7 +102,7 @@ export default class Player {
     this.hand.disableAllCards();
   }
 
-  removeCard(cardData) {
+  removeCard(cardData: CardType) {
     return this.hand.removeCard(cardData);
   }
 
@@ -93,7 +110,7 @@ export default class Player {
     return this.hand.getCardData();
   }
 
-  setBid(bid) {
+  setBid(bid: number) {
     this.bid = bid;
     this.updateStats();
   }
@@ -111,14 +128,14 @@ export default class Player {
     }
   }
 
-  setRoundScore(score) {
+  setRoundScore(score: number) {
     this.roundScore = score;
     this.score += score;
   }
 
   showTurnIndicator() {
     const { width, height } = this.scene.cameras.main;
-    const posConfig = PLAYER_POSITIONS[this.position];
+    const posConfig = PLAYER_POSITIONS[this.handPostion];
 
     this.turnIndicator.clear();
     this.turnIndicator.lineStyle(3, COLORS.PRIMARY, 1);

@@ -1,12 +1,30 @@
 import Phaser from 'phaser';
-import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.js';
+import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID, GamePhase } from '../utils/constants';
+import GameScene from './GameScene';
+import Player from '../objects/Player';
 
 export default class UIScene extends Phaser.Scene {
+  gameManager: any;
+  audioManager: any;
+  gameScene!: GameScene;
+  settingsOverlay!: Phaser.GameObjects.Container;
+  scoreboard!: Phaser.GameObjects.Container;
+  scoreboardBg!: Phaser.GameObjects.Graphics;
+  roundIndicator!: Phaser.GameObjects.Text;
+  divider!: Phaser.GameObjects.Graphics;
+  playerScoreEntries?: any[];
+  biddingUI!: Phaser.GameObjects.Container;
+  bidButtons?: Phaser.GameObjects.Container[];
+  roundModal!: Phaser.GameObjects.Container;
+  roundModalContent!: Phaser.GameObjects.Container;
+  gameOverModal!: Phaser.GameObjects.Container;
+  gameOverModalContent!: Phaser.GameObjects.Container;
+
   constructor() {
     super({ key: 'UIScene' });
   }
 
-  init(data) {
+  init(data: any) {
     this.gameManager = data.gameManager;
     this.audioManager = data.audioManager;
   }
@@ -15,7 +33,7 @@ export default class UIScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
 
     // Get reference to game scene
-    this.gameScene = this.scene.get('GameScene');
+    this.gameScene = this.scene.get('GameScene') as GameScene;
 
     // Create UI elements
     this.createControlButtons();
@@ -99,12 +117,12 @@ export default class UIScene extends Phaser.Scene {
     const itemSpacing = 50;
 
     // Music row
-    this.createSettingRow(0, startY, 'Music', this.audioManager.isMusicEnabled(), (enabled) => {
+    this.createSettingRow(0, startY, 'Music', this.audioManager.isMusicEnabled(), (enabled: boolean) => {
       this.audioManager.toggleMusic();
     });
 
     // Sound row
-    this.createSettingRow(0, startY + itemSpacing, 'Sound', this.audioManager.isSoundEnabled(), (enabled) => {
+    this.createSettingRow(0, startY + itemSpacing, 'Sound', this.audioManager.isSoundEnabled(), (enabled: boolean) => {
       this.audioManager.toggleButtonSound();
     });
 
@@ -126,7 +144,7 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  createSettingRow(x, y, label, initialState, callback) {
+  createSettingRow(x: number, y: number, label: string, initialState: any, callback: Function) {
     const container = this.add.container(x, y);
     let isEnabled = initialState;
 
@@ -165,12 +183,14 @@ export default class UIScene extends Phaser.Scene {
     });
 
     container.add([labelText, toggleBg, toggleKnob, hitArea]);
-    this.settingsOverlay.add(container);
 
-    return { container, setEnabled: (val) => { isEnabled = val; drawToggle(); } };
+    if (!this.settingsOverlay) console.warn('Settings overlay not initialized');
+    this.settingsOverlay?.add(container);
+
+    return { container, setEnabled: (val: any) => { isEnabled = val; drawToggle(); } };
   }
 
-  createActionButton(x, y, label, isDanger, callback) {
+  createActionButton(x: number, y: number, label: string, isDanger: boolean, callback: Function) {
     const container = this.add.container(x, y);
     const btnWidth = 180;
     const btnHeight = 44;
@@ -216,11 +236,16 @@ export default class UIScene extends Phaser.Scene {
       callback();
     });
 
-    this.settingsOverlay.add(container);
+    if (!this.settingsOverlay) console.warn('Settings overlay not initialized');
+    this.settingsOverlay?.add(container);
     return container;
   }
 
   showSettingsOverlay() {
+    if (!this.settingsOverlay) {
+      console.warn('Settings overlay not initialized');
+      return;
+    }
     this.settingsOverlay.setVisible(true);
     this.settingsOverlay.alpha = 0;
     this.settingsOverlay.setScale(0.95);
@@ -242,7 +267,8 @@ export default class UIScene extends Phaser.Scene {
       scaleY: 0.95,
       duration: 100,
       onComplete: () => {
-        this.settingsOverlay.setVisible(false);
+        if (!this.settingsOverlay) console.warn('Settings overlay not initialized');
+        this.settingsOverlay?.setVisible(false);
       },
     });
   }
@@ -272,7 +298,7 @@ export default class UIScene extends Phaser.Scene {
     this.playerScoreEntries = [];
     const players = this.gameManager.getPlayers();
 
-    players.forEach((player, index) => {
+    players.forEach((player: Player, index: number) => {
       const entry = {
         emoji: this.add.text(0, 0, player.emoji, {
           fontFamily: 'Arial, sans-serif',
@@ -286,8 +312,10 @@ export default class UIScene extends Phaser.Scene {
         }).setOrigin(0, 0.5),
         player: player,
       };
-      this.scoreboard.add([entry.emoji, entry.score]);
-      this.playerScoreEntries.push(entry);
+      if (!this.scoreboard) console.warn('Scoreboard not initialized');
+      this.scoreboard?.add([entry.emoji, entry.score]);
+      if (!this.playerScoreEntries) console.warn('Player score entries not initialized');
+      this.playerScoreEntries?.push(entry);
     });
 
     this.updateScoreboard();
@@ -298,7 +326,8 @@ export default class UIScene extends Phaser.Scene {
     const round = this.gameManager.getCurrentRound();
 
     // Update round indicator
-    this.roundIndicator.setText(`R${round}/${TOTAL_ROUNDS}`);
+    if (!this.roundIndicator) console.warn('Round indicator not initialized');
+    this.roundIndicator?.setText(`R${round}/${TOTAL_ROUNDS}`);
 
     // Sort players by score for coloring
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
@@ -316,7 +345,7 @@ export default class UIScene extends Phaser.Scene {
     xOffset += 16;
 
     // Position each player entry
-    this.playerScoreEntries.forEach((entry, index) => {
+    this.playerScoreEntries?.forEach((entry, index) => {
       const player = entry.player;
       const score = player.score;
 
@@ -446,7 +475,7 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  onBidSelected(bid) {
+  onBidSelected(bid: number) {
     this.hideBiddingUI();
     this.gameScene.onHumanBid(bid);
   }
@@ -465,7 +494,7 @@ export default class UIScene extends Phaser.Scene {
     this.gameOverModal.add(this.gameOverModalContent);
   }
 
-  createModal(title) {
+  createModal(title: string) {
     const { width, height } = this.cameras.main;
 
     const modal = this.add.container(width / 2, height / 2);
@@ -497,11 +526,11 @@ export default class UIScene extends Phaser.Scene {
     return modal;
   }
 
-  showRoundModal(data) {
+  showRoundModal(data: any) {
     this.roundModalContent.removeAll(true);
 
     // Player results
-    data.players.forEach((player, index) => {
+    data.players.forEach((player: Player, index: number) => {
       const y = -60 + index * 35;
 
       const name = this.add.text(-150, y, `${player.name}`, {
@@ -549,7 +578,7 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  showGameOverModal(data) {
+  showGameOverModal(data: any) {
     this.gameOverModalContent.removeAll(true);
 
     // Winner announcement
@@ -564,7 +593,7 @@ export default class UIScene extends Phaser.Scene {
     this.gameOverModalContent.add(winnerText);
 
     // Final scores
-    data.players.forEach((player, index) => {
+    data.players.forEach((player: Player, index: number) => {
       const y = -20 + index * 30;
 
       const name = this.add.text(-100, y, `${player.emoji} ${player.name}`, {
@@ -607,12 +636,13 @@ export default class UIScene extends Phaser.Scene {
       alpha: 0,
       duration: 200,
       onComplete: () => {
-        this.gameOverModal.setVisible(false);
+        if (!this.gameOverModal) console.warn('Game over modal not initialized');
+        this.gameOverModal?.setVisible(false);
       },
     });
   }
 
-  createModalButton(x, y, text, callback) {
+  createModalButton(x: number, y: number, text: string, callback: Function) {
     const container = this.add.container(x, y);
 
     const bg = this.add.graphics();
@@ -648,7 +678,7 @@ export default class UIScene extends Phaser.Scene {
 
   setupEventListeners() {
     // Listen for phase changes from game scene
-    this.gameScene.events.on('phaseChanged', (phase) => {
+    this.gameScene.events.on('phaseChanged', (phase: GamePhase) => {
       if (phase === PHASE.BIDDING) {
         // Check if it's human's turn to bid
         const biddingPlayer = this.gameManager.biddingPlayer;
@@ -659,7 +689,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Bid placed
-    this.gameScene.events.on('bidPlaced', ({ playerIndex, bid }) => {
+    this.gameScene.events.on('bidPlaced', ({ playerIndex, bid }: any) => {
       // If next bidder is human, show bidding UI
       if (playerIndex < 3) {
         const nextBidder = playerIndex + 1;
@@ -670,13 +700,13 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Round complete
-    this.gameScene.events.on('roundComplete', (data) => {
+    this.gameScene.events.on('roundComplete', (data: any) => {
       this.updateScoreboard();
       this.time.delayedCall(500, () => this.showRoundModal(data));
     });
 
     // Game complete
-    this.gameScene.events.on('gameComplete', (data) => {
+    this.gameScene.events.on('gameComplete', (data: any) => {
       this.updateScoreboard();
       this.time.delayedCall(500, () => this.showGameOverModal(data));
     });

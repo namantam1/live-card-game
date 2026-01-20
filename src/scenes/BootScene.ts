@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SUITS, RANKS, COLORS } from '../utils/constants.js';
+import { SUITS, RANKS, COLORS } from '../utils/constants';
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -45,7 +45,7 @@ export default class BootScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Update progress bar on load progress
-    this.load.on('progress', (value) => {
+    this.load.on('progress', (value: number) => {
       progressBar.width = 390 * value;
       percentText.setText(`${Math.round(value * 100)}%`);
     });

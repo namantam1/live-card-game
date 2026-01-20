@@ -1,11 +1,18 @@
 import Phaser from 'phaser';
-import Player from '../objects/Player.js';
-import TrickArea from '../objects/TrickArea.js';
-import GameManager from '../managers/GameManager.js';
-import AudioManager from '../managers/AudioManager.js';
-import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.js';
+import Player from '../objects/Player';
+import TrickArea from '../objects/TrickArea';
+import GameManager from '../managers/GameManager';
+import AudioManager from '../managers/AudioManager';
+import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS, GamePhase } from '../utils/constants';
+import { CardType } from '../types';
 
 export default class GameScene extends Phaser.Scene {
+  audioManager?: AudioManager;
+  gameManager?: GameManager;
+  players?: Player[];
+  trickArea?: TrickArea;
+  roundText?: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'GameScene' });
   }
@@ -49,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
 
       // Listen for card play events from human player
       if (player.isHuman) {
-        player.hand.on('cardPlayed', (cardData, cardObject) => {
+        player.hand.on('cardPlayed', (cardData: CardType, /*cardObject*/) => {
           this.onHumanCardPlayed(cardData);
         });
       }
@@ -246,13 +253,26 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updateRoundText() {
+    if (!this.gameManager || !this.roundText) {
+      console.warn('GameManager or roundText not initialized yet');
+      return;
+    }
     const round = this.gameManager.getCurrentRound();
     this.roundText.setText(`Round ${round}/${TOTAL_ROUNDS}`);
   }
 
   setupEventListeners() {
+    if (!this.gameManager) {
+      console.warn('GameManager not initialized yet');
+      return;
+    }
     // Turn changed
-    this.gameManager.on(EVENTS.TURN_CHANGED, (playerIndex) => {
+    this.gameManager.on(EVENTS.TURN_CHANGED, (playerIndex: number) => {
+      if (!this.players) {
+        console.warn('Players not initialized yet');
+        return;
+      }
+
       this.players.forEach((p, i) => {
         if (i === playerIndex) {
           p.showTurnIndicator();
@@ -263,7 +283,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Phase changed
-    this.gameManager.on(EVENTS.PHASE_CHANGED, (phase) => {
+    this.gameManager.on(EVENTS.PHASE_CHANGED, (phase: GamePhase) => {
       this.events.emit('phaseChanged', phase);
 
       if (phase === PHASE.PLAYING) {
@@ -272,12 +292,21 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Card played
-    this.gameManager.on(EVENTS.CARD_PLAYED, ({ playerIndex, card }) => {
+    this.gameManager.on(EVENTS.CARD_PLAYED, ({ /* playerIndex, card */ }) => {
+      if (!this.audioManager) {
+        console.warn('AudioManager not initialized yet');
+        return;
+      }
       this.audioManager.playCardSound();
     });
 
     // Trick complete
-    this.gameManager.on(EVENTS.TRICK_COMPLETE, ({ winnerIndex }) => {
+    this.gameManager.on(EVENTS.TRICK_COMPLETE, ({ winnerIndex }: { winnerIndex: number }) => {
+      if (!this.players) {
+        console.warn('Players not initialized yet');
+        return;
+      }
+
       // Flash winner indicator
       const winner = this.players[winnerIndex];
       this.tweens.add({
@@ -290,45 +319,73 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Round complete
-    this.gameManager.on(EVENTS.ROUND_COMPLETE, (data) => {
+    this.gameManager.on(EVENTS.ROUND_COMPLETE, (data: any) => {
       this.events.emit('roundComplete', data);
     });
 
     // Game complete
-    this.gameManager.on(EVENTS.GAME_COMPLETE, (data) => {
+    this.gameManager.on(EVENTS.GAME_COMPLETE, (data: any) => {
+      if (!this.audioManager) {
+        console.warn('AudioManager not initialized yet');
+        return;
+      }
+
       this.audioManager.playWinSound();
       this.events.emit('gameComplete', data);
     });
 
     // Bid placed
-    this.gameManager.on(EVENTS.BID_PLACED, ({ playerIndex, bid }) => {
+    this.gameManager.on(EVENTS.BID_PLACED, ({ playerIndex, bid }: any) => {
       this.events.emit('bidPlaced', { playerIndex, bid });
     });
   }
 
-  onHumanCardPlayed(cardData) {
+  onHumanCardPlayed(cardData: CardType) {
+    if (!this.gameManager) {
+      console.warn('GameManager not initialized yet');
+      return;
+    }
+
     this.gameManager.playCard(cardData, 0);
   }
 
   // Called from UIScene when human places bid
-  onHumanBid(bid) {
+  onHumanBid(bid: number) {
+    if (!this.gameManager) {
+      console.warn('GameManager not initialized yet');
+      return;
+    }
+
     this.gameManager.placeHumanBid(bid);
   }
 
   // Called from UIScene to continue to next round
   continueToNextRound() {
+    if (!this.gameManager) {
+      console.warn('GameManager not initialized yet');
+      return;
+    }
+
     this.gameManager.continueToNextRound();
   }
 
   // Called from UIScene to restart game
   restartGame() {
-    this.trickArea.clear();
-    this.gameManager.restartGame();
+    if (!this.gameManager || !this.trickArea) {
+      console.warn('GameManager or TrickArea not initialized yet');
+    }
+
+    this.trickArea?.clear();
+    this.gameManager?.restartGame();
   }
 
   // Called from UIScene to return to menu
   returnToMenu() {
-    this.audioManager.destroy();
+    if (!this.audioManager) {
+      console.warn('AudioManager not initialized yet');
+    }
+
+    this.audioManager?.destroy();
     this.scene.stop('UIScene');
     this.scene.start('MenuScene');
   }

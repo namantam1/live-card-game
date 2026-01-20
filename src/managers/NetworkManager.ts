@@ -5,6 +5,11 @@
  * for multiplayer functionality. Currently a placeholder.
  */
 export default class NetworkManager {
+  connected: boolean;
+  socket: any | null;
+  roomId: null;
+  playerId: null;
+
   constructor() {
     this.connected = false;
     this.socket = null;
@@ -16,7 +21,7 @@ export default class NetworkManager {
    * Connect to game server
    * @param {string} serverUrl - WebSocket server URL
    */
-  async connect(serverUrl) {
+  async connect(serverUrl: string) {
     // TODO: Implement WebSocket connection
     // this.socket = new WebSocket(serverUrl);
     console.log('NetworkManager: Multiplayer not yet implemented');
@@ -27,7 +32,7 @@ export default class NetworkManager {
    * Create a new game room
    * @returns {string} Room ID
    */
-  async createRoom() {
+  async createRoom(): Promise<string | null> {
     // TODO: Implement room creation
     return null;
   }
@@ -36,7 +41,7 @@ export default class NetworkManager {
    * Join an existing game room
    * @param {string} roomId - Room ID to join
    */
-  async joinRoom(roomId) {
+  async joinRoom(roomId: string) {
     // TODO: Implement room joining
     return false;
   }
@@ -53,7 +58,7 @@ export default class NetworkManager {
    * @param {string} action - Action type
    * @param {object} data - Action data
    */
-  sendAction(action, data) {
+  sendAction(action: string, data: object) {
     // TODO: Implement action sending
     console.log('NetworkManager: Would send action', action, data);
   }
@@ -63,7 +68,7 @@ export default class NetworkManager {
    * @param {string} event - Event name
    * @param {function} callback - Handler function
    */
-  on(event, callback) {
+  on(event: string, callback: Function) {
     // TODO: Implement event handling
   }
 
@@ -72,7 +77,7 @@ export default class NetworkManager {
    * @param {string} event - Event name
    * @param {function} callback - Handler function
    */
-  off(event, callback) {
+  off(event: string, callback: Function) {
     // TODO: Implement event removal
   }
 

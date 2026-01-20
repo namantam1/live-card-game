@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, ANIMATION } from '../utils/constants.js';
+import { COLORS, ANIMATION } from '../utils/constants';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -48,7 +48,7 @@ export default class MenuScene extends Phaser.Scene {
     graphics.fillCircle(width * 0.75, height * 0.75, 250);
   }
 
-  createTitle(x, y) {
+  createTitle(x: number, y: number) {
     // Spade icon (using text emoji for simplicity)
     const spadeIcon = this.add.text(x, y - 50, '\u2660', {
       fontFamily: 'Arial, sans-serif',
@@ -75,7 +75,7 @@ export default class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
   }
 
-  createStartButton(x, y) {
+  createStartButton(x: number, y: number) {
     // Button background
     const buttonWidth = 200;
     const buttonHeight = 50;

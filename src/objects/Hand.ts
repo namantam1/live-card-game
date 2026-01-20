@@ -1,16 +1,21 @@
-import Phaser from 'phaser';
-import Card from './Card.js';
-import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants.js';
-import { sortHand, getValidCards } from '../utils/cards.js';
+import Phaser, { Scene } from 'phaser';
+import { CARD, ANIMATION, PLAYER_POSITIONS, Suit } from '../utils/constants';
+import { sortHand, getValidCards } from '../utils/cards';
+import { CardType, Position } from '../types';
+import Card from './Card';
 
 export default class Hand extends Phaser.GameObjects.Container {
-  constructor(scene, position, isHuman = false) {
+  isHuman: boolean;
+  cards: Card[];
+  handPosition: Position;
+
+  constructor(scene: Scene, position: Position, isHuman = false) {
     const { width, height } = scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[position];
 
     super(scene, width * posConfig.x, height * posConfig.y);
 
-    this.position = position;
+    this.handPosition = position;
     this.isHuman = isHuman;
     this.cards = [];
     this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
@@ -18,7 +23,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  setCards(cardDataArray, animate = true) {
+  setCards(cardDataArray: CardType[], animate = true) {
     // Clear existing cards
     this.clearCards();
 
@@ -34,7 +39,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     }
   }
 
-  async dealCards(cardDataArray) {
+  async dealCards(cardDataArray: CardType[]) {
     const { width, height } = this.scene.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -70,7 +75,7 @@ export default class Hand extends Phaser.GameObjects.Container {
 
       // Setup click handler for human cards
       if (this.isHuman) {
-        card.on('cardClicked', (data) => {
+        card.on('cardClicked', (data: any) => {
           this.emit('cardPlayed', data, card);
         });
       }
@@ -79,21 +84,21 @@ export default class Hand extends Phaser.GameObjects.Container {
     return Promise.resolve();
   }
 
-  createCards(cardDataArray) {
+  createCards(cardDataArray: CardType[]) {
     cardDataArray.forEach((cardData, index) => {
       const faceDown = !this.isHuman;
       const card = new Card(this.scene, 0, 0, cardData, faceDown);
       this.cards.push(card);
 
       if (this.isHuman) {
-        card.on('cardClicked', (data) => {
+        card.on('cardClicked', (data: any) => {
           this.emit('cardPlayed', data, card);
         });
       }
     });
   }
 
-  getCardPosition(index, total) {
+  getCardPosition(index: number, total: number) {
     const overlap = this.isHuman ? CARD.HAND_OVERLAP : CARD.HAND_OVERLAP * 0.4;
     const totalSpan = (total - 1) * overlap;
     const startOffset = -totalSpan / 2;
@@ -104,7 +109,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     const angleOffset = (index - middleIndex) * fanAngle;
 
     // For left/right positions, stack cards vertically instead of horizontally
-    const isVertical = this.position === 'left' || this.position === 'right';
+    const isVertical = this.handPosition === 'left' || this.handPosition === 'right';
 
     if (isVertical) {
       return {
@@ -149,7 +154,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     });
   }
 
-  updatePlayableCards(leadSuit) {
+  updatePlayableCards(leadSuit: Suit) {
     if (!this.isHuman) return;
 
     const cardDataArray = this.cards.map(c => c.cardData);
@@ -165,7 +170,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     this.cards.forEach(card => card.setPlayable(false));
   }
 
-  removeCard(cardData) {
+  removeCard(cardData: CardType) {
     const index = this.cards.findIndex(c => c.cardData.id === cardData.id);
     if (index === -1) return null;
 
@@ -177,7 +182,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     return card;
   }
 
-  getCardByData(cardData) {
+  getCardByData(cardData: CardType) {
     return this.cards.find(c => c.cardData.id === cardData.id);
   }
 

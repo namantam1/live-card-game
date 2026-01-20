@@ -1,5 +1,15 @@
+import { Scene } from "phaser";
+
 export default class AudioManager {
-  constructor(scene) {
+  scene: Scene;
+  enabled: boolean;
+  musicEnabled: boolean;
+  soundEnabled: boolean;
+  bgMusic: Phaser.Sound.BaseSound | null;
+  audioContext: AudioContext | null;
+  initialized: boolean;
+
+  constructor(scene: Scene) {
     this.scene = scene;
     this.enabled = true;
     this.musicEnabled = true;
@@ -18,7 +28,7 @@ export default class AudioManager {
   ensureAudioContext() {
     if (!this.audioContext) {
       try {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       } catch (e) {
         console.log('Could not create AudioContext');
       }
@@ -121,6 +131,11 @@ export default class AudioManager {
     if (!this.audioContext) return;
 
     [400, 500, 600].forEach((freq, i) => {
+      if (!this.audioContext) {
+        console.warn('AudioContext not available for trump sound');
+        return;
+      }
+
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
 
@@ -165,6 +180,11 @@ export default class AudioManager {
     if (!this.audioContext) return;
 
     [523, 659, 784, 1047].forEach((freq, i) => {
+      if (!this.audioContext) {
+        console.warn('AudioContext not available for win sound');
+        return;
+      }
+
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
 
