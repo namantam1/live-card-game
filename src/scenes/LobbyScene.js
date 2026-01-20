@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, ANIMATION, SERVER } from '../utils/constants.ts';
 import NetworkManager from '../managers/NetworkManager.js';
+import NetworkIndicator from '../components/NetworkIndicator.js';
 import Button from '../utils/Button.js';
 
 export default class LobbyScene extends Phaser.Scene {
@@ -38,8 +39,20 @@ export default class LobbyScene extends Phaser.Scene {
     this.createJoinView();
     this.createWaitingView();
 
+    // Create network indicator (will be shown after connection)
+    this.createNetworkIndicator();
+
     // Connect to server
     this.connectToServer();
+  }
+
+  createNetworkIndicator() {
+    const { width } = this.cameras.main;
+
+    // Create network indicator in top-right corner
+    this.networkIndicator = new NetworkIndicator(this, width - 50, 30);
+    this.networkIndicator.setDepth(1000);
+    this.networkIndicator.setVisible(false); // Hide until connected
   }
 
   createBackground() {
@@ -267,15 +280,26 @@ export default class LobbyScene extends Phaser.Scene {
     const connected = await this.networkManager.connect(SERVER.URL);
     if (connected) {
       this.connectionStatus.setText('Connected').setColor('#22c55e');
+      this.networkIndicator.setVisible(true);
+      this.networkIndicator.updateQuality('good');
       this.setupNetworkListeners();
     } else {
       this.connectionStatus.setText('Connection failed. Retry...').setColor('#ef4444');
+      this.networkIndicator.setVisible(true);
+      this.networkIndicator.updateQuality('offline');
       // Retry after 3 seconds
       this.time.delayedCall(3000, () => this.connectToServer());
     }
   }
 
   setupNetworkListeners() {
+    // Connection quality changes
+    this.networkManager.on('connectionQualityChange', ({ quality }) => {
+      if (this.networkIndicator) {
+        this.networkIndicator.updateQuality(quality);
+      }
+    });
+
     // Room created/joined - receive seat and room code
     this.networkManager.on('seated', (data) => {
       this.roomCode = data.roomCode;
@@ -494,6 +518,10 @@ export default class LobbyScene extends Phaser.Scene {
     }
     if (this.roomCodeInput) {
       this.roomCodeInput.destroy();
+    }
+    // Clean up network indicator
+    if (this.networkIndicator) {
+      this.networkIndicator.destroy();
     }
   }
 }

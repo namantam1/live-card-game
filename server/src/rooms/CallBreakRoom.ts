@@ -90,7 +90,7 @@ export class CallBreakRoom extends Room<GameState> {
         if (this.state.phase !== 'waiting') {
           this.broadcast('playerLeft', { name: player.name });
         }
-        
+
         // If we're in active gameplay and all human players left, end the room
         const remainingHumans = Array.from(this.state.players.values()).filter(p => !p.isBot);
         if (remainingHumans.length === 0 && this.state.phase !== 'waiting') {
@@ -101,17 +101,32 @@ export class CallBreakRoom extends Room<GameState> {
       }
 
       try {
-        // Allow reconnection within 30 seconds for unintentional disconnects
-        await this.allowReconnection(client, 30);
+        // Allow reconnection within 60 seconds for unintentional disconnects
+        console.log(`${player.name} disconnected unexpectedly. Allowing 60s for reconnection...`);
+        await this.allowReconnection(client, 60);
+
         player.isConnected = true;
-        console.log(`${player.name} reconnected`);
+        console.log(`${player.name} reconnected successfully`);
+
+        // Notify player they've reconnected
+        client.send('reconnected', {
+          message: 'Successfully reconnected',
+          roomCode: this.state.roomCode
+        });
+
+        // Broadcast to other players
+        this.broadcast('playerReconnected', {
+          playerId: client.sessionId,
+          name: player.name
+        }, { except: client });
+
       } catch (e) {
         // Player didn't reconnect, handle game state
-        console.log(`${player.name} left permanently`);
+        console.log(`${player.name} failed to reconnect within timeout`);
         if (this.state.phase !== 'waiting') {
           this.broadcast('playerLeft', { name: player.name });
         }
-        
+
         // If all human players are gone, end the room
         const remainingHumans = Array.from(this.state.players.values()).filter(p => !p.isBot && p.isConnected);
         if (remainingHumans.length === 0) {

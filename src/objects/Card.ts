@@ -37,7 +37,7 @@ export default class Card extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  setPlayable(playable, skipAnimation = false) {
+  setPlayable(playable: boolean, skipAnimation = false) {
     const wasPlayable = this.isPlayable;
     this.isPlayable = playable;
 
@@ -191,7 +191,7 @@ export default class Card extends Phaser.GameObjects.Container {
     });
   }
 
-  animateTo(x, y, duration = ANIMATION.CARD_PLAY, rotation = 0) {
+  animateTo(x: number, y: number, duration = ANIMATION.CARD_PLAY, rotation = 0) {
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this,
@@ -208,7 +208,7 @@ export default class Card extends Phaser.GameObjects.Container {
     });
   }
 
-  animateToWithBounce(x, y, duration = ANIMATION.CARD_PLAY) {
+  animateToWithBounce(x: number, y: number, duration = ANIMATION.CARD_PLAY) {
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this,
@@ -224,7 +224,7 @@ export default class Card extends Phaser.GameObjects.Container {
     });
   }
 
-  destroy() {
+  override destroy() {
     this.removeInteraction();
     super.destroy();
   }

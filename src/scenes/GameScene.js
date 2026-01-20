@@ -3,6 +3,7 @@ import Player from '../objects/Player.js';
 import TrickArea from '../objects/TrickArea.js';
 import GameManager from '../managers/GameManager.js';
 import AudioManager from '../managers/AudioManager.js';
+import NetworkIndicator from '../components/NetworkIndicator.js';
 import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.ts';
 import { getFontSize } from '../config/uiConfig.js';
 
@@ -98,6 +99,9 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
+    // Create network indicator
+    this.createNetworkIndicator();
+
     // Create players from network state
     this.players = [];
     const networkPlayers = this.networkManager.getPlayers();
@@ -155,7 +159,155 @@ export default class GameScene extends Phaser.Scene {
     this.syncHandFromServer();
   }
 
+  createNetworkIndicator() {
+    const { width, height } = this.cameras.main;
+
+    // Create network indicator in top-right corner, to the left of settings icon
+    // Settings icon is at (width - margin), so place this at (width - margin - 60)
+    this.networkIndicator = new NetworkIndicator(this, width - 80, 30);
+    this.networkIndicator.setDepth(1000);
+
+    // Create reconnection overlay (hidden by default)
+    this.createReconnectionOverlay();
+  }
+
+  createReconnectionOverlay() {
+    const { width, height } = this.cameras.main;
+
+    this.reconnectionOverlay = this.add.container(width / 2, height / 2);
+    this.reconnectionOverlay.setVisible(false);
+    this.reconnectionOverlay.setDepth(500);
+
+    // Semi-transparent background
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.7);
+    bg.fillRect(-width / 2, -height / 2, width, height);
+
+    // Message panel
+    const panelWidth = 300;
+    const panelHeight = 150;
+
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1e293b, 0.95);
+    panel.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+    panel.lineStyle(2, 0xf59e0b, 0.6);
+    panel.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+
+    // Reconnection icon (spinning circle)
+    this.reconnectingSpinner = this.add.graphics();
+    this.reconnectingSpinner.lineStyle(4, 0xf59e0b, 1);
+    this.reconnectingSpinner.beginPath();
+    this.reconnectingSpinner.arc(0, -20, 20, 0, Math.PI * 1.5, false);
+    this.reconnectingSpinner.strokePath();
+
+    // Reconnection text
+    this.reconnectingText = this.add.text(0, 30, 'Connection lost\nReconnecting...', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '18px',
+      color: '#f59e0b',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    // Attempt counter
+    this.reconnectAttemptText = this.add.text(0, 65, '', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '14px',
+      color: '#94a3b8',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    this.reconnectionOverlay.add([bg, panel, this.reconnectingSpinner, this.reconnectingText, this.reconnectAttemptText]);
+
+    // Spinning animation
+    this.spinnerTween = null;
+  }
+
+  showReconnectionOverlay(attempt = 1) {
+    this.reconnectionOverlay.setVisible(true);
+    this.reconnectAttemptText.setText(`Attempt ${attempt} of 3`);
+
+    // Start spinner animation
+    if (!this.spinnerTween) {
+      this.spinnerTween = this.tweens.add({
+        targets: this.reconnectingSpinner,
+        angle: 360,
+        duration: 1000,
+        repeat: -1
+      });
+    }
+  }
+
+  hideReconnectionOverlay() {
+    this.reconnectionOverlay.setVisible(false);
+
+    if (this.spinnerTween) {
+      this.spinnerTween.stop();
+      this.spinnerTween = null;
+      this.reconnectingSpinner.angle = 0;
+    }
+  }
+
   setupNetworkListeners() {
+    // Connection quality changes
+    this.networkManager.on('connectionQualityChange', ({ quality }) => {
+      if (this.networkIndicator) {
+        this.networkIndicator.updateQuality(quality);
+      }
+    });
+
+    // Reconnecting
+    this.networkManager.on('reconnecting', ({ attempt }) => {
+      console.log('GameScene: Reconnecting...', attempt);
+      if (this.networkIndicator) {
+        this.networkIndicator.showReconnecting(attempt);
+      }
+      this.showReconnectionOverlay(attempt);
+    });
+
+    // Reconnected
+    this.networkManager.on('reconnected', ({ message }) => {
+      console.log('GameScene: Reconnected!', message);
+      if (this.networkIndicator) {
+        this.networkIndicator.showReconnected();
+      }
+      this.hideReconnectionOverlay();
+
+      // Wait a brief moment for server state to fully sync, then re-sync game state
+      this.time.delayedCall(200, () => {
+        this.syncHandFromServer();
+      });
+
+      // Show brief success message
+      const successText = this.add.text(this.cameras.main.width / 2, 100, 'Reconnected!', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '24px',
+        color: '#22c55e',
+        fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(600);
+
+      this.tweens.add({
+        targets: successText,
+        alpha: 0,
+        y: 70,
+        duration: 2000,
+        onComplete: () => successText.destroy()
+      });
+    });
+
+    // Reconnection failed
+    this.networkManager.on('reconnectionFailed', ({ message }) => {
+      console.log('GameScene: Reconnection failed', message);
+      this.hideReconnectionOverlay();
+
+      // Show error and redirect to menu
+      this.events.emit('connectionLost', { message });
+
+      this.time.delayedCall(2000, () => {
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
+      });
+    });
+
     // Phase change
     this.networkManager.on('phaseChange', ({ phase }) => {
       this.events.emit('phaseChanged', phase);
@@ -356,8 +508,9 @@ export default class GameScene extends Phaser.Scene {
     const hand = this.networkManager.getMyHand();
     const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
 
-    if (localPlayer && hand.length > 0) {
-      // For initial sync, set cards without animation to avoid glitches
+    if (localPlayer) {
+      // Always sync cards, even if hand is empty (cards might have been played)
+      console.log('GameScene: Syncing hand from server. Cards:', hand.length);
       localPlayer.hand.setCards(hand, false);
     }
 
@@ -367,25 +520,39 @@ export default class GameScene extends Phaser.Scene {
       state.players.forEach((player, sessionId) => {
         if (sessionId !== this.networkManager.playerId) {
           const handCount = player.hand.length;
-          if (handCount > 0) {
-            const localPlayerObj = this.players.find(p => p.networkId === sessionId);
-            if (localPlayerObj) {
-              localPlayerObj.hand.updateCardCount(handCount);
-            }
+          const localPlayerObj = this.players.find(p => p.networkId === sessionId);
+          if (localPlayerObj) {
+            console.log(`GameScene: Updating card count for ${player.name}: ${handCount}`);
+            localPlayerObj.hand.updateCardCount(handCount);
           }
         }
       });
 
-      // Check if we joined during bidding phase and it's our turn
-      // This handles the case where a player joins after the game started
+      // Check current game state and update UI accordingly
       const phase = state.phase;
-      const isMyTurn = state.currentTurn === this.networkManager.playerId;
+      const currentTurnPlayerId = state.currentTurn;
+      const isMyTurn = currentTurnPlayerId === this.networkManager.playerId;
+
+      // Update turn indicators for all players
+      this.players.forEach(p => {
+        if (p.networkId === currentTurnPlayerId) {
+          p.showTurnIndicator();
+        } else {
+          p.hideTurnIndicator();
+          p.hand.disableAllCards();
+        }
+      });
 
       if (phase === 'bidding' && isMyTurn) {
         // Emit phase changed event to trigger bidding UI
         this.time.delayedCall(500, () => {
           this.events.emit('phaseChanged', phase);
         });
+      } else if (phase === 'playing' && isMyTurn && localPlayer) {
+        // If it's our turn to play, update playable cards
+        const leadSuit = state.leadSuit || '';
+        console.log('GameScene: Reconnected during our turn, updating playable cards. Lead suit:', leadSuit);
+        localPlayer.hand.updatePlayableCards(leadSuit);
       }
     }
   }
@@ -678,6 +845,16 @@ export default class GameScene extends Phaser.Scene {
     if (this.isMultiplayer && this.networkManager) {
       this.networkManager.removeAllListeners();
       this.networkManager.leaveRoom();
+    }
+
+    // Clean up network indicator
+    if (this.networkIndicator) {
+      this.networkIndicator.destroy();
+    }
+
+    // Clean up reconnection overlay
+    if (this.reconnectionOverlay) {
+      this.reconnectionOverlay.destroy();
     }
 
     this.scene.stop('UIScene');

@@ -17,6 +17,23 @@ export default class NetworkManager {
 
     // Event listeners
     this.listeners = new Map();
+
+    // Reconnection state
+    this.reconnecting = false;
+    this.maxReconnectAttempts = 3;
+    this.reconnectAttempts = 0;
+    this.reconnectDelay = 2000; // Start with 2 seconds
+    this.reconnectTimer = null;
+
+    // Connection monitoring
+    this.connectionQuality = 'good'; // 'good', 'fair', 'poor', 'offline'
+    this.lastPingTime = Date.now();
+    this.pingInterval = null;
+    this.pingTimeout = 5000; // 5 seconds
+    this.serverUrl = null;
+
+    // Saved state for reconnection (using new Colyseus reconnectionToken API)
+    this.reconnectionToken = null;
   }
 
   /**
@@ -25,13 +42,17 @@ export default class NetworkManager {
    */
   async connect(serverUrl) {
     try {
+      this.serverUrl = serverUrl;
       this.client = new Client(serverUrl);
       this.connected = true;
+      this.reconnectAttempts = 0;
       console.log('NetworkManager: Connected to server');
+      this.emit('connectionChange', { quality: 'good', connected: true });
       return true;
     } catch (error) {
       console.error('NetworkManager: Connection failed', error);
       this.connected = false;
+      this.emit('connectionChange', { quality: 'offline', connected: false });
       return false;
     }
   }
@@ -103,6 +124,12 @@ export default class NetworkManager {
    */
   setupRoomListeners() {
     if (!this.room) return;
+
+    // Save reconnection token for the new Colyseus API
+    this.reconnectionToken = this.room.reconnectionToken;
+
+    // Start connection monitoring
+    this.startConnectionMonitoring();
 
     // Handle seat assignment
     this.room.onMessage('seated', (data) => {
@@ -239,9 +266,21 @@ export default class NetworkManager {
     // Room leave handling
     this.room.onLeave((code) => {
       console.log(`NetworkManager: Left room with code ${code}`);
-      this.emit('roomLeft', { code });
-      this.room = null;
-      this.roomCode = null;
+
+      // Stop connection monitoring
+      this.stopConnectionMonitoring();
+
+      // Check if this was an unexpected disconnect
+      if (code !== 1000 && code !== 4000) {
+        console.log('NetworkManager: Unexpected disconnect, attempting reconnection...');
+        this.handleUnexpectedDisconnect();
+      } else {
+        // Clean disconnect
+        this.emit('roomLeft', { code });
+        this.room = null;
+        this.roomCode = null;
+        this.reconnectionToken = null;
+      }
     });
   }
 
@@ -401,9 +440,12 @@ export default class NetworkManager {
    * Disconnect from server
    */
   disconnect() {
+    this.stopConnectionMonitoring();
+    this.cancelReconnection();
     this.leaveRoom();
     this.client = null;
     this.connected = false;
+    this.reconnectionToken = null;
   }
 
   /**
@@ -472,5 +514,166 @@ export default class NetworkManager {
     } else {
       this.listeners.clear();
     }
+  }
+
+  // ============ Connection Monitoring Methods ============
+
+  /**
+   * Start monitoring connection quality
+   */
+  startConnectionMonitoring() {
+    if (this.pingInterval) return;
+
+    this.lastPingTime = Date.now();
+    this.connectionQuality = 'good';
+
+    // Monitor state updates to detect connection health
+    this.pingInterval = setInterval(() => {
+      const timeSinceLastPing = Date.now() - this.lastPingTime;
+
+      if (timeSinceLastPing > this.pingTimeout * 3) {
+        // No updates for a long time - poor connection or offline
+        this.updateConnectionQuality('offline');
+      } else if (timeSinceLastPing > this.pingTimeout * 2) {
+        // Slow connection
+        this.updateConnectionQuality('poor');
+      } else if (timeSinceLastPing > this.pingTimeout) {
+        // Fair connection
+        this.updateConnectionQuality('fair');
+      } else {
+        // Good connection
+        this.updateConnectionQuality('good');
+      }
+    }, 2000);
+
+    // Update ping time whenever we receive state updates
+    if (this.room && this.room.state) {
+      const originalOnChange = this.room.state.onChange || (() => {});
+      this.room.state.onChange = () => {
+        this.lastPingTime = Date.now();
+        originalOnChange();
+      };
+    }
+  }
+
+  /**
+   * Stop connection monitoring
+   */
+  stopConnectionMonitoring() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
+
+  /**
+   * Update connection quality
+   */
+  updateConnectionQuality(quality) {
+    if (this.connectionQuality !== quality) {
+      this.connectionQuality = quality;
+      console.log(`NetworkManager: Connection quality changed to ${quality}`);
+      this.emit('connectionQualityChange', {
+        quality,
+        connected: quality !== 'offline'
+      });
+    }
+  }
+
+  /**
+   * Get current connection quality
+   */
+  getConnectionQuality() {
+    return this.connectionQuality;
+  }
+
+  // ============ Reconnection Methods ============
+
+  /**
+   * Handle unexpected disconnect and attempt reconnection
+   */
+  async handleUnexpectedDisconnect() {
+    if (this.reconnecting) return;
+
+    this.reconnecting = true;
+    this.updateConnectionQuality('offline');
+    this.emit('reconnecting', { attempt: this.reconnectAttempts + 1 });
+
+    await this.attemptReconnection();
+  }
+
+  /**
+   * Attempt to reconnect to the room
+   */
+  async attemptReconnection() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('NetworkManager: Max reconnection attempts reached');
+      this.reconnecting = false;
+      this.emit('reconnectionFailed', {
+        message: 'Could not reconnect to the game'
+      });
+      this.emit('roomLeft', { code: 1006 }); // Abnormal closure
+      this.room = null;
+      this.roomCode = null;
+      this.reconnectionToken = null;
+      return;
+    }
+
+    this.reconnectAttempts++;
+    console.log(`NetworkManager: Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+
+    try {
+      // Try to reconnect using the reconnectionToken (new Colyseus API)
+      if (this.reconnectionToken && this.client) {
+        this.room = await this.client.reconnect(this.reconnectionToken);
+
+        // Reconnection successful
+        console.log('NetworkManager: Reconnection successful!');
+        this.reconnecting = false;
+        this.reconnectAttempts = 0;
+        this.updateConnectionQuality('good');
+
+        // Update reconnection token for future reconnections
+        this.reconnectionToken = this.room.reconnectionToken;
+
+        // Re-setup listeners
+        this.setupRoomListeners();
+
+        this.emit('reconnected', {
+          message: 'Reconnected to game'
+        });
+      } else {
+        throw new Error('No reconnection token available');
+      }
+    } catch (error) {
+      console.error('NetworkManager: Reconnection failed', error);
+
+      // Schedule next attempt with exponential backoff
+      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+      console.log(`NetworkManager: Retrying in ${delay}ms...`);
+
+      this.reconnectTimer = setTimeout(() => {
+        this.attemptReconnection();
+      }, delay);
+    }
+  }
+
+  /**
+   * Cancel ongoing reconnection attempts
+   */
+  cancelReconnection() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnecting = false;
+    this.reconnectAttempts = 0;
+  }
+
+  /**
+   * Check if currently reconnecting
+   */
+  isReconnecting() {
+    return this.reconnecting;
   }
 }
