@@ -284,7 +284,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Phase changed
     this.gameManager.on(EVENTS.PHASE_CHANGED, (phase: GamePhase) => {
-      this.events.emit('phaseChanged', phase);
+      this.events.emit(EVENTS.PHASE_CHANGED, phase);
 
       if (phase === PHASE.PLAYING) {
         this.updateRoundText();
@@ -320,7 +320,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Round complete
     this.gameManager.on(EVENTS.ROUND_COMPLETE, (data: any) => {
-      this.events.emit('roundComplete', data);
+      this.events.emit(EVENTS.ROUND_COMPLETE, data);
     });
 
     // Game complete
@@ -331,12 +331,12 @@ export default class GameScene extends Phaser.Scene {
       }
 
       this.audioManager.playWinSound();
-      this.events.emit('gameComplete', data);
+      this.events.emit(EVENTS.GAME_COMPLETE, data);
     });
 
     // Bid placed
     this.gameManager.on(EVENTS.BID_PLACED, ({ playerIndex, bid }: any) => {
-      this.events.emit('bidPlaced', { playerIndex, bid });
+      this.events.emit(EVENTS.BID_PLACED, { playerIndex, bid });
     });
   }
 

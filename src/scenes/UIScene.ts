@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID, GamePhase } from '../utils/constants';
+import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID, GamePhase, EVENTS } from '../utils/constants';
 import GameScene from './GameScene';
 import Player from '../objects/Player';
 
@@ -678,7 +678,7 @@ export default class UIScene extends Phaser.Scene {
 
   setupEventListeners() {
     // Listen for phase changes from game scene
-    this.gameScene.events.on('phaseChanged', (phase: GamePhase) => {
+    this.gameScene.events.on(EVENTS.PHASE_CHANGED, (phase: GamePhase) => {
       if (phase === PHASE.BIDDING) {
         // Check if it's human's turn to bid
         const biddingPlayer = this.gameManager.biddingPlayer;
@@ -689,7 +689,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Bid placed
-    this.gameScene.events.on('bidPlaced', ({ playerIndex, bid }: any) => {
+    this.gameScene.events.on(EVENTS.BID_PLACED, ({ playerIndex, bid }: any) => {
       // If next bidder is human, show bidding UI
       if (playerIndex < 3) {
         const nextBidder = playerIndex + 1;
@@ -700,13 +700,13 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Round complete
-    this.gameScene.events.on('roundComplete', (data: any) => {
+    this.gameScene.events.on(EVENTS.ROUND_COMPLETE, (data: any) => {
       this.updateScoreboard();
       this.time.delayedCall(500, () => this.showRoundModal(data));
     });
 
     // Game complete
-    this.gameScene.events.on('gameComplete', (data: any) => {
+    this.gameScene.events.on(EVENTS.GAME_COMPLETE, (data: any) => {
       this.updateScoreboard();
       this.time.delayedCall(500, () => this.showGameOverModal(data));
     });
