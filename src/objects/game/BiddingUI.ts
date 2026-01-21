@@ -58,7 +58,7 @@ export default class BiddingUI {
     for (let i = 1; i <= MAX_BID; i++) {
       const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
 
-      const button = Button.createBidButton(scene, x, 10, {
+      const button = Button.create(scene, x, 10, {
         width: config.buttonWidth,
         height: config.buttonHeight,
         text: `${i}`,

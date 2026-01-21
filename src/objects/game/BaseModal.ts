@@ -95,13 +95,11 @@ export default abstract class BaseModal {
   }
 
   protected createModalButton(x: number, y: number, text: string, callback: () => void) {
-    return Button.createGradient(this.scene, x, y, {
+    return Button.create(this.scene, x, y, {
       width: 120,
       height: 36,
       text,
       onClick: callback,
-      primaryColor: COLORS.PRIMARY,
-      secondaryColor: COLORS.SECONDARY,
       borderRadius: 8,
       fontSize: '14px',
       hoverScale: 1.05,

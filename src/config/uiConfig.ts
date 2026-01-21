@@ -94,14 +94,16 @@ export const SCOREBOARD_CONFIG = {
 // Settings icon configuration
 export const SETTINGS_ICON_CONFIG = {
   DESKTOP: {
-    iconSize: 20,
-    fontSize: '30px',
-    margin: 30,
+    iconSize: 28,          // Increased for better touch target
+    fontSize: '36px',      // Increased icon font size
+    margin: 40,
+    hitAreaPadding: 12,    // Extra padding for hit area
   },
   MOBILE: {
-    iconSize: 20,
-    fontSize: '30px',
+    iconSize: 28,          // Increased for better touch target
+    fontSize: '36px',      // Increased icon font size
     margin: 40,
+    hitAreaPadding: 12,    // Extra padding for hit area
   },
 };
 

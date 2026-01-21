@@ -1,12 +1,8 @@
-import { CARD_CONFIG } from "../config/uiConfig";
-import Card from "../objects/Card";
-import { gameCommon } from "../objects/game/common";
-import GameOverModal from "../objects/game/GameOverModal";
-import RoundModal from "../objects/game/RoundModal";
-import ScoreBoard from "../objects/game/ScoreBoard";
+import { CARD_CONFIG, getResponsiveConfig, SETTINGS_ICON_CONFIG } from "../config/uiConfig";
 import { CardData } from "../type";
+import Button from "../utils/Button";
 import { createDeck } from "../utils/cards";
-import { RANKS, SUITS } from "../utils/constants";
+import { COLORS, RANKS, SUITS } from "../utils/constants";
 
 const CARD: CardData = createDeck()[0];
 
@@ -63,28 +59,40 @@ export default class DebugScene extends Phaser.Scene {
         //     )
         // });
 
-        const gameOverModal = new GameOverModal(
-            this,
-            () => {
-                console.log('Play Again clicked');
-            },
-            () => {
-                console.log('Menu clicked');
-            },
-            null as any,
-        );
-        this.time.delayedCall(1000, () => {
-            gameOverModal.showGameResults(
-                {
-                    winner: { name: 'Bob', emoji: '😎' },
-                    players: [
-                        { name: 'Alice', emoji: '😀', score: 30 },
-                        { name: 'Bob', emoji: '😎', score: 50 },
-                        { name: 'Charlie', emoji: '🤠', score: 40 },
-                        { name: 'Diana', emoji: '🧐', score: 20 },
-                    ],
-                }
-            )
+        // const gameOverModal = new GameOverModal(
+        //     this,
+        //     () => {
+        //         console.log('Play Again clicked');
+        //     },
+        //     () => {
+        //         console.log('Menu clicked');
+        //     },
+        //     null as any,
+        // );
+        // this.time.delayedCall(1000, () => {
+        //     gameOverModal.showGameResults(
+        //         {
+        //             winner: { name: 'Bob', emoji: '😎' },
+        //             players: [
+        //                 { name: 'Alice', emoji: '😀', score: 30 },
+        //                 { name: 'Bob', emoji: '😎', score: 50 },
+        //                 { name: 'Charlie', emoji: '🤠', score: 40 },
+        //                 { name: 'Diana', emoji: '🧐', score: 20 },
+        //             ],
+        //         }
+        //     )
+        // });
+
+
+        const { width, height } = this.cameras.main;
+        const config = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
+        const { iconSize, fontSize, margin } = config;
+        Button.createIconButton(this, width - margin, margin, {
+            iconSize,
+            fontSize,
+            icon: '\u2699',
+            onClick: () => console.log('Settings clicked'),
+            audioManager: null
         });
     }
 }

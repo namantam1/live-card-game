@@ -3,6 +3,7 @@ import BaseModal from './BaseModal';
 import Button from '../../utils/Button';
 import { getFontSize } from '../../config/uiConfig';
 import AudioManager from '../../managers/AudioManager';
+import { COLORS } from '../../utils/constants';
 
 export default class SettingsModal extends BaseModal {
   private onNewGame: () => void;
@@ -43,7 +44,7 @@ export default class SettingsModal extends BaseModal {
     this.content.add(divider);
 
     // Action buttons
-    const newGameBtn = Button.createActionButton(this.scene, 0, startY + itemSpacing * 2 + 15, {
+    const newGameBtn = Button.create(this.scene, 0, startY + itemSpacing * 2 + 15, {
       width: 180,
       height: 44,
       text: 'New Game',
@@ -51,13 +52,12 @@ export default class SettingsModal extends BaseModal {
         this.hide();
         this.onNewGame();
       },
-      isDanger: false,
       fontSize: getFontSize('actionButton', width, height),
       audioManager: this.audioManager
     });
     this.content.add(newGameBtn);
 
-    const quitBtn = Button.createActionButton(this.scene, 0, startY + itemSpacing * 3 + 15, {
+    const quitBtn = Button.create(this.scene, 0, startY + itemSpacing * 3 + 15, {
       width: 180,
       height: 44,
       text: 'Quit',
@@ -65,7 +65,7 @@ export default class SettingsModal extends BaseModal {
         this.hide();
         this.onQuit();
       },
-      isDanger: true,
+      bgColor: COLORS.DANGER,
       fontSize: getFontSize('actionButton', width, height),
       audioManager: this.audioManager
     });
