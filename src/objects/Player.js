@@ -25,6 +25,8 @@ export default class Player {
 
     // Create player label
     this.createLabel();
+    this.networkId = undefined;
+    this.absoluteSeatIndex = undefined;
   }
 
   createLabel() {

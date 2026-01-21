@@ -1,3 +1,4 @@
+import NetworkIndicator from "../components/NetworkIndicator";
 import { CARD_CONFIG, getResponsiveConfig, SETTINGS_ICON_CONFIG } from "../config/uiConfig";
 import { CardData } from "../type";
 import Button from "../utils/Button";
@@ -94,5 +95,7 @@ export default class DebugScene extends Phaser.Scene {
             onClick: () => console.log('Settings clicked'),
             audioManager: null
         });
+
+        (window as any).indicator = new NetworkIndicator(this, width - 110, 40);
     }
 }

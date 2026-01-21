@@ -1,81 +1,92 @@
-import Phaser from 'phaser';
+import Phaser, { Scene } from "phaser";
 
-/**
- * NetworkIndicator - Visual indicator for network connection strength
- *
- * Displays a signal strength icon with color coding:
- * - Green: Good connection
- * - Yellow: Fair connection
- * - Orange: Poor connection
- * - Red: Offline/Reconnecting
- */
-export default class NetworkIndicator extends Phaser.GameObjects.Container {
-  constructor(scene, x, y) {
-    super(scene, x, y);
+export type Quality = "good" | "fair" | "poor" | "offline";
 
+
+const size = 28;
+
+export default class NetworkIndicator {
+  currentQuality: Quality;
+  isReconnecting: boolean;
+  bg!: Phaser.GameObjects.Graphics;
+  bars!: Phaser.GameObjects.Rectangle[];
+  statusText!: Phaser.GameObjects.Text;
+  pulseAnimation: Phaser.Tweens.Tween | null = null;
+  container: Phaser.GameObjects.Container;
+  scene: Phaser.Scene;
+
+  constructor(scene: Scene, x: number, y: number) {
     this.scene = scene;
-    this.currentQuality = 'good';
+    this.container = scene.add.container(x, y);
+    this.currentQuality = "good";
     this.isReconnecting = false;
 
     this.createIndicator();
-    scene.add.existing(this);
+    // scene.add.existing(this);
   }
 
-  createIndicator() {
+  private createIndicator() {
     // Background circle
     this.bg = this.scene.add.graphics();
     this.bg.fillStyle(0x1e293b, 0.9);
-    this.bg.fillCircle(0, 0, 18);
+    this.bg.fillCircle(0, 0, size);
     this.bg.lineStyle(2, 0x475569, 0.5);
-    this.bg.strokeCircle(0, 0, 18);
-    this.add(this.bg);
+    this.bg.strokeCircle(0, 0, size);
+    this.container.add(this.bg);
 
     // Signal bars (3 bars)
     this.bars = [];
-    const barWidth = 3;
+    const barWidth = 5;
     const barSpacing = 2;
-    const startX = -6;
+    const startX = -10;
 
     for (let i = 0; i < 3; i++) {
-      const height = 6 + (i * 4);
+      const height = 6 + i * 7;
       const bar = this.scene.add.rectangle(
-        startX + (i * (barWidth + barSpacing)),
-        2,
+        startX + i * (barWidth + barSpacing),
+        10,
         barWidth,
         height,
-        0x22c55e
+        0x22c55e,
       );
       bar.setOrigin(0, 1);
       this.bars.push(bar);
-      this.add(bar);
+      this.container.add(bar);
     }
 
     // Status text (hidden by default)
-    this.statusText = this.scene.add.text(0, 28, '', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '10px',
-      color: '#94a3b8',
-      align: 'center'
-    }).setOrigin(0.5, 0);
+    this.statusText = this.scene.add
+      .text(0, 35, "", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        color: "#94a3b8",
+        align: "center",
+      })
+      .setOrigin(0.5, 0);
     this.statusText.setVisible(false);
-    this.add(this.statusText);
+    this.container.add(this.statusText);
 
     // Pulsing animation for reconnecting state
     this.pulseAnimation = null;
 
     // Make it interactive to show tooltip
-    this.setSize(36, 36);
-    this.setInteractive(new Phaser.Geom.Circle(0, 0, 18), Phaser.Geom.Circle.Contains);
+    this.container.setSize(size * 2, size * 2);
+    this.container.setInteractive(
+      new Phaser.Geom.Circle(0, 0, size),
+      Phaser.Geom.Circle.Contains,
+    );
 
-    this.on('pointerover', () => this.showTooltip());
-    this.on('pointerout', () => this.hideTooltip());
+    this.container.on("pointerover", () => this.showTooltip());
+    this.container.on("pointerout", () => this.hideTooltip());
+    this.container.setDepth(1000);
+    this.container.setVisible(true);
   }
 
   /**
    * Update connection quality display
    * @param {string} quality - 'good', 'fair', 'poor', or 'offline'
    */
-  updateQuality(quality) {
+  updateQuality(quality: Quality) {
     this.currentQuality = quality;
     this.isReconnecting = false;
 
@@ -83,22 +94,22 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
     if (this.pulseAnimation) {
       this.pulseAnimation.stop();
       this.pulseAnimation = null;
-      this.setAlpha(1);
+      this.container.setAlpha(1);
     }
 
     // Update bar colors and visibility
     const colors = {
-      good: 0x22c55e,    // Green
-      fair: 0xeab308,    // Yellow
-      poor: 0xf97316,    // Orange
-      offline: 0xef4444  // Red
+      good: 0x22c55e, // Green
+      fair: 0xeab308, // Yellow
+      poor: 0xf97316, // Orange
+      offline: 0xef4444, // Red
     };
 
     const visibleBars = {
       good: 3,
       fair: 2,
       poor: 1,
-      offline: 0
+      offline: 0,
     };
 
     const color = colors[quality] || colors.good;
@@ -112,18 +123,14 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
     // Update border color
     this.bg.clear();
     this.bg.fillStyle(0x1e293b, 0.9);
-    this.bg.fillCircle(0, 0, 18);
+    this.bg.fillCircle(0, 0, size);
     this.bg.lineStyle(2, color, 0.6);
-    this.bg.strokeCircle(0, 0, 18);
+    this.bg.strokeCircle(0, 0, size);
   }
 
-  /**
-   * Show reconnecting state
-   * @param {number} attempt - Current reconnection attempt number
-   */
-  showReconnecting(attempt = 1) {
+  showReconnecting(attempt: number = 1) {
     this.isReconnecting = true;
-    this.updateQuality('offline');
+    this.updateQuality("offline");
 
     // Add pulsing animation
     if (!this.pulseAnimation) {
@@ -132,7 +139,7 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
         alpha: 0.3,
         duration: 500,
         yoyo: true,
-        repeat: -1
+        repeat: -1,
       });
     }
 
@@ -141,12 +148,9 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
     this.statusText.setVisible(true);
   }
 
-  /**
-   * Show reconnected state
-   */
   showReconnected() {
     this.isReconnecting = false;
-    this.updateQuality('good');
+    this.updateQuality("good");
 
     // Flash green
     this.scene.tweens.add({
@@ -157,24 +161,21 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
       yoyo: true,
       onComplete: () => {
         this.statusText.setVisible(false);
-      }
+      },
     });
   }
 
-  /**
-   * Show tooltip with connection info
-   */
   showTooltip() {
     const messages = {
-      good: 'Good',
-      fair: 'Fair',
-      poor: 'Poor',
-      offline: 'Offline'
+      good: "Good",
+      fair: "Fair",
+      poor: "Poor",
+      offline: "Offline",
     };
 
     const message = this.isReconnecting
-      ? 'Reconnecting...'
-      : messages[this.currentQuality] || 'Unknown';
+      ? "Reconnecting..."
+      : messages[this.currentQuality] || "Unknown";
 
     this.statusText.setText(message);
     this.statusText.setVisible(true);
@@ -184,13 +185,10 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
       targets: this,
       scaleX: 1.1,
       scaleY: 1.1,
-      duration: 100
+      duration: 100,
     });
   }
 
-  /**
-   * Hide tooltip
-   */
   hideTooltip() {
     if (!this.isReconnecting) {
       this.statusText.setVisible(false);
@@ -200,17 +198,14 @@ export default class NetworkIndicator extends Phaser.GameObjects.Container {
       targets: this,
       scaleX: 1,
       scaleY: 1,
-      duration: 100
+      duration: 100,
     });
   }
 
-  /**
-   * Clean up
-   */
-  destroy(fromScene) {
+  destroy(fromScene: boolean) {
     if (this.pulseAnimation) {
       this.pulseAnimation.stop();
     }
-    super.destroy(fromScene);
+    this.container.destroy(fromScene);
   }
 }

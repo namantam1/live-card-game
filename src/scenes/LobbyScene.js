@@ -52,9 +52,8 @@ export default class LobbyScene extends Phaser.Scene {
     const { width } = this.cameras.main;
 
     // Create network indicator in top-right corner
-    this.networkIndicator = new NetworkIndicator(this, width - 50, 30);
-    this.networkIndicator.setDepth(1000);
-    this.networkIndicator.setVisible(false); // Hide until connected
+    this.networkIndicator = new NetworkIndicator(this, width - 50, 40);
+    // this.networkIndicator.setVisible(false); // Hide until connected
   }
 
   createBackground() {
@@ -289,12 +288,11 @@ export default class LobbyScene extends Phaser.Scene {
     const connected = await this.networkManager.connect(SERVER.URL);
     if (connected) {
       this.connectionStatus.setText('Connected').setColor('#22c55e');
-      this.networkIndicator.setVisible(true);
+      // this.networkIndicator.setVisible(true);
       this.networkIndicator.updateQuality('good');
       this.setupNetworkListeners();
     } else {
       this.connectionStatus.setText('Connection failed. Retry...').setColor('#ef4444');
-      this.networkIndicator.setVisible(true);
       this.networkIndicator.updateQuality('offline');
       // Retry after 3 seconds
       this.time.delayedCall(3000, () => this.connectToServer());

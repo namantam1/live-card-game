@@ -15,15 +15,30 @@ import BiddingUI from '../objects/game/BiddingUI';
 import RoundModal from '../objects/game/RoundModal';
 import GameOverModal from '../objects/game/GameOverModal';
 import SettingsModal from '../objects/game/SettingsModal';
+import NetworkManager from '../managers/NetworkManager';
+import GameManager from '../managers/GameManager';
+import AudioManager from '../managers/AudioManager';
+import GameScene from './GameScene';
 
 export default class UIScene extends Phaser.Scene {
+  isMultiplayer: boolean;
+  networkManager: NetworkManager | null;
+  gameManager!: GameManager;
+  audioManager!: AudioManager;
+  gameScene!: GameScene;
+  scoreBoard!: ScoreBoard;
+  roundModal!: RoundModal;
+  gameOverModal!: GameOverModal;
+  settingsModal!: SettingsModal;
+  biddingUI!: BiddingUI;
+
   constructor() {
     super({ key: 'UIScene' });
     this.isMultiplayer = false;
     this.networkManager = null;
   }
 
-  init(data) {
+  init(data: any) {
     this.gameManager = data.gameManager;
     this.audioManager = data.audioManager;
     this.isMultiplayer = data.isMultiplayer || false;
@@ -34,7 +49,7 @@ export default class UIScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
 
     // Get reference to game scene
-    this.gameScene = this.scene.get('GameScene');
+    this.gameScene = this.scene.get('GameScene') as GameScene;
 
     this.scoreBoard = new ScoreBoard(this, this.isMultiplayer, this.getPlayersData(), this.getCurrentRound());
     
@@ -110,7 +125,7 @@ export default class UIScene extends Phaser.Scene {
     return 'waiting';
   }
 
-  onBidSelected(bid) {
+  onBidSelected(bid: number) {
     if (this.isMultiplayer) {
       this.gameScene.onMultiplayerBid(bid);
     } else {
@@ -127,13 +142,13 @@ export default class UIScene extends Phaser.Scene {
 
     // Common event listeners
     // Round complete
-    this.gameScene.events.on('roundComplete', (data) => {
+    this.gameScene.events.on('roundComplete', (data: any) => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       this.time.delayedCall(500, () => this.roundModal.showRoundResults(data));
     });
 
     // Game complete
-    this.gameScene.events.on('gameComplete', (data) => {
+    this.gameScene.events.on('gameComplete', (data: any) => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       this.time.delayedCall(500, () => this.gameOverModal.showGameResults(data));
     });
@@ -141,7 +156,7 @@ export default class UIScene extends Phaser.Scene {
 
   setupSoloEventListeners() {
     // Listen for phase changes from game scene
-    this.gameScene.events.on('phaseChanged', (phase) => {
+    this.gameScene.events.on('phaseChanged', (phase: any) => {
       if (phase === PHASE.BIDDING) {
         // Check if it's human's turn to bid
         if (this.gameManager && this.gameManager.biddingPlayer === 0) {
@@ -151,7 +166,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Bid placed
-    this.gameScene.events.on('bidPlaced', ({ playerIndex }) => {
+    this.gameScene.events.on('bidPlaced', ({ playerIndex }: any) => {
       // If next bidder is human, show bidding UI
       if (playerIndex < 3) {
         const nextBidder = playerIndex + 1;
@@ -164,12 +179,12 @@ export default class UIScene extends Phaser.Scene {
 
   setupMultiplayerEventListeners() {
     // Listen for phase changes - show bidding UI when it's our turn
-    this.gameScene.events.on('phaseChanged', (phase) => {
+    this.gameScene.events.on('phaseChanged', (phase: any) => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       if (phase === 'bidding') {
         // Add slight delay to ensure currentTurn state is updated
         this.time.delayedCall(100, () => {
-          if (this.networkManager.isMyTurn()) {
+          if (this.networkManager!.isMyTurn()) {
             this.biddingUI.show();
           }
         });
@@ -177,25 +192,25 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Turn change - show bidding UI if it's bidding phase and our turn
-    this.networkManager.on('turnChange', ({ isMyTurn }) => {
-      const phase = this.networkManager.getPhase();
+    this.networkManager!.on('turnChange', ({ isMyTurn }: any) => {
+      const phase = this.networkManager!.getPhase();
       if (phase === 'bidding' && isMyTurn) {
         this.time.delayedCall(300, () => this.biddingUI.show());
       }
     });
 
     // Score updates
-    this.networkManager.on('playerScoreChange', () => {
+    this.networkManager!.on('playerScoreChange', () => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
 
     // Bid placed
-    this.networkManager.on('playerBid', () => {
+    this.networkManager!.on('playerBid', () => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
 
     // Tricks won update
-    this.networkManager.on('playerTricksWon', () => {
+    this.networkManager!.on('playerTricksWon', () => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
   }
