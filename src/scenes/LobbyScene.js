@@ -13,6 +13,7 @@ export default class LobbyScene extends Phaser.Scene {
     this.mode = 'menu'; // 'menu', 'join', 'waiting'
     this.players = [];
     this.isTransitioning = false;
+    this.PLAYER_NAME_KEY = 'callbreak_player_name'; // localStorage key
   }
 
   create() {
@@ -95,6 +96,12 @@ export default class LobbyScene extends Phaser.Scene {
     // Name input field (using rexUI InputText)
     this.nameInput = this.createInputField(centerX, centerY - 30, 200, 'Your Name');
     this.nameInput.setDepth(100); // Ensure it renders above other elements
+    
+    // Load and prefill saved name from localStorage
+    const savedName = this.loadPlayerName();
+    if (savedName) {
+      this.nameInput.setText(savedName);
+    }
 
     // Create Room button
     const createBtn = this.createButton(centerX, centerY + 50, 'Create Room', () => {
@@ -388,6 +395,7 @@ export default class LobbyScene extends Phaser.Scene {
 
     if (room) {
       this.playerName = name;
+      this.savePlayerName(name);
       this.showWaitingView();
     } else {
       this.connectionStatus.setText('Failed to create room').setColor('#ef4444');
@@ -413,15 +421,21 @@ export default class LobbyScene extends Phaser.Scene {
       return;
     }
 
-    this.joinError.setText('Joining room...');
-    const room = await this.networkManager.joinRoom(code, name);
+    this.joinError.setText('Joining room...').setColor('#f59e0b');
 
-    if (room) {
-      this.playerName = name;
-      this.roomCode = code;
-      this.showWaitingView();
-    } else {
-      this.joinError.setText('Room not found or full');
+    try {
+      const room = await this.networkManager.joinRoom(code, name);
+      
+      if (room) {
+        this.playerName = name;
+        this.savePlayerName(name);
+        this.roomCode = code;
+        this.showWaitingView();
+      }
+    } catch (error) {
+      console.error('Failed to join room:', error);
+      const errorMsg = error.message || 'Room not found or full';
+      this.joinError.setText(errorMsg).setColor('#ef4444');
     }
   }
 
@@ -509,6 +523,23 @@ export default class LobbyScene extends Phaser.Scene {
         isMultiplayer: true
       });
     });
+  }
+
+  savePlayerName(name) {
+    try {
+      localStorage.setItem(this.PLAYER_NAME_KEY, name);
+    } catch (error) {
+      console.error('Error saving player name to localStorage:', error);
+    }
+  }
+
+  loadPlayerName() {
+    try {
+      return localStorage.getItem(this.PLAYER_NAME_KEY);
+    } catch (error) {
+      console.error('Error loading player name from localStorage:', error);
+      return null;
+    }
   }
 
   shutdown() {

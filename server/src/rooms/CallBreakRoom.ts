@@ -55,6 +55,11 @@ export class CallBreakRoom extends Room<GameState> {
   }
 
   onJoin(client: Client, options: JoinOptions): void {
+    // Validate room code if provided (for join attempts, not create)
+    if (options.roomCode && options.roomCode !== this.state.roomCode) {
+      throw new Error(`Invalid room code. Room code is ${this.state.roomCode}, but got ${options.roomCode}`);
+    }
+
     const name = options.name || `Player ${this.state.players.size + 1}`;
     const seatIndex = this.state.players.size;
 

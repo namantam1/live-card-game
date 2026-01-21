@@ -98,16 +98,12 @@ export default class NetworkManager {
       const rooms = await this.client.getAvailableRooms('call_break');
       const targetRoom = rooms.find(r => r.metadata?.roomCode === roomCode);
 
-      if (targetRoom) {
-        this.room = await this.client.joinById(targetRoom.roomId, { name: playerName });
-      } else {
-        // Try joining by room ID directly (fallback)
-        this.room = await this.client.join('call_break', {
-          name: playerName,
-          roomCode: roomCode
-        });
+      if (!targetRoom) {
+        console.error('NetworkManager: Room not found with code:', roomCode);
+        throw new Error('Room not found. Please check the room code.');
       }
 
+      this.room = await this.client.joinById(targetRoom.roomId, { name: playerName });
       this.playerId = this.room.sessionId;
       this.setupRoomListeners();
 
@@ -115,7 +111,7 @@ export default class NetworkManager {
       return this.room;
     } catch (error) {
       console.error('NetworkManager: Failed to join room', error);
-      return null;
+      throw error;
     }
   }
 
