@@ -1,16 +1,17 @@
 import Phaser, { Scene } from 'phaser';
-import { CARD, ANIMATION, COLORS } from '../utils/constants.ts';
-import { getCardAssetKey } from '../utils/cards.js';
+import { CARD, ANIMATION, COLORS } from '../utils/constants';
+import { getCardAssetKey } from '../utils/cards';
+import { CardData } from '../type';
 
 export default class Card extends Phaser.GameObjects.Container {
-  cardData: any;
+  cardData: CardData;
   isFaceDown: boolean;
   isPlayable: boolean;
   originalY: number;
   sprite: Phaser.GameObjects.Image;
   glow: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Scene, x: number, y: number, cardData: any, faceDown = false) {
+  constructor(scene: Scene, x: number, y: number, cardData: CardData, faceDown = false) {
     super(scene, x, y);
 
     this.cardData = cardData;

@@ -1,9 +1,10 @@
-import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT } from './constants.ts';
+import { CardData, TrickEntry } from '../type';
+import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT, Suit } from './constants';
 
 /**
  * Create a standard 52-card deck
  */
-export function createDeck() {
+export function createDeck(): CardData[] {
   const deck = [];
   for (const suit of SUITS) {
     for (const rank of RANKS) {
@@ -21,7 +22,7 @@ export function createDeck() {
 /**
  * Fisher-Yates shuffle
  */
-export function shuffleDeck(deck) {
+export function shuffleDeck(deck: CardData[]) {
   const shuffled = [...deck];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -33,7 +34,7 @@ export function shuffleDeck(deck) {
 /**
  * Get numeric value of a card
  */
-export function getCardValue(card) {
+export function getCardValue(card: CardData) {
   return RANK_VALUES[card.rank];
 }
 
@@ -41,7 +42,7 @@ export function getCardValue(card) {
  * Compare two cards given a lead suit
  * Returns positive if card1 wins, negative if card2 wins
  */
-export function compareCards(card1, card2, leadSuit) {
+export function compareCards(card1: CardData, card2: CardData, leadSuit: Suit) {
   // Trump (spades) beats non-trump
   if (card1.suit === TRUMP_SUIT && card2.suit !== TRUMP_SUIT) return 1;
   if (card2.suit === TRUMP_SUIT && card1.suit !== TRUMP_SUIT) return -1;
@@ -64,7 +65,7 @@ export function compareCards(card1, card2, leadSuit) {
  * @param {string} leadSuit - The suit that was led
  * @returns {number} - Index of winning player
  */
-export function findTrickWinner(trick, leadSuit) {
+export function findTrickWinner(trick: TrickEntry[], leadSuit: Suit): number {
   let winnerIndex = 0;
   let winningCard = trick[0].card;
 
@@ -81,7 +82,7 @@ export function findTrickWinner(trick, leadSuit) {
 /**
  * Sort a hand by suit then by rank (descending)
  */
-export function sortHand(hand) {
+export function sortHand(hand: CardData[]) {
   const suitOrder = { spades: 0, hearts: 1, diamonds: 2, clubs: 3 };
   return [...hand].sort((a, b) => {
     if (suitOrder[a.suit] !== suitOrder[b.suit]) {
@@ -97,20 +98,20 @@ export function sortHand(hand) {
  * @param {string|null} leadSuit - The suit that was led (null if leading)
  * @returns {Array} - Valid cards to play
  */
-export function getValidCards(hand, leadSuit) {
+export function getValidCards(hand: any[], leadSuit: string | null): Array<any> {
   if (!leadSuit) {
     // Leading - can play anything
     return hand;
   }
 
   // Must follow lead suit if possible
-  const leadSuitCards = hand.filter(c => c.suit === leadSuit);
+  const leadSuitCards = hand.filter((c: { suit: any; }) => c.suit === leadSuit);
   if (leadSuitCards.length > 0) {
     return leadSuitCards;
   }
 
   // If can't follow, must play spades if possible
-  const spadeCards = hand.filter(c => c.suit === TRUMP_SUIT);
+  const spadeCards = hand.filter((c: { suit: string; }) => c.suit === TRUMP_SUIT);
   if (spadeCards.length > 0) {
     return spadeCards;
   }
@@ -125,7 +126,7 @@ export function getValidCards(hand, leadSuit) {
  * @param {number} tricksWon - Tricks actually won
  * @returns {number} - Score for the round
  */
-export function calculateScore(bid, tricksWon) {
+export function calculateScore(bid: number, tricksWon: number): number {
   if (tricksWon >= bid) {
     return bid + (tricksWon - bid) * 0.1;
   }
@@ -135,6 +136,6 @@ export function calculateScore(bid, tricksWon) {
 /**
  * Get the asset path for a card image
  */
-export function getCardAssetKey(card) {
+export function getCardAssetKey(card: CardData) {
   return `card-${card.id}`;
 }

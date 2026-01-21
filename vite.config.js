@@ -8,6 +8,9 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
   },
+  resolve: {
+    extensions: ['.js', '.ts'],
+  },
   server: {
     port: 3000,
     open: true,

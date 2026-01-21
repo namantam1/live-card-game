@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import CanvasInputPlugin from 'phaser3-rex-plugins/plugins/canvasinput-plugin.js';
-import BootScene from './scenes/BootScene.js';
-import MenuScene from './scenes/MenuScene.js';
-import LobbyScene from './scenes/LobbyScene.js';
-import GameScene from './scenes/GameScene.js';
-import UIScene from './scenes/UIScene.js';
-import { registerServiceWorker, enforceLandscapeOnMobile } from './pwaUtils.js';
+import CanvasInputPlugin from 'phaser3-rex-plugins/plugins/canvasinput-plugin';
+import BootScene from './scenes/BootScene';
+import MenuScene from './scenes/MenuScene';
+import LobbyScene from './scenes/LobbyScene';
+import GameScene from './scenes/GameScene';
+import UIScene from './scenes/UIScene';
+import { registerServiceWorker, enforceLandscapeOnMobile } from './pwaUtils';
+import DebugScene from './scenes/DebugScene';
 
 const config = {
   type: Phaser.AUTO,
@@ -27,7 +28,14 @@ const config = {
     width: 1920,
     height: 1080,
   },
-  scene: [BootScene, MenuScene, LobbyScene, GameScene, UIScene],
+  scene: [
+    // DebugScene, 
+    BootScene, 
+    MenuScene, 
+    LobbyScene, 
+    GameScene, 
+    UIScene
+  ],
   input: {
     activePointers: 3,
     touch: {

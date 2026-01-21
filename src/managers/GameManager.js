@@ -2,11 +2,11 @@ import Phaser from 'phaser';
 import {
   PHASE, EVENTS, TOTAL_ROUNDS, CARDS_PER_PLAYER, NUM_PLAYERS,
   ANIMATION, TRUMP_SUIT, MAX_BID
-} from '../utils/constants.ts';
+} from '../utils/constants';
 import {
   createDeck, shuffleDeck, sortHand, findTrickWinner,
   getValidCards, calculateScore
-} from '../utils/cards.js';
+} from '../utils/cards';
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   constructor(scene) {

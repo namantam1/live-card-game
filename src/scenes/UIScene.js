@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants.ts';
+import { COLORS, PHASE, TOTAL_ROUNDS, MAX_BID } from '../utils/constants';
 import {
   SETTINGS_ICON_CONFIG,
   SCOREBOARD_CONFIG,
@@ -8,8 +8,10 @@ import {
   isMobile,
   getResponsiveConfig,
   getFontSize
-} from '../config/uiConfig.js';
-import Button from '../utils/Button.js';
+} from '../config/uiConfig';
+import Button from '../utils/Button';
+import ScoreBoard from '../objects/game/ScoreBoard';
+import BiddingUI from '../objects/game/BiddingUI';
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -33,9 +35,17 @@ export default class UIScene extends Phaser.Scene {
 
     // Create UI elements
     this.createControlButtons();
-    this.createScoreboard();
-    this.createBiddingUI();
+    // this.createScoreboard();
     this.createModals();
+
+    this.scoreBoard = new ScoreBoard(this, this.isMultiplayer, this.getPlayersData(), this.getCurrentRound());
+    
+    // Create bidding UI
+    this.biddingUI = new BiddingUI(
+      this,
+      (bid) => this.onBidSelected(bid),
+      this.audioManager
+    );
 
     // Listen for game events
     this.setupEventListeners();
@@ -243,65 +253,6 @@ export default class UIScene extends Phaser.Scene {
     });
   }
 
-  createScoreboard() {
-    const { width, height } = this.cameras.main;
-
-    // Get responsive sizing from centralized config
-    const config = getResponsiveConfig(SCOREBOARD_CONFIG, width, height);
-    const mobile = isMobile(width, height);
-
-    // Modern compact horizontal scoreboard (pill-shaped)
-    this.scoreboard = this.add.container(config.margin, config.marginTop);
-    this.scoreboard.setDepth(1000); // Ensure it's always on top
-
-    // Store responsive values for updates
-    this.scoreboardConfig = {
-      isMobile: mobile,
-      ...config
-    };
-
-    // We'll rebuild the scoreboard content on each update
-    this.scoreboardBg = this.add.graphics();
-    this.scoreboard.add(this.scoreboardBg);
-
-    // Round text
-    this.roundIndicator = this.add.text(this.scoreboardConfig.padding, 0, '', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: this.scoreboardConfig.roundFontSize,
-      fontStyle: 'bold',
-      color: '#94a3b8',
-    }).setOrigin(0, 0.5);
-    this.scoreboard.add(this.roundIndicator);
-
-    // Divider
-    this.divider = this.add.graphics();
-    this.scoreboard.add(this.divider);
-
-    // Player score entries (emoji + score)
-    this.playerScoreEntries = [];
-    const players = this.getPlayersData();
-
-    players.forEach((player, index) => {
-      const entry = {
-        emoji: this.add.text(0, 0, player.emoji, {
-          fontFamily: 'Arial, sans-serif',
-          fontSize: this.scoreboardConfig.emojiFontSize,
-        }).setOrigin(0, 0.5),
-        score: this.add.text(0, 0, '0.0', {
-          fontFamily: 'Arial, sans-serif',
-          fontSize: this.scoreboardConfig.scoreFontSize,
-          fontStyle: 'bold',
-          color: '#22c55e',
-        }).setOrigin(0, 0.5),
-        playerId: this.isMultiplayer ? player.id : index,
-      };
-      this.scoreboard.add([entry.emoji, entry.score]);
-      this.playerScoreEntries.push(entry);
-    });
-
-    this.updateScoreboard();
-  }
-
   getPlayersData() {
     if (this.isMultiplayer && this.networkManager) {
       return this.networkManager.getPlayers();
@@ -321,69 +272,6 @@ export default class UIScene extends Phaser.Scene {
     return 1;
   }
 
-  updateScoreboard() {
-    const players = this.getPlayersData();
-    const round = this.getCurrentRound();
-    const config = this.scoreboardConfig;
-
-    // Update round indicator
-    this.roundIndicator.setText(`R${round}/${TOTAL_ROUNDS}`);
-
-    // Sort players by score for coloring
-    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-    const topPlayer = sortedPlayers[0];
-
-    // Calculate positions with responsive padding
-    let xOffset = config.padding;
-    const roundWidth = this.roundIndicator.width;
-    xOffset += roundWidth + (config.isMobile ? 16 : 14);
-
-    // Draw divider
-    this.divider.clear();
-    this.divider.fillStyle(0x475569, 1);
-    const dividerHeight = config.isMobile ? 24 : 20;
-    this.divider.fillRect(xOffset, -dividerHeight / 2, 2, dividerHeight);
-    xOffset += config.isMobile ? 20 : 16;
-
-    // Position each player entry
-    this.playerScoreEntries.forEach((entry, index) => {
-      const player = players[index];
-      if (!player) return;
-
-      const score = player.score;
-
-      entry.emoji.setX(xOffset);
-      entry.emoji.setY(0);
-      xOffset += entry.emoji.width + config.spacing;
-
-      entry.score.setText(score.toFixed(1));
-      entry.score.setX(xOffset);
-      entry.score.setY(0);
-
-      // Color based on ranking and score
-      const isTopPlayer = this.isMultiplayer ? player.id === topPlayer?.id : player === topPlayer;
-      if (isTopPlayer && score > 0) {
-        entry.score.setColor('#facc15'); // Yellow for leader
-      } else if (score >= 0) {
-        entry.score.setColor('#22c55e'); // Green for positive
-      } else {
-        entry.score.setColor('#ef4444'); // Red for negative
-      }
-
-      xOffset += entry.score.width + (config.isMobile ? 20 : 16);
-    });
-
-    // Draw background pill with responsive height
-    const totalWidth = xOffset;
-    const height = config.isMobile ? 44 : 36;
-
-    this.scoreboardBg.clear();
-    this.scoreboardBg.fillStyle(0x0f172a, 0.95);
-    this.scoreboardBg.fillRoundedRect(0, -height / 2, totalWidth, height, height / 2);
-    this.scoreboardBg.lineStyle(config.isMobile ? 2 : 1, 0x6366f1, 0.6);
-    this.scoreboardBg.strokeRoundedRect(0, -height / 2, totalWidth, height, height / 2);
-  }
-
   getPhase() {
     if (this.isMultiplayer && this.networkManager) {
       return this.networkManager.getPhase();
@@ -393,89 +281,7 @@ export default class UIScene extends Phaser.Scene {
     return 'waiting';
   }
 
-  createBiddingUI() {
-    const { width, height } = this.cameras.main;
-
-    // Get responsive bidding config
-    const config = getResponsiveConfig(BIDDING_CONFIG, width, height);
-
-    // Bidding container (hidden by default) - positioned higher to avoid cards
-    this.biddingUI = this.add.container(width / 2, height * 0.55);
-    this.biddingUI.setVisible(false);
-    this.biddingUI.setDepth(50);
-
-    // Calculate dimensions based on button config
-    const totalButtonWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
-    const padding = 20; // Horizontal padding
-    const bgWidth = totalButtonWidth + (padding * 2);
-    const bgHeight = 140;
-
-    // Background - centered
-    const bg = this.add.graphics();
-    bg.fillStyle(COLORS.PANEL_BG, 0.95);
-    bg.fillRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
-    bg.lineStyle(2, COLORS.PRIMARY, 0.5);
-    bg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
-
-    // Title - centered horizontally
-    const title = this.add.text(0, -50, 'Place Your Bid', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: config.titleFontSize,
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    this.biddingUI.add([bg, title]);
-
-    // Bid buttons (1 to MAX_BID) with responsive sizing - centered horizontally
-    this.bidButtons = [];
-    const startX = -totalButtonWidth / 2 + config.buttonWidth / 2;
-
-    for (let i = 1; i <= MAX_BID; i++) {
-      const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
-
-      const button = Button.createBidButton(this, x, 10, {
-        width: config.buttonWidth,
-        height: config.buttonHeight,
-        text: `${i}`,
-        onClick: () => this.onBidSelected(i),
-        bgColor: COLORS.PRIMARY,
-        borderRadius: config.borderRadius,
-        fontSize: config.fontSize,
-        audioManager: this.audioManager
-      });
-
-      this.biddingUI.add(button);
-      this.bidButtons.push(button);
-    }
-  }
-
-  showBiddingUI() {
-    this.biddingUI.setVisible(true);
-    this.biddingUI.alpha = 0;
-    this.biddingUI.y = this.cameras.main.height * 0.4;
-    this.tweens.add({
-      targets: this.biddingUI,
-      alpha: 1,
-      y: this.cameras.main.height * 0.5,
-      duration: 300,
-      ease: 'Back.easeOut',
-    });
-  }
-
-  hideBiddingUI() {
-    this.tweens.add({
-      targets: this.biddingUI,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => {
-        this.biddingUI.setVisible(false);
-      },
-    });
-  }
-
   onBidSelected(bid) {
-    this.hideBiddingUI();
     if (this.isMultiplayer) {
       this.gameScene.onMultiplayerBid(bid);
     } else {
@@ -670,13 +476,13 @@ export default class UIScene extends Phaser.Scene {
     // Common event listeners
     // Round complete
     this.gameScene.events.on('roundComplete', (data) => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       this.time.delayedCall(500, () => this.showRoundModal(data));
     });
 
     // Game complete
     this.gameScene.events.on('gameComplete', (data) => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       this.time.delayedCall(500, () => this.showGameOverModal(data));
     });
   }
@@ -687,7 +493,7 @@ export default class UIScene extends Phaser.Scene {
       if (phase === PHASE.BIDDING) {
         // Check if it's human's turn to bid
         if (this.gameManager && this.gameManager.biddingPlayer === 0) {
-          this.showBiddingUI();
+          this.biddingUI.show();
         }
       }
     });
@@ -698,7 +504,7 @@ export default class UIScene extends Phaser.Scene {
       if (playerIndex < 3) {
         const nextBidder = playerIndex + 1;
         if (nextBidder === 0) {
-          this.time.delayedCall(500, () => this.showBiddingUI());
+          this.time.delayedCall(500, () => this.biddingUI.show());
         }
       }
     });
@@ -707,12 +513,12 @@ export default class UIScene extends Phaser.Scene {
   setupMultiplayerEventListeners() {
     // Listen for phase changes - show bidding UI when it's our turn
     this.gameScene.events.on('phaseChanged', (phase) => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
       if (phase === 'bidding') {
         // Add slight delay to ensure currentTurn state is updated
         this.time.delayedCall(100, () => {
           if (this.networkManager.isMyTurn()) {
-            this.showBiddingUI();
+            this.biddingUI.show();
           }
         });
       }
@@ -722,23 +528,23 @@ export default class UIScene extends Phaser.Scene {
     this.networkManager.on('turnChange', ({ isMyTurn }) => {
       const phase = this.networkManager.getPhase();
       if (phase === 'bidding' && isMyTurn) {
-        this.time.delayedCall(300, () => this.showBiddingUI());
+        this.time.delayedCall(300, () => this.biddingUI.show());
       }
     });
 
     // Score updates
     this.networkManager.on('playerScoreChange', () => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
 
     // Bid placed
     this.networkManager.on('playerBid', () => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
 
     // Tricks won update
     this.networkManager.on('playerTricksWon', () => {
-      this.updateScoreboard();
+      this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
     });
   }
 

@@ -1,5 +1,5 @@
-import { TRUMP_SUIT, MAX_BID } from '../utils/constants.ts';
-import { getCardValue, getValidCards } from '../utils/cards.js';
+import { TRUMP_SUIT, MAX_BID } from '../utils/constants';
+import { getCardValue, getValidCards } from '../utils/cards';
 
 /**
  * Bot AI for Call Break game

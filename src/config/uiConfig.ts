@@ -17,7 +17,7 @@ export const BREAKPOINT = {
  * @param {number} height - Screen height
  * @returns {boolean} - True if mobile size
  */
-export const isMobile = (width, height) => {
+export const isMobile = (width: number, height: number): boolean => {
   const isMobile = width < BREAKPOINT.WIDTH || height < BREAKPOINT.HEIGHT;
   // console.log(`isMobile check: width=${width}, height=${height} => isMobile=${isMobile}`);
   return isMobile;
@@ -70,14 +70,14 @@ export const BIDDING_CONFIG = {
 // Scoreboard configuration
 export const SCOREBOARD_CONFIG = {
   DESKTOP: {
-    margin: 20,
-    marginTop: 30,
-    height: 50,
-    padding: 20,
+    margin: 10,
+    marginTop: 40,
+    height: 60,
+    padding: 25,
     spacing: 10,
-    roundFontSize: '22px',
-    emojiFontSize: '22px',
-    scoreFontSize: '22px',
+    roundFontSize: '30px',
+    emojiFontSize: '30px',
+    scoreFontSize: '30px',
   },
   MOBILE: {
     margin: 15,
@@ -109,8 +109,8 @@ export const SETTINGS_ICON_CONFIG = {
 export const FONT_CONFIG = {
   DESKTOP: {
     // Game UI
-    trumpIndicator: '20px',
-    trumpSymbol: '30px',
+    trumpIndicator: '22px',
+    trumpSymbol: '35px',
     roundIndicator: '11px',
 
     // Player labels
@@ -201,7 +201,11 @@ export const TURN_INDICATOR_CONFIG = {
  * @param {number} height - Screen height
  * @returns {object} - Responsive config based on screen size
  */
-export const getResponsiveConfig = (config, width, height) => {
+export const getResponsiveConfig = (
+  config: { DESKTOP: any; MOBILE: any; }, 
+  width: number, 
+  height: number
+): Record<string, any> => {
   return isMobile(width, height) ? config.MOBILE : config.DESKTOP;
 };
 
@@ -212,7 +216,7 @@ export const getResponsiveConfig = (config, width, height) => {
  * @param {number} height - Screen height
  * @returns {string} - Font size string (e.g., '16px')
  */
-export const getFontSize = (key, width, height) => {
+export const getFontSize = (key: string, width: number, height: number): string => {
   const config = getResponsiveConfig(FONT_CONFIG, width, height);
   // console.log(`getFontSize: key=${key}, width=${width}, height=${height} => fontSize=${config[key] || '14px'}`);
   return config[key] || '14px';

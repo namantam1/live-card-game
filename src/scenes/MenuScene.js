@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { COLORS, ANIMATION } from '../utils/constants.ts';
-import { getFontSize } from '../config/uiConfig.js';
-import Button from '../utils/Button.js';
+import { COLORS, ANIMATION } from '../utils/constants';
+import { getFontSize } from '../config/uiConfig';
+import Button from '../utils/Button';
+import { gameCommon } from '../objects/game/common';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {

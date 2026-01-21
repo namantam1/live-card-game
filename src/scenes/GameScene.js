@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
-import Player from '../objects/Player.js';
-import TrickArea from '../objects/TrickArea.js';
-import GameManager from '../managers/GameManager.js';
-import AudioManager from '../managers/AudioManager.js';
-import NetworkIndicator from '../components/NetworkIndicator.js';
-import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants.ts';
-import { getFontSize } from '../config/uiConfig.js';
+import Player from '../objects/Player';
+import TrickArea from '../objects/TrickArea';
+import GameManager from '../managers/GameManager';
+import AudioManager from '../managers/AudioManager';
+import NetworkIndicator from '../components/NetworkIndicator';
+import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS } from '../utils/constants';
+import { getFontSize } from '../config/uiConfig';
+import { gameCommon } from '../objects/game/common';
+import { RoundIndicator } from '../objects/game/RoundIndicator';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -38,7 +40,10 @@ export default class GameScene extends Phaser.Scene {
     this.createTable();
 
     // Create trump indicator
-    this.createTrumpIndicator();
+    gameCommon.createTrumpIndicator(this);
+    this.roundText = new RoundIndicator(this, this.isMultiplayer, 
+      this.networkManager, this.gameManager);
+    
 
     // Create trick area
     this.trickArea = new TrickArea(this);
@@ -313,7 +318,7 @@ export default class GameScene extends Phaser.Scene {
       this.events.emit('phaseChanged', phase);
 
       if (phase === 'playing') {
-        this.updateRoundText();
+        this.roundText.updateRoundText();
       }
 
       if (phase === 'roundEnd') {
@@ -454,7 +459,7 @@ export default class GameScene extends Phaser.Scene {
       this.players.forEach(player => {
         player.reset();
       });
-      this.updateRoundText();
+      this.roundText.updateRoundText();
     });
 
     // Lead suit changed - update playable cards if it's our turn
@@ -668,87 +673,87 @@ export default class GameScene extends Phaser.Scene {
     graphics.fillRoundedRect(centerX + tableWidth / 2 - 18, centerY + tableHeight / 2 - 15 - accentSize, 3, accentSize, 1);
   }
 
-  createTrumpIndicator() {
-    const { width, height } = this.cameras.main;
-    const centerX = width / 2;
-    const centerY = height / 2;
+  // createTrumpIndicator() {
+  //   const { width, height } = this.cameras.main;
+  //   const centerX = width / 2;
+  //   const centerY = height / 2;
 
-    // Container for trump indicator
-    const container = this.add.container(centerX, centerY - 80);
-    const indicatorHeight = 50;
-    const indicatorWidth = 140;
-    const indicatorHeightBg = indicatorHeight * .95;
-    const indicatorWidthBg = indicatorWidth * .95;
+  //   // Container for trump indicator
+  //   const container = this.add.container(centerX, centerY - 80);
+  //   const indicatorHeight = 50;
+  //   const indicatorWidth = 140;
+  //   const indicatorHeightBg = indicatorHeight * .95;
+  //   const indicatorWidthBg = indicatorWidth * .95;
 
-    // Glow effect behind
-    const glow = this.add.graphics();
-    glow.fillStyle(0x6366f1, 0.15);
-    glow.fillRoundedRect(-55, -22, indicatorWidth, indicatorHeight, 22);
+  //   // Glow effect behind
+  //   const glow = this.add.graphics();
+  //   glow.fillStyle(0x6366f1, 0.15);
+  //   glow.fillRoundedRect(-55, -22, indicatorWidth, indicatorHeight, 22);
 
-    // Background with glass effect
-    const bg = this.add.graphics();
-    bg.fillStyle(0x1e293b, 0.95);
-    bg.fillRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
-    bg.lineStyle(1, 0x6366f1, 0.6);
-    bg.strokeRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
+  //   // Background with glass effect
+  //   const bg = this.add.graphics();
+  //   bg.fillStyle(0x1e293b, 0.95);
+  //   bg.fillRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
+  //   bg.lineStyle(1, 0x6366f1, 0.6);
+  //   bg.strokeRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
 
-    // Trump text with responsive font size (width, height already declared above)
-    const trumpText = this.add.text(-30, 0, 'Trump', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('trumpIndicator', width, height),
-      fontStyle: 'bold',
-      color: '#94a3b8',
-    }).setOrigin(0, 0.5);
+  //   // Trump text with responsive font size (width, height already declared above)
+  //   const trumpText = this.add.text(-30, 0, 'Trump', {
+  //     fontFamily: 'Arial, sans-serif',
+  //     fontSize: getFontSize('trumpIndicator', width, height),
+  //     fontStyle: 'bold',
+  //     color: '#94a3b8',
+  //   }).setOrigin(0, 0.5);
 
-    // Spade symbol with glow and responsive font size
-    const spadeSymbol = this.add.text(50, 0, '\u2660', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('trumpSymbol', width, height),
-      color: '#ffffff',
-      shadow: {
-        offsetX: 0,
-        offsetY: 0,
-        color: '#6366f1',
-        blur: 8,
-        fill: true,
-      },
-    }).setOrigin(0.5);
+  //   // Spade symbol with glow and responsive font size
+  //   const spadeSymbol = this.add.text(50, 0, '\u2660', {
+  //     fontFamily: 'Arial, sans-serif',
+  //     fontSize: getFontSize('trumpSymbol', width, height),
+  //     color: '#ffffff',
+  //     shadow: {
+  //       offsetX: 0,
+  //       offsetY: 0,
+  //       color: '#6366f1',
+  //       blur: 8,
+  //       fill: true,
+  //     },
+  //   }).setOrigin(0.5);
 
-    container.add([glow, bg, trumpText, spadeSymbol]);
+  //   container.add([glow, bg, trumpText, spadeSymbol]);
 
-    // Round indicator - sleeker design
-    const roundContainer = this.add.container(centerX, centerY + 75);
+  //   // Round indicator - sleeker design
+  //   const roundContainer = this.add.container(centerX, centerY + 75);
 
-    const roundBg = this.add.graphics();
-    roundBg.fillStyle(0x1e293b, 0.8);
-    roundBg.fillRoundedRect(-45, -12, 90, 24, 12);
-    roundBg.lineStyle(1, 0x475569, 0.4);
-    roundBg.strokeRoundedRect(-45, -12, 90, 24, 12);
+  //   const roundBg = this.add.graphics();
+  //   roundBg.fillStyle(0x1e293b, 0.8);
+  //   roundBg.fillRoundedRect(-45, -12, 90, 24, 12);
+  //   roundBg.lineStyle(1, 0x475569, 0.4);
+  //   roundBg.strokeRoundedRect(-45, -12, 90, 24, 12);
 
-    this.roundText = this.add.text(0, 0, '', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('roundIndicator', width, height),
-      fontStyle: 'bold',
-      color: '#94a3b8',
-    }).setOrigin(0.5);
+  //   this.roundText = this.add.text(0, 0, '', {
+  //     fontFamily: 'Arial, sans-serif',
+  //     fontSize: getFontSize('roundIndicator', width, height),
+  //     fontStyle: 'bold',
+  //     color: '#94a3b8',
+  //   }).setOrigin(0.5);
 
-    roundContainer.add([roundBg, this.roundText]);
+  //   roundContainer.add([roundBg, this.roundText]);
 
-    this.updateRoundText();
-  }
+  //   this.updateRoundText();
+  // }
 
-  updateRoundText() {
-    let round;
-    if (this.isMultiplayer && this.networkManager) {
-      const state = this.networkManager.getState();
-      round = state?.currentRound || 1;
-    } else if (this.gameManager) {
-      round = this.gameManager.getCurrentRound();
-    } else {
-      round = 1;
-    }
-    this.roundText.setText(`Round ${round}/${TOTAL_ROUNDS}`);
-  }
+  // updateRoundText() {
+  //   let round;
+  //   if (this.isMultiplayer && this.networkManager) {
+  //     const state = this.networkManager.getState();
+  //     round = state?.currentRound || 1;
+  //   } else if (this.gameManager) {
+  //     round = this.gameManager.getCurrentRound();
+  //   } else {
+  //     round = 1;
+  //   }
+  //   this.roundText.setText(`Round ${round}/${TOTAL_ROUNDS}`);
+  // }
 
   setupEventListeners() {
     // Turn changed
@@ -767,7 +772,7 @@ export default class GameScene extends Phaser.Scene {
       this.events.emit('phaseChanged', phase);
 
       if (phase === PHASE.PLAYING) {
-        this.updateRoundText();
+        this.roundText.updateRoundText();
       }
     });
 

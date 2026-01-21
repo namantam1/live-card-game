@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import Card from './Card.ts';
-import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants.ts';
-import { sortHand, getValidCards } from '../utils/cards.js';
-import { CARD_CONFIG, isMobile } from '../config/uiConfig.js';
+import Card from './Card';
+import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants';
+import { sortHand, getValidCards } from '../utils/cards';
+import { CARD_CONFIG, isMobile } from '../config/uiConfig';
 
 export default class Hand extends Phaser.GameObjects.Container {
   constructor(scene, position, isHuman = false) {

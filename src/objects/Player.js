@@ -1,6 +1,6 @@
-import Hand from './Hand.js';
-import { PLAYER_POSITIONS, COLORS } from '../utils/constants.ts';
-import { TURN_INDICATOR_CONFIG, isMobile, getFontSize, getResponsiveConfig } from '../config/uiConfig.js';
+import Hand from './Hand';
+import { PLAYER_POSITIONS, COLORS } from '../utils/constants';
+import { TURN_INDICATOR_CONFIG, isMobile, getFontSize, getResponsiveConfig } from '../config/uiConfig';
 
 export default class Player {
   constructor(scene, index, name, emoji, isHuman = false) {
