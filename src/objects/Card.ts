@@ -20,8 +20,9 @@ export default class Card extends Phaser.GameObjects.Container {
 
     // Create card sprite
     const textureKey = faceDown ? 'card-back' : getCardAssetKey(cardData);
+    const scale = faceDown ? CARD.SCALE * 0.9 : CARD.SCALE;
     this.sprite = scene.add.image(0, 0, textureKey);
-    this.sprite.setScale(CARD.SCALE);
+    this.sprite.setScale(scale);
     this.add(this.sprite);
 
     // Add glow effect (hidden by default)
@@ -31,7 +32,7 @@ export default class Card extends Phaser.GameObjects.Container {
     this.sendToBack(this.glow);
 
     // Set size for hit area
-    this.setSize(CARD.WIDTH * CARD.SCALE, CARD.HEIGHT * CARD.SCALE);
+    this.setSize(CARD.WIDTH * scale, CARD.HEIGHT * scale);
 
     // Add to scene
     scene.add.existing(this);

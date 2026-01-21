@@ -36,7 +36,7 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     // Multiplayer button
-    this.createButton(centerX, centerY + 120, 'Multiplayer', () => {
+    this.createButton(centerX, centerY + 150, 'Multiplayer', () => {
       this.sound.stopAll();
       this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
       this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -69,9 +69,10 @@ export default class MenuScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
 
     // Spade icon (using text emoji for simplicity) with responsive font size
-    const spadeIcon = this.add.text(x, y - 50, '\u2660', {
+    const iconSize = getFontSize('menuSpadeIcon', width, height);
+    const spadeIcon = this.add.text(x, y - parseInt(iconSize) * .9, '\u2660', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('menuSpadeIcon', width, height),
+      fontSize: iconSize,
       color: '#818cf8',
     }).setOrigin(0.5);
 
@@ -98,8 +99,8 @@ export default class MenuScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
 
     return Button.create(this, x, y, {
-      width: 220,
-      height: 50,
+      width: 350,
+      height: 80,
       text,
       onClick: callback,
       bgColor,

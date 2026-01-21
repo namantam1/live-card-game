@@ -134,6 +134,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   }
 
   updatePlayableCards() {
+    console.log('Updating playable cards for current turn:', this.currentTurn);
     this.players.forEach((player, index) => {
       if (index === this.currentTurn && player.isHuman) {
         player.updatePlayableCards(this.leadSuit);

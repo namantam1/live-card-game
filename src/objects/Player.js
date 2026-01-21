@@ -36,18 +36,18 @@ export default class Player {
     switch (this.position) {
       case 'bottom':
         labelX = width * 0.5;
-        labelY = height * posConfig.labelY;
+        labelY = height * posConfig.labelY + 30;
         break;
       case 'top':
         labelX = width * 0.5;
-        labelY = height * posConfig.labelY;
+        labelY = height * posConfig.labelY - 20;
         break;
       case 'left':
-        labelX = width * posConfig.labelX;
+        labelX = width * posConfig.labelX - 20;
         labelY = height * 0.5;
         break;
       case 'right':
-        labelX = width * posConfig.labelX;
+        labelX = width * posConfig.labelX + 20;
         labelY = height * 0.5;
         break;
     }
@@ -75,7 +75,7 @@ export default class Player {
     } else {
       // Position below the name label (left/right players)
       statsX = labelX;
-      statsY = labelY + 20;
+      statsY = labelY + 30;
       statsOrigin = { x: 0.5, y: 0.5 }; // Center-aligned
     }
 

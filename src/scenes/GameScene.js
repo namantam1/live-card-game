@@ -675,18 +675,22 @@ export default class GameScene extends Phaser.Scene {
 
     // Container for trump indicator
     const container = this.add.container(centerX, centerY - 80);
+    const indicatorHeight = 50;
+    const indicatorWidth = 140;
+    const indicatorHeightBg = indicatorHeight * .95;
+    const indicatorWidthBg = indicatorWidth * .95;
 
     // Glow effect behind
     const glow = this.add.graphics();
     glow.fillStyle(0x6366f1, 0.15);
-    glow.fillRoundedRect(-55, -22, 110, 44, 22);
+    glow.fillRoundedRect(-55, -22, indicatorWidth, indicatorHeight, 22);
 
     // Background with glass effect
     const bg = this.add.graphics();
     bg.fillStyle(0x1e293b, 0.95);
-    bg.fillRoundedRect(-50, -18, 100, 36, 18);
+    bg.fillRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
     bg.lineStyle(1, 0x6366f1, 0.6);
-    bg.strokeRoundedRect(-50, -18, 100, 36, 18);
+    bg.strokeRoundedRect(-50, -18, indicatorWidthBg, indicatorHeightBg, 18);
 
     // Trump text with responsive font size (width, height already declared above)
     const trumpText = this.add.text(-30, 0, 'Trump', {
@@ -697,7 +701,7 @@ export default class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0.5);
 
     // Spade symbol with glow and responsive font size
-    const spadeSymbol = this.add.text(30, 0, '\u2660', {
+    const spadeSymbol = this.add.text(50, 0, '\u2660', {
       fontFamily: 'Arial, sans-serif',
       fontSize: getFontSize('trumpSymbol', width, height),
       color: '#ffffff',

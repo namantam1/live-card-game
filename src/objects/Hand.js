@@ -107,7 +107,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     const startOffset = -totalSpan / 2;
 
     // Fan effect - slight rotation for each card (only for human player)
-    const fanAngle = this.isHuman ? 2 : 0;
+    const fanAngle = this.isHuman ? 5 : 0;
     const middleIndex = (total - 1) / 2;
     const angleOffset = (index - middleIndex) * fanAngle;
 

@@ -18,25 +18,27 @@ export const BREAKPOINT = {
  * @returns {boolean} - True if mobile size
  */
 export const isMobile = (width, height) => {
-  return width < BREAKPOINT.WIDTH || height < BREAKPOINT.HEIGHT;
+  const isMobile = width < BREAKPOINT.WIDTH || height < BREAKPOINT.HEIGHT;
+  // console.log(`isMobile check: width=${width}, height=${height} => isMobile=${isMobile}`);
+  return isMobile;
 };
 
 // Card sizes
-const CARD_HEIGHT = 240;
-const CARD_WIDTH = (CARD_HEIGHT * 3) / 4;
+const CARD_HEIGHT = 250;
+const CARD_WIDTH = (CARD_HEIGHT * 5) / 7;
 export const CARD_CONFIG = {
   // Base card dimensions
   HEIGHT: CARD_HEIGHT,
   WIDTH: CARD_WIDTH,
 
   // Desktop scale
-  DESKTOP_SCALE: 0.7,
+  DESKTOP_SCALE: 0.9,
 
   // Mobile scale (adjust this to make cards bigger/smaller on mobile)
   MOBILE_SCALE: 0.9,
 
   // Card overlap in hand (desktop)
-  HAND_OVERLAP: 35,
+  HAND_OVERLAP: 50,
 
   // Mobile hand overlap multiplier
   MOBILE_OVERLAP_MULTIPLIER: 0.7,
@@ -48,12 +50,12 @@ export const CARD_CONFIG = {
 // Bidding buttons
 export const BIDDING_CONFIG = {
   DESKTOP: {
-    buttonWidth: 60,
-    buttonHeight: 50,
+    buttonWidth: 80,
+    buttonHeight: 80,
     buttonSpacing: 10,
-    borderRadius: 10,
-    fontSize: '20px',
-    titleFontSize: '22px',
+    borderRadius: 20,
+    fontSize: '30px',
+    titleFontSize: '20px',
   },
   MOBILE: {
     buttonWidth: 60,        // Larger for easier tapping
@@ -107,26 +109,31 @@ export const SETTINGS_ICON_CONFIG = {
 export const FONT_CONFIG = {
   DESKTOP: {
     // Game UI
-    trumpIndicator: '12px',
-    trumpSymbol: '22px',
+    trumpIndicator: '20px',
+    trumpSymbol: '30px',
     roundIndicator: '11px',
 
     // Player labels
-    playerName: '18px',
-    playerStats: '16px',
+    playerName: '20px',
+    playerStats: '20px',
 
     // Menu
-    menuTitle: '48px',
-    menuSpadeIcon: '64px',
-    menuSubtitle: '18px',
-    menuButton: '18px',
+    menuTitle: '100px',
+    menuSpadeIcon: '180px',
+    menuSubtitle: '25px',
+    menuButton: '30px',
+
+    // Lobby
+    lobbyTitle: '100px',
+    lobbySubtitle: '25px',
+    lobbyButton: '30px',
 
     // Modals
-    modalTitle: '24px',
-    modalContent: '14px',
+    modalTitle: '28px',
+    modalContent: '16px',
 
     // Settings
-    settingsLabel: '15px',
+    settingsLabel: '22px',
 
     // Action buttons
     actionButton: '20px',
@@ -178,8 +185,8 @@ export const SPACING_CONFIG = {
 // Turn indicator
 export const TURN_INDICATOR_CONFIG = {
   DESKTOP: {
-    radius: 80,
-    lineWidth: 3,
+    radius: 150,
+    lineWidth: 4,
   },
   MOBILE: {
     radius: 90,
@@ -207,5 +214,6 @@ export const getResponsiveConfig = (config, width, height) => {
  */
 export const getFontSize = (key, width, height) => {
   const config = getResponsiveConfig(FONT_CONFIG, width, height);
+  // console.log(`getFontSize: key=${key}, width=${width}, height=${height} => fontSize=${config[key] || '14px'}`);
   return config[key] || '14px';
 };

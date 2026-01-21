@@ -408,7 +408,7 @@ export default class UIScene extends Phaser.Scene {
     const totalButtonWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
     const padding = 20; // Horizontal padding
     const bgWidth = totalButtonWidth + (padding * 2);
-    const bgHeight = 100;
+    const bgHeight = 140;
 
     // Background - centered
     const bg = this.add.graphics();
@@ -418,7 +418,7 @@ export default class UIScene extends Phaser.Scene {
     bg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
 
     // Title - centered horizontally
-    const title = this.add.text(0, -30, 'Place Your Bid', {
+    const title = this.add.text(0, -50, 'Place Your Bid', {
       fontFamily: 'Arial, sans-serif',
       fontSize: config.titleFontSize,
       fontStyle: 'bold',
@@ -453,11 +453,11 @@ export default class UIScene extends Phaser.Scene {
   showBiddingUI() {
     this.biddingUI.setVisible(true);
     this.biddingUI.alpha = 0;
-    this.biddingUI.y = this.cameras.main.height * 0.6;
+    this.biddingUI.y = this.cameras.main.height * 0.4;
     this.tweens.add({
       targets: this.biddingUI,
       alpha: 1,
-      y: this.cameras.main.height * 0.55,
+      y: this.cameras.main.height * 0.5,
       duration: 300,
       ease: 'Back.easeOut',
     });

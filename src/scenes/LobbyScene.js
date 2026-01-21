@@ -3,6 +3,7 @@ import { COLORS, ANIMATION, SERVER } from '../utils/constants.ts';
 import NetworkManager from '../managers/NetworkManager.js';
 import NetworkIndicator from '../components/NetworkIndicator.js';
 import Button from '../utils/Button.js';
+import { getFontSize } from '../config/uiConfig.js';
 
 export default class LobbyScene extends Phaser.Scene {
   constructor() {
@@ -71,30 +72,31 @@ export default class LobbyScene extends Phaser.Scene {
 
   createMenuView() {
     const { centerX, centerY } = this;
+    const { width, height } = this.cameras.main;
 
     // Title
-    const title = this.add.text(centerX, centerY - 180, 'Call Break', {
+    const title = this.add.text(centerX, centerY - 200, 'Call Break', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '42px',
+      fontSize: getFontSize('lobbyTitle', width, height),
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
 
     const subtitle = this.add.text(centerX, centerY - 130, 'Multiplayer', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
+      fontSize: getFontSize('lobbySubtitle', width, height),
       color: '#94a3b8',
     }).setOrigin(0.5);
 
     // Name input label
     const nameLabel = this.add.text(centerX, centerY - 70, 'Enter your name:', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '22px',
       color: '#cbd5e1',
     }).setOrigin(0.5);
 
     // Name input field (using rexUI InputText)
-    this.nameInput = this.createInputField(centerX, centerY - 30, 200, 'Your Name');
+    this.nameInput = this.createInputField(centerX, centerY - 30, 350, 'Your Name');
     this.nameInput.setDepth(100); // Ensure it renders above other elements
     
     // Load and prefill saved name from localStorage
@@ -109,7 +111,7 @@ export default class LobbyScene extends Phaser.Scene {
     });
 
     // Join Room button
-    const joinBtn = this.createButton(centerX, centerY + 120, 'Join Room', () => {
+    const joinBtn = this.createButton(centerX, centerY + 150, 'Join Room', () => {
       const name = this.nameInput.text.trim();
       if (!name) {
         this.connectionStatus.setText('Please enter your name first').setColor('#ef4444');
@@ -119,7 +121,7 @@ export default class LobbyScene extends Phaser.Scene {
     });
 
     // Back to Menu button
-    const backBtn = this.createButton(centerX, centerY + 190, 'Back to Menu', () => {
+    const backBtn = this.createButton(centerX, centerY + 250, 'Back to Menu', () => {
       this.scene.start('MenuScene');
     }, 0x475569);
 
@@ -147,12 +149,12 @@ export default class LobbyScene extends Phaser.Scene {
     // Room code label
     const codeLabel = this.add.text(centerX, centerY - 50, 'Enter Room Code:', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '22px',
       color: '#cbd5e1',
     }).setOrigin(0.5);
 
     // Room code input
-    this.roomCodeInput = this.createInputField(centerX, centerY - 10, 200, 'XXXX', true);
+    this.roomCodeInput = this.createInputField(centerX, centerY - 10, 350, 'XXXX', true);
     this.roomCodeInput.setDepth(100); // Ensure it renders above other elements
     this.roomCodeInput.setVisible(false); // Hidden initially
 
@@ -162,7 +164,7 @@ export default class LobbyScene extends Phaser.Scene {
     });
 
     // Back button
-    const backBtn = this.createButton(centerX, centerY + 140, 'Back', () => {
+    const backBtn = this.createButton(centerX, centerY + 180, 'Back', () => {
       this.showMenuView();
     }, 0x475569);
 
@@ -182,15 +184,15 @@ export default class LobbyScene extends Phaser.Scene {
     // Title
     const waitTitle = this.add.text(centerX, centerY - 180, 'Waiting Room', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '32px',
+      fontSize: '40px',
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);
 
     // Room code display
-    this.roomCodeDisplay = this.add.text(centerX, centerY - 120, 'Room Code: ----', {
+    this.roomCodeDisplay = this.add.text(centerX, centerY - 135, 'Room Code: ----', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '24px',
+      fontSize: '35px',
       fontStyle: 'bold',
       color: '#22c55e',
     }).setOrigin(0.5);
@@ -198,7 +200,7 @@ export default class LobbyScene extends Phaser.Scene {
     // Copy hint
     const copyHint = this.add.text(centerX, centerY - 85, 'Share this code with friends!', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '14px',
+      fontSize: '22px',
       color: '#94a3b8',
     }).setOrigin(0.5);
 
@@ -208,7 +210,7 @@ export default class LobbyScene extends Phaser.Scene {
     // Waiting text
     this.waitingText = this.add.text(centerX, centerY + 120, 'Waiting for players... (0/4)', {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '22px',
       color: '#94a3b8',
     }).setOrigin(0.5);
 
@@ -219,7 +221,7 @@ export default class LobbyScene extends Phaser.Scene {
     this.readyBtn.setVisible(false);
 
     // Leave button
-    const leaveBtn = this.createButton(centerX, centerY + 250, 'Leave Room', () => {
+    const leaveBtn = this.createButton(centerX, centerY + 280, 'Leave Room', () => {
       this.handleLeaveRoom();
     }, 0xef4444);
 
@@ -228,7 +230,7 @@ export default class LobbyScene extends Phaser.Scene {
 
   createInputField(x, y, width, placeholder, uppercase = false) {
     // Create rexUI CanvasInput (truly canvas-based)
-    const canvasInput = this.add.rexCanvasInput(x, y, width, 45, {
+    const canvasInput = this.add.rexCanvasInput(x, y, width, 50, {
       background: {
         color: 0x1e293b,
         stroke: 0x475569,
@@ -271,13 +273,13 @@ export default class LobbyScene extends Phaser.Scene {
 
   createButton(x, y, text, callback, bgColor = COLORS.PRIMARY) {
     return Button.create(this, x, y, {
-      width: 200,
-      height: 45,
+      width: 350,
+      height: 80,
       text,
       onClick: callback,
       bgColor,
       borderRadius: 10,
-      fontSize: '18px',
+      fontSize: '30px',
       hoverScale: 1.05,
       pressScale: 0.95
     });
@@ -470,20 +472,20 @@ export default class LobbyScene extends Phaser.Scene {
     const localId = this.networkManager.playerId;
 
     players.forEach((player, index) => {
-      const y = -60 + index * 35;
+      const y = -50 + index * 35;
       const isLocal = player.id === localId;
 
       // Player emoji and name
       const nameText = this.add.text(-100, y, `${player.emoji} ${player.name}${isLocal ? ' (You)' : ''}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '16px',
+        fontSize: '22px',
         color: isLocal ? '#22c55e' : '#ffffff',
       }).setOrigin(0, 0.5);
 
       // Ready status
-      const status = this.add.text(100, y, player.isReady ? 'Ready' : 'Waiting...', {
+      const status = this.add.text(150, y, player.isReady ? 'Ready' : 'Waiting...', {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: '22px',
         color: player.isReady ? '#22c55e' : '#94a3b8',
       }).setOrigin(1, 0.5);
 
