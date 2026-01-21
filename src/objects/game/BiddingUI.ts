@@ -5,6 +5,7 @@ import {
   getResponsiveConfig,
 } from '../../config/uiConfig';
 import Button from '../../utils/Button';
+import AudioManager from '../../managers/AudioManager';
 
 export default class BiddingUI {
   private scene: Scene;
@@ -14,7 +15,7 @@ export default class BiddingUI {
   constructor(
     scene: Scene,
     onBidSelected: (bid: number) => void,
-    audioManager: any
+    audioManager: AudioManager,
   ) {
     this.scene = scene;
     const { width, height } = scene.cameras.main;

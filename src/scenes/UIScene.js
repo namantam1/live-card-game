@@ -12,6 +12,8 @@ import {
 import Button from '../utils/Button';
 import ScoreBoard from '../objects/game/ScoreBoard';
 import BiddingUI from '../objects/game/BiddingUI';
+import RoundModal from '../objects/game/RoundModal';
+import GameOverModal from '../objects/game/GameOverModal';
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -36,9 +38,22 @@ export default class UIScene extends Phaser.Scene {
     // Create UI elements
     this.createControlButtons();
     // this.createScoreboard();
-    this.createModals();
 
     this.scoreBoard = new ScoreBoard(this, this.isMultiplayer, this.getPlayersData(), this.getCurrentRound());
+    
+    // Create modals
+    this.roundModal = new RoundModal(
+      this,
+      () => this.gameScene.continueToNextRound(),
+      this.audioManager
+    );
+    
+    this.gameOverModal = new GameOverModal(
+      this,
+      () => this.gameScene.restartGame(),
+      () => this.gameScene.returnToMenu(),
+      this.audioManager
+    );
     
     // Create bidding UI
     this.biddingUI = new BiddingUI(
@@ -289,183 +304,6 @@ export default class UIScene extends Phaser.Scene {
     }
   }
 
-  createModals() {
-    // Round summary modal
-    this.roundModal = this.createModal('Round Complete');
-    this.roundModalContent = this.add.container(0, 0);
-    this.roundModal.add(this.roundModalContent);
-
-    // Game over modal
-    this.gameOverModal = this.createModal('Game Over');
-    this.gameOverModalContent = this.add.container(0, 0);
-    this.gameOverModal.add(this.gameOverModalContent);
-  }
-
-  createModal(title) {
-    const { width, height } = this.cameras.main;
-
-    const modal = this.add.container(width / 2, height / 2);
-    modal.setVisible(false);
-    modal.setDepth(100);
-
-    // Overlay
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.7);
-    overlay.fillRect(-width / 2, -height / 2, width, height);
-
-    // Modal background
-    const bg = this.add.graphics();
-    bg.fillStyle(COLORS.PANEL_BG, 1);
-    bg.fillRoundedRect(-200, -150, 400, 300, 20);
-    bg.lineStyle(2, COLORS.PRIMARY, 0.5);
-    bg.strokeRoundedRect(-200, -150, 400, 300, 20);
-
-    // Title with responsive font size
-    const titleText = this.add.text(0, -120, title, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('modalTitle', width, height),
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    modal.add([overlay, bg, titleText]);
-
-    return modal;
-  }
-
-  showRoundModal(data) {
-    const { width, height } = this.cameras.main;
-    this.roundModalContent.removeAll(true);
-
-    // Player results with responsive font sizes
-    data.players.forEach((player, index) => {
-      const y = -60 + index * 35;
-
-      const name = this.add.text(-150, y, `${player.name}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('modalContent', width, height),
-        color: '#ffffff',
-      });
-
-      const result = this.add.text(0, y, `${player.tricksWon}/${player.bid}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('modalContent', width, height),
-        color: '#94a3b8',
-      }).setOrigin(0.5);
-
-      const score = this.add.text(150, y, player.roundScore >= 0 ? `+${player.roundScore.toFixed(1)}` : `${player.roundScore.toFixed(1)}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('modalContent', width, height),
-        fontStyle: 'bold',
-        color: player.roundScore >= 0 ? '#22c55e' : '#ef4444',
-      }).setOrigin(1, 0);
-
-      this.roundModalContent.add([name, result, score]);
-    });
-
-    // Continue button
-    const button = this.createModalButton(0, 100, 'Continue', () => {
-      this.hideRoundModal();
-      this.gameScene.continueToNextRound();
-    });
-    this.roundModalContent.add(button);
-
-    this.roundModal.setVisible(true);
-    this.roundModal.alpha = 0;
-    this.tweens.add({ targets: this.roundModal, alpha: 1, duration: 300 });
-  }
-
-  hideRoundModal() {
-    this.tweens.add({
-      targets: this.roundModal,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => {
-        this.roundModal.setVisible(false);
-      },
-    });
-  }
-
-  showGameOverModal(data) {
-    this.gameOverModalContent.removeAll(true);
-
-    // Winner announcement
-    const winner = data.winner;
-    const winnerText = this.add.text(0, -70, `${winner.emoji} ${winner.name} Wins!`, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '20px',
-      fontStyle: 'bold',
-      color: '#fbbf24',
-    }).setOrigin(0.5);
-
-    this.gameOverModalContent.add(winnerText);
-
-    // Final scores
-    data.players.forEach((player, index) => {
-      const y = -20 + index * 30;
-
-      const name = this.add.text(-100, y, `${player.emoji} ${player.name}`, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        color: index === 0 ? '#fbbf24' : '#ffffff',
-      });
-
-      const score = this.add.text(100, y, player.score.toFixed(1), {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        fontStyle: 'bold',
-        color: index === 0 ? '#fbbf24' : '#94a3b8',
-      }).setOrigin(1, 0);
-
-      this.gameOverModalContent.add([name, score]);
-    });
-
-    // Buttons
-    const playAgainBtn = this.createModalButton(-70, 110, 'Play Again', () => {
-      this.hideGameOverModal();
-      this.gameScene.restartGame();
-    });
-
-    const menuBtn = this.createModalButton(70, 110, 'Menu', () => {
-      this.hideGameOverModal();
-      this.gameScene.returnToMenu();
-    });
-
-    this.gameOverModalContent.add([playAgainBtn, menuBtn]);
-
-    this.gameOverModal.setVisible(true);
-    this.gameOverModal.alpha = 0;
-    this.tweens.add({ targets: this.gameOverModal, alpha: 1, duration: 300 });
-  }
-
-  hideGameOverModal() {
-    this.tweens.add({
-      targets: this.gameOverModal,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => {
-        this.gameOverModal.setVisible(false);
-      },
-    });
-  }
-
-  createModalButton(x, y, text, callback) {
-    return Button.createGradient(this, x, y, {
-      width: 120,
-      height: 36,
-      text,
-      onClick: callback,
-      primaryColor: COLORS.PRIMARY,
-      secondaryColor: COLORS.SECONDARY,
-      borderRadius: 8,
-      fontSize: '14px',
-      hoverScale: 1.05,
-      pressScale: 0.95,
-      playSound: true,
-      audioManager: this.audioManager
-    });
-  }
-
   setupEventListeners() {
     if (this.isMultiplayer) {
       this.setupMultiplayerEventListeners();
@@ -477,13 +315,13 @@ export default class UIScene extends Phaser.Scene {
     // Round complete
     this.gameScene.events.on('roundComplete', (data) => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
-      this.time.delayedCall(500, () => this.showRoundModal(data));
+      this.time.delayedCall(500, () => this.roundModal.showRoundResults(data));
     });
 
     // Game complete
     this.gameScene.events.on('gameComplete', (data) => {
       this.scoreBoard.updateScoreboard(this.getPlayersData(), this.getCurrentRound());
-      this.time.delayedCall(500, () => this.showGameOverModal(data));
+      this.time.delayedCall(500, () => this.gameOverModal.showGameResults(data));
     });
   }
 
