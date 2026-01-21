@@ -12,27 +12,48 @@ export default abstract class BaseModal {
   protected titleText: Phaser.GameObjects.Text;
   protected content: Phaser.GameObjects.Container;
   protected audioManager: AudioManager;
+  protected closeOnOverlayClick: boolean;
 
-  constructor(scene: Scene, title: string, audioManager: AudioManager) {
+  constructor(scene: Scene, title: string, audioManager: AudioManager, closeOnOverlayClick: boolean = false) {
     this.audioManager = audioManager;
     this.scene = scene;
+    this.closeOnOverlayClick = closeOnOverlayClick;
     const { width, height } = scene.cameras.main;
 
     this.modal = scene.add.container(width / 2, height / 2);
     this.modal.setVisible(false);
     this.modal.setDepth(100);
 
-    // Overlay
+    // Overlay - make it interactive to block clicks
     this.overlay = scene.add.graphics();
     this.overlay.fillStyle(0x000000, 0.7);
     this.overlay.fillRect(-width / 2, -height / 2, width, height);
+    this.overlay.setInteractive(
+      new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    // Add overlay click handler if closeOnOverlayClick is enabled
+    if (this.closeOnOverlayClick) {
+      this.overlay.on('pointerdown', () => {
+        this.hide();
+      });
+    }
 
-    // Modal background
+    // Modal background - make it interactive to prevent click-through
     this.bg = scene.add.graphics();
     this.bg.fillStyle(COLORS.PANEL_BG, 1);
     this.bg.fillRoundedRect(-200, -150, 400, 300, 20);
     this.bg.lineStyle(2, COLORS.PRIMARY, 0.5);
     this.bg.strokeRoundedRect(-200, -150, 400, 300, 20);
+    this.bg.setInteractive(
+      new Phaser.Geom.Rectangle(-200, -150, 400, 300),
+      Phaser.Geom.Rectangle.Contains
+    );
+    this.bg.on('pointerdown', (pointer: any, localX: number, localY: number, event: any) => {
+      // Stop event propagation to prevent clicks from going through
+      event.stopPropagation();
+    });
 
     // Title with responsive font size
     this.titleText = scene.add.text(0, -120, title, {

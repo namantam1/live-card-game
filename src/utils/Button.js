@@ -349,4 +349,95 @@ export default class Button {
 
     return container;
   }
+
+  /**
+   * Create a circular icon button
+   * @param {Phaser.Scene} scene - The scene
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {Object} config - Button configuration
+   */
+  static createIconButton(scene, x, y, config) {
+    const {
+      iconSize = 24,
+      icon = '\u2699',
+      fontSize = '24px',
+      onClick,
+      bgColor = 0x1e293b,
+      bgAlpha = 0.9,
+      borderColor = 0x6366f1,
+      borderAlpha = 0.5,
+      iconColor = '#94a3b8',
+      iconHoverColor = '#ffffff',
+      hoverScale = 1.1,
+      audioManager
+    } = config;
+
+    const container = scene.add.container(x, y);
+
+    // Circular background
+    const bg = scene.add.graphics();
+    bg.fillStyle(bgColor, bgAlpha);
+    bg.fillCircle(0, 0, iconSize);
+    bg.lineStyle(2, borderColor, borderAlpha);
+    bg.strokeCircle(0, 0, iconSize);
+
+    // Icon text
+    const iconText = scene.add.text(0, 0, icon, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: fontSize,
+      color: iconColor,
+    }).setOrigin(0.5);
+
+    container.add([bg, iconText]);
+
+    container.setInteractive({
+      hitArea: new Phaser.Geom.Circle(0, 0, iconSize + 5),
+      hitAreaCallback: Phaser.Geom.Circle.Contains,
+      useHandCursor: true
+    });
+    container.setDepth(1000);
+
+    let isPressed = false;
+
+    container.on('pointerover', () => {
+      if (!isPressed && !scene.sys.game.device.input.touch) {
+        iconText.setColor(iconHoverColor);
+        scene.tweens.add({
+          targets: container,
+          scaleX: hoverScale,
+          scaleY: hoverScale,
+          duration: 100
+        });
+      }
+    });
+
+    container.on('pointerout', () => {
+      if (!isPressed) {
+        iconText.setColor(iconColor);
+        scene.tweens.add({
+          targets: container,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 100
+        });
+      }
+    });
+
+    container.on('pointerdown', () => {
+      isPressed = true;
+      if (audioManager) audioManager.playButtonSound();
+    });
+
+    container.on('pointerup', () => {
+      if (isPressed) {
+        isPressed = false;
+        iconText.setColor(iconColor);
+        container.setScale(1);
+        onClick();
+      }
+    });
+
+    return container;
+  }
 }
