@@ -124,7 +124,7 @@ export default class SettingsModal extends BaseModal {
   }
 
   showSettings() {
-    console.log('Showing settings modal');
+    // console.log('Showing settings modal');
     this.show();
   }
 }
