@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['icon.svg', 'cards/**/*', 'audio/**/*'],
+      includeAssets: ['icons/*', 'cards/**/*', 'audio/**/*'],
 
       manifest: {
         name: 'Call Break',
@@ -30,33 +30,29 @@ export default defineConfig({
         orientation: 'landscape',
         start_url: '/',
         scope: '/',
-        icons: [
+        "icons": [
           {
-            src: 'pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png'
+            "src": "icons/web-app-manifest-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
           },
           {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            "src": "icons/web-app-manifest-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
           },
           {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'maskable-icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/png"
           }
-        ]
+        ],
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp,mp3,ogg,wav}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp,mp3,ogg,wav,map}'],
 
         // Increase file size limit for large audio files (bgm.mp3 is ~9MB)
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
@@ -119,7 +115,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: false,
+        enabled: true,
         type: 'module'
       }
     })
