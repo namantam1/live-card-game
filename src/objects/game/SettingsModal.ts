@@ -6,16 +6,19 @@ import AudioManager from '../../managers/AudioManager';
 import { COLORS } from '../../utils/constants';
 
 export default class SettingsModal extends BaseModal {
-  private onNewGame: () => void;
+  private onNewGame: (() => void) | null;
   private onQuit: () => void;
 
   constructor(
     scene: Scene,
-    onNewGame: () => void,
-    onQuit: () => void,
-    audioManager: AudioManager
+    config: {
+      audioManager: AudioManager
+      onQuit: () => void,
+      onNewGame: null | (() => void),
+    }
   ) {
-    super(scene, 'Settings', audioManager, true); // Enable close on overlay click
+    const { onNewGame, onQuit, audioManager } = config;
+    super(scene, 'Settings', audioManager, true, 450, onNewGame ? 300 : 250);
     this.onNewGame = onNewGame;
     this.onQuit = onQuit;
     
@@ -24,40 +27,45 @@ export default class SettingsModal extends BaseModal {
 
   private buildSettingsContent() {
     const { width, height } = this.scene.cameras.main;
-    const startY = -60;
+    let startY = -50;
     const itemSpacing = 50;
 
     // Music row
     this.createSettingRow(0, startY, 'Music', this.audioManager.isMusicEnabled(), () => {
       this.audioManager.toggleMusic();
     });
+    startY += itemSpacing;
 
     // Sound row
-    this.createSettingRow(0, startY + itemSpacing, 'Sound', this.audioManager.isSoundEnabled(), () => {
+    this.createSettingRow(0, startY, 'Sound', this.audioManager.isSoundEnabled(), () => {
       this.audioManager.toggleButtonSound();
     });
+    startY += itemSpacing;
 
     // Divider
     const divider = this.scene.add.graphics();
     divider.fillStyle(0x475569, 0.3);
-    divider.fillRect(-100, startY + itemSpacing * 2 - 15, 200, 1);
+    divider.fillRect(-100, startY - 20, 200, 1);
     this.content.add(divider);
 
     // Action buttons
-    const newGameBtn = Button.create(this.scene, 0, startY + itemSpacing * 2 + 15, {
-      width: 180,
-      height: 44,
-      text: 'New Game',
-      onClick: () => {
-        this.hide();
-        this.onNewGame();
-      },
-      fontSize: getFontSize('actionButton', width, height),
-      audioManager: this.audioManager
-    });
-    this.content.add(newGameBtn);
+    if (this.onNewGame) {
+      const newGameBtn = Button.create(this.scene, 0, startY + 15, {
+        width: 180,
+        height: 44,
+        text: 'New Game',
+        onClick: () => {
+          this.hide();
+          this.onNewGame!();
+        },
+        fontSize: getFontSize('actionButton', width, height),
+        audioManager: this.audioManager
+      });
+      this.content.add(newGameBtn);
+      startY += itemSpacing;
+    }
 
-    const quitBtn = Button.create(this.scene, 0, startY + itemSpacing * 3 + 15, {
+    const quitBtn = Button.create(this.scene, 0, startY + 15, {
       width: 180,
       height: 44,
       text: 'Quit',

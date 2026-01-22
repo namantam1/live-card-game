@@ -42,6 +42,7 @@ export class CallBreakRoom extends Room<GameState> {
     this.onMessage('bid', (client, data: BidData) => this.handleBid(client, data));
     this.onMessage('playCard', (client, data: PlayCardData) => this.handlePlayCard(client, data));
     this.onMessage('nextRound', (client) => this.handleNextRound(client));
+    // TODO: This restart doesn;t make any sense in multiplayer, Do cleanup
     this.onMessage('restart', (client) => this.handleRestart(client));
   }
 

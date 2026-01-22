@@ -1,5 +1,7 @@
 import NetworkIndicator from "../components/NetworkIndicator";
 import { CARD_CONFIG, getResponsiveConfig, SETTINGS_ICON_CONFIG } from "../config/uiConfig";
+import AudioManager from "../managers/AudioManager";
+import SettingsModal from "../objects/game/SettingsModal";
 import { CardData } from "../type";
 import Button from "../utils/Button";
 import { createDeck } from "../utils/cards";
@@ -83,19 +85,31 @@ export default class DebugScene extends Phaser.Scene {
         //         }
         //     )
         // });
+        new SettingsModal(
+            this,
+            {
+                audioManager: new AudioManager(this),
+                onNewGame: () => {
+                    console.log('New Game clicked');
+                },
+                onQuit: () => {
+                    console.log('Quit clicked');
+                },
+            }
+        ).showSettings();
 
 
-        const { width, height } = this.cameras.main;
-        const config = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
-        const { iconSize, fontSize, margin } = config;
-        Button.createIconButton(this, width - margin, margin, {
-            iconSize,
-            fontSize,
-            icon: '\u2699',
-            onClick: () => console.log('Settings clicked'),
-            audioManager: null
-        });
+        // const { width, height } = this.cameras.main;
+        // const config = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
+        // const { iconSize, fontSize, margin } = config;
+        // Button.createIconButton(this, width - margin, margin, {
+        //     iconSize,
+        //     fontSize,
+        //     icon: '\u2699',
+        //     onClick: () => console.log('Settings clicked'),
+        //     audioManager: null
+        // });
 
-        (window as any).indicator = new NetworkIndicator(this, width - 110, 40);
+        // (window as any).indicator = new NetworkIndicator(this, width - 110, 40);
     }
 }

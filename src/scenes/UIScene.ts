@@ -80,10 +80,12 @@ export default class UIScene extends Phaser.Scene {
     });
     
     this.settingsModal = new SettingsModal(
-      this,
-      () => this.gameScene.restartGame(),
-      () => this.gameScene.returnToMenu(),
-      this.audioManager
+      this, 
+      { 
+        audioManager: this.audioManager, 
+        onQuit: () => this.gameScene.returnToMenu(),
+        onNewGame: !this.isMultiplayer ? (() => this.gameScene.restartGame()) : null
+      }
     );
     
     // Create bidding UI
