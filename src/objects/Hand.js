@@ -52,36 +52,32 @@ export default class Hand extends Phaser.GameObjects.Container {
       const faceDown = !this.isHuman;
 
       // Create card at center (deck position)
-      const card = new Card(this.scene, centerX, centerY, cardData, faceDown);
-      card.setScale(0.3 * this.cardScale / CARD.SCALE); // Scale relative to base scale
+      const card = new Card(this.scene, {
+        x: centerX,
+        y: centerY,
+        cardData,
+        faceDown,
+        onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+      });
+
+      // Set initial small scale
+      await card.moveTo({ scale: 0.3 * this.cardScale / CARD.SCALE });
 
       // Calculate target position in hand
       const targetPos = this.getCardPosition(i, cardDataArray.length);
 
       // Animate to hand
-      await new Promise((resolve) => {
-        this.scene.tweens.add({
-          targets: card,
-          x: this.x + targetPos.x,
-          y: this.y + targetPos.y,
-          rotation: this.rotation + targetPos.rotation,
-          scaleX: this.cardScale,
-          scaleY: this.cardScale,
-          duration: ANIMATION.CARD_DEAL,
-          ease: 'Quad.easeOut',
-          onComplete: resolve,
-        });
+      await card.moveTo({
+        x: this.x + targetPos.x,
+        y: this.y + targetPos.y,
+        rotation: this.rotation + targetPos.rotation,
+        scale: this.cardScale,
+        animate: true,
+        duration: ANIMATION.CARD_DEAL,
+        ease: 'Quad.easeOut',
       });
 
-      card.originalY = this.y + targetPos.y;
       this.cards.push(card);
-
-      // Setup click handler for human cards
-      if (this.isHuman) {
-        card.on('cardClicked', (data) => {
-          this.emit('cardPlayed', data, card);
-        });
-      }
     }
 
     return Promise.resolve();
@@ -90,14 +86,14 @@ export default class Hand extends Phaser.GameObjects.Container {
   createCards(cardDataArray) {
     cardDataArray.forEach((cardData) => {
       const faceDown = !this.isHuman;
-      const card = new Card(this.scene, 0, 0, cardData, faceDown);
+      const card = new Card(this.scene, {
+        x: 0,
+        y: 0,
+        cardData,
+        faceDown,
+        onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+      });
       this.cards.push(card);
-
-      if (this.isHuman) {
-        card.on('cardClicked', (data) => {
-          this.emit('cardPlayed', data, card);
-        });
-      }
     });
   }
 
@@ -138,25 +134,15 @@ export default class Hand extends Phaser.GameObjects.Container {
       const targetY = this.y + pos.y;
       const targetRotation = this.rotation + pos.rotation;
 
-      if (animate) {
-        this.scene.tweens.add({
-          targets: card,
-          x: targetX,
-          y: targetY,
-          rotation: targetRotation,
-          scaleX: this.cardScale,
-          scaleY: this.cardScale,
-          duration: 200,
-          ease: 'Quad.easeOut',
-        });
-      } else {
-        card.x = targetX;
-        card.y = targetY;
-        card.rotation = targetRotation;
-        card.setScale(this.cardScale);
-      }
-
-      card.originalY = targetY;
+      card.moveTo({
+        x: targetX,
+        y: targetY,
+        rotation: targetRotation,
+        scale: this.cardScale,
+        animate,
+        duration: 200,
+        ease: 'Quad.easeOut',
+      });
     });
   }
 
@@ -188,20 +174,19 @@ export default class Hand extends Phaser.GameObjects.Container {
     const centerY = height / 2;
 
     // Create card at center (deck position) or at hand position
-    const card = new Card(this.scene, animate ? centerX : this.x, animate ? centerY : this.y, cardData, faceDown);
+    const card = new Card(this.scene, {
+      x: animate ? centerX : this.x,
+      y: animate ? centerY : this.y,
+      cardData,
+      faceDown,
+      onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+    });
 
     if (animate) {
-      card.setScale(0.3);
+      card.moveTo({ scale: 0.3 });
     }
 
     this.cards.push(card);
-
-    // Setup click handler for human cards
-    if (this.isHuman) {
-      card.on('cardClicked', (data) => {
-        this.emit('cardPlayed', data, card);
-      });
-    }
 
     // Rearrange all cards
     this.arrangeCards(animate);
@@ -265,7 +250,7 @@ export default class Hand extends Phaser.GameObjects.Container {
       for (let i = 0; i < cardsToAdd; i++) {
         // Create a dummy card object for placeholder
         const dummyCard = { id: `placeholder_${Date.now()}_${i}`, suit: '', rank: '', value: 0 };
-        const card = new Card(this.scene, this.x, this.y, dummyCard, true);
+        const card = new Card(this.scene, { x: this.x, y: this.y, cardData: dummyCard, faceDown: true });
         this.cards.push(card);
       }
     } else {

@@ -377,6 +377,12 @@ export default class GameScene extends Phaser.Scene {
             yoyo: true,
           });
         }
+
+        // Animate cards being collected to the winner
+        const winnerIndex = this.players.indexOf(winner);
+        this.time.delayedCall(1000, () => {
+          this.trickArea.collectTrick(winnerIndex, 400 as any);
+        });
       }
       // For bots not in players array, just collect the trick without animation
     });

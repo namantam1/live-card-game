@@ -55,16 +55,18 @@ export default class TrickArea extends Phaser.GameObjects.Container {
       }
 
       // Normalize scale to match trick area scale (in case hand scale differs)
-      card.setScale(this.trickCardScale);
+      await card.moveTo({ scale: this.trickCardScale });
 
       // Animate to center
       await card.animateToWithBounce(targetX, targetY, ANIMATION.CARD_TO_CENTER);
-      card.rotation = Phaser.Math.DegToRad(offset.rotation);
+      await card.moveTo({ rotation: Phaser.Math.DegToRad(offset.rotation) });
     } else {
       // Create new card at center position
-      card = new Card(this.scene, targetX, targetY, cardData, false);
-      card.setScale(this.trickCardScale); // Use consistent scale
-      card.rotation = Phaser.Math.DegToRad(offset.rotation);
+      card = new Card(this.scene, { x: targetX, y: targetY, cardData, faceDown: false });
+      await card.moveTo({
+        scale: this.trickCardScale,
+        rotation: Phaser.Math.DegToRad(offset.rotation)
+      });
     }
 
     // Play sound
@@ -105,7 +107,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     oscillator.stop(audioContext.currentTime + 0.1);
   }
 
-  async collectTrick(winnerIndex) {
+  async collectTrick(winnerIndex, duration = ANIMATION.TRICK_COLLECT) {
     const { width, height } = this.scene.cameras.main;
 
     // Determine winner position
@@ -120,21 +122,16 @@ export default class TrickArea extends Phaser.GameObjects.Container {
 
     // Animate all cards to winner
     const promises = this.playedCards.map(({ card }, index) => {
-      return new Promise((resolve) => {
-        this.scene.tweens.add({
-          targets: card,
-          x: target.x,
-          y: target.y,
-          alpha: 0,
-          scale: 0.5,
-          duration: ANIMATION.TRICK_COLLECT,
-          delay: index * 50,
-          ease: 'Quad.easeIn',
-          onComplete: () => {
-            card.destroy();
-            resolve();
-          },
-        });
+      return card.moveTo({
+        x: target.x,
+        y: target.y,
+        alpha: 0,
+        scale: 0.5,
+        animate: true,
+        duration,
+        delay: index * 50,
+        ease: 'Quad.easeIn',
+        onComplete: () => card.destroy(),
       });
     });
 
