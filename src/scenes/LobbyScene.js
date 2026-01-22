@@ -52,7 +52,7 @@ export default class LobbyScene extends Phaser.Scene {
     const { width } = this.cameras.main;
 
     // Create network indicator in top-right corner
-    this.networkIndicator = new NetworkIndicator(this, width - 50, 40);
+    this.networkIndicator = new NetworkIndicator(this, width - 50, 50);
     // this.networkIndicator.setVisible(false); // Hide until connected
   }
 

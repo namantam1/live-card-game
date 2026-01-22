@@ -1,6 +1,12 @@
 import { Scene } from "phaser";
-import { getFontSize } from "../../utils/uiConfig";
+import {
+  getFontSize,
+  getResponsiveConfig,
+  SETTINGS_ICON_CONFIG,
+} from "../../utils/uiConfig";
 import { Position } from "../../type";
+import Button from "../../components/Button";
+import AudioManager from "../../managers/AudioManager";
 
 export default class Common {
   static createBackground(scene: Scene): void {
@@ -226,5 +232,21 @@ export default class Common {
       .setOrigin(0.5, 0.5);
 
     container.add([glow, bg, trumpText, spadeSymbol]);
+  }
+
+  static createSettingIcon(
+    scene: Scene,
+    config: { audioManager: AudioManager; onClick: () => void },
+  ): void {
+    const { width, height } = scene.cameras.main;
+    const iconConfig = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
+    const { iconSize, fontSize, margin } = iconConfig;
+    Button.createIconButton(scene, width - margin, margin, {
+      iconSize,
+      fontSize,
+      icon: "\u2699",
+      onClick: config.onClick,
+      audioManager: config.audioManager,
+    });
   }
 }

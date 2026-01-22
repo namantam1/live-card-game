@@ -4,6 +4,19 @@ import { getFontSize } from "../../utils/uiConfig";
 import Button from "../../components/Button";
 import AudioManager from "../../managers/AudioManager";
 
+const HEIGHT = 300;
+const WIDTH = 300;
+
+type ModalButtonParams = {
+  x: number;
+  y: number;
+  text: string;
+  callback: () => void;
+  height?: number;
+  width?: number;
+  bgColor?: number;
+};
+
 export default abstract class BaseModal {
   protected scene: Scene;
   protected modal: Phaser.GameObjects.Container;
@@ -19,8 +32,8 @@ export default abstract class BaseModal {
     title: string,
     audioManager: AudioManager,
     closeOnOverlayClick: boolean = false,
-    modalWidth: number = 400,
-    modalHeight: number = 300,
+    modalWidth: number = WIDTH,
+    modalHeight: number = HEIGHT,
   ) {
     this.audioManager = audioManager;
     this.scene = scene;
@@ -96,9 +109,10 @@ export default abstract class BaseModal {
       .setOrigin(0.5);
 
     // Content container
-    this.content = scene.add.container(0, 0);
+    this.content = scene.add.container(0, this.titleText.height);
 
     this.modal.add([this.overlay, this.bg, this.titleText, this.content]);
+    this.modal.scale = 2;
   }
 
   protected show() {
@@ -126,19 +140,23 @@ export default abstract class BaseModal {
     this.content.removeAll(true);
   }
 
-  protected createModalButton(
-    x: number,
-    y: number,
-    text: string,
-    callback: () => void,
-  ) {
+  protected createModalButton({
+    x,
+    y,
+    text,
+    callback,
+    height = 44,
+    width = 180,
+    bgColor,
+  }: ModalButtonParams) {
     return Button.create(this.scene, x, y, {
-      width: 120,
-      height: 36,
+      width,
+      height,
       text,
       onClick: callback,
       borderRadius: 8,
-      fontSize: "14px",
+      bgColor,
+      fontSize: "20px",
       hoverScale: 1.05,
       pressScale: 0.95,
       playSound: true,

@@ -1,9 +1,13 @@
-import { Scene } from 'phaser';
-import BaseModal from './BaseModal';
-import Button from '../../components/Button';
-import { getFontSize } from '../../utils/uiConfig';
-import AudioManager from '../../managers/AudioManager';
-import { COLORS } from '../../utils/constants';
+import { Scene } from "phaser";
+import BaseModal from "./BaseModal";
+import AudioManager from "../../managers/AudioManager";
+import { COLORS } from "../../utils/constants";
+
+const HEIGHT = 300;
+const WIDTH = 300;
+const TITLE_FONT_SIZE = "24px";
+const SETTINGS_LABEL_FONT_SIZE = "22px";
+const ITEM_SPACING = 50;
 
 export default class SettingsModal extends BaseModal {
   private onNewGame: (() => void) | null;
@@ -12,35 +16,52 @@ export default class SettingsModal extends BaseModal {
   constructor(
     scene: Scene,
     config: {
-      audioManager: AudioManager
-      onQuit: () => void,
-      onNewGame: null | (() => void),
-    }
+      audioManager: AudioManager;
+      onQuit: () => void;
+      onNewGame: null | (() => void);
+    },
   ) {
     const { onNewGame, onQuit, audioManager } = config;
-    super(scene, 'Settings', audioManager, true, 450, onNewGame ? 300 : 250);
+    super(
+      scene,
+      "Settings",
+      audioManager,
+      true,
+      WIDTH,
+      onNewGame ? HEIGHT : HEIGHT - ITEM_SPACING,
+    );
     this.onNewGame = onNewGame;
     this.onQuit = onQuit;
-    
+
     this.buildSettingsContent();
   }
 
   private buildSettingsContent() {
-    const { width, height } = this.scene.cameras.main;
-    let startY = -50;
-    const itemSpacing = 50;
+    let startY = -80;
 
     // Music row
-    this.createSettingRow(0, startY, 'Music', this.audioManager.isMusicEnabled(), () => {
-      this.audioManager.toggleMusic();
-    });
-    startY += itemSpacing;
+    this.createSettingRow(
+      0,
+      startY,
+      "Music",
+      this.audioManager.isMusicEnabled(),
+      () => {
+        this.audioManager.toggleMusic();
+      },
+    );
+    startY += ITEM_SPACING;
 
     // Sound row
-    this.createSettingRow(0, startY, 'Sound', this.audioManager.isSoundEnabled(), () => {
-      this.audioManager.toggleButtonSound();
-    });
-    startY += itemSpacing;
+    this.createSettingRow(
+      0,
+      startY,
+      "Sound",
+      this.audioManager.isSoundEnabled(),
+      () => {
+        this.audioManager.toggleButtonSound();
+      },
+    );
+    startY += ITEM_SPACING;
 
     // Divider
     const divider = this.scene.add.graphics();
@@ -50,47 +71,50 @@ export default class SettingsModal extends BaseModal {
 
     // Action buttons
     if (this.onNewGame) {
-      const newGameBtn = Button.create(this.scene, 0, startY + 15, {
-        width: 180,
-        height: 44,
-        text: 'New Game',
-        onClick: () => {
+      const newGameBtn = this.createModalButton({
+        x: 0,
+        y: startY + 15,
+        text: "New Game",
+        callback: () => {
           this.hide();
           this.onNewGame!();
         },
-        fontSize: getFontSize('actionButton', width, height),
-        audioManager: this.audioManager
       });
       this.content.add(newGameBtn);
-      startY += itemSpacing;
+      startY += ITEM_SPACING;
     }
 
-    const quitBtn = Button.create(this.scene, 0, startY + 15, {
-      width: 180,
-      height: 44,
-      text: 'Quit',
-      onClick: () => {
+    const quitBtn = this.createModalButton({
+      x: 0,
+      y: startY + 15,
+      text: "Quit",
+      callback: () => {
         this.hide();
         this.onQuit();
       },
       bgColor: COLORS.DANGER,
-      fontSize: getFontSize('actionButton', width, height),
-      audioManager: this.audioManager
     });
     this.content.add(quitBtn);
   }
 
-  private createSettingRow(x: number, y: number, label: string, initialState: boolean, callback: () => void) {
+  private createSettingRow(
+    x: number,
+    y: number,
+    label: string,
+    initialState: boolean,
+    callback: () => void,
+  ) {
     const container = this.scene.add.container(x, y);
     let isEnabled = initialState;
-    const { width, height } = this.scene.cameras.main;
 
     // Label with responsive font size
-    const labelText = this.scene.add.text(-100, 0, label, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: getFontSize('settingsLabel', width, height),
-      color: '#e2e8f0',
-    }).setOrigin(0, 0.5);
+    const labelText = this.scene.add
+      .text(-100, 0, label, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: SETTINGS_LABEL_FONT_SIZE,
+        color: "#e2e8f0",
+      })
+      .setOrigin(0, 0.5);
 
     // Toggle pill
     const toggleWidth = 46;
@@ -101,7 +125,13 @@ export default class SettingsModal extends BaseModal {
     const drawToggle = () => {
       toggleBg.clear();
       toggleBg.fillStyle(isEnabled ? 0x6366f1 : 0x334155, 1);
-      toggleBg.fillRoundedRect(100 - toggleWidth, -toggleHeight / 2, toggleWidth, toggleHeight, toggleHeight / 2);
+      toggleBg.fillRoundedRect(
+        100 - toggleWidth,
+        -toggleHeight / 2,
+        toggleWidth,
+        toggleHeight,
+        toggleHeight / 2,
+      );
 
       toggleKnob.clear();
       toggleKnob.fillStyle(0xffffff, 1);
@@ -110,9 +140,16 @@ export default class SettingsModal extends BaseModal {
     };
     drawToggle();
 
-    const hitArea = this.scene.add.rectangle(100 - toggleWidth / 2, 0, toggleWidth + 10, toggleHeight + 10, 0x000000, 0);
+    const hitArea = this.scene.add.rectangle(
+      100 - toggleWidth / 2,
+      0,
+      toggleWidth + 10,
+      toggleHeight + 10,
+      0x000000,
+      0,
+    );
     hitArea.setInteractive({ useHandCursor: true });
-    hitArea.on('pointerdown', () => {
+    hitArea.on("pointerdown", () => {
       isEnabled = !isEnabled;
       drawToggle();
       this.audioManager.playButtonSound();

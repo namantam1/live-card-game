@@ -1,15 +1,15 @@
-import Phaser from 'phaser';
-import Player from '../objects/Player';
-import TrickArea from '../objects/TrickArea';
-import GameManager from '../managers/GameManager';
-import AudioManager from '../managers/AudioManager';
-import NetworkIndicator from '../components/NetworkIndicator';
-import { PHASE, EVENTS, Suit } from '../utils/constants';
-import { RoundIndicator } from '../objects/game/RoundIndicator';
-import { ReconnectionOverlay } from '../objects/game/ReconnectionOverlay';
-import NetworkManager from '../managers/NetworkManager';
-import { CardData } from '../type';
-import Common from '../objects/game/Common';
+import Phaser from "phaser";
+import Player from "../objects/Player";
+import TrickArea from "../objects/TrickArea";
+import GameManager from "../managers/GameManager";
+import AudioManager from "../managers/AudioManager";
+import NetworkIndicator from "../components/NetworkIndicator";
+import { PHASE, EVENTS, Suit } from "../utils/constants";
+import { RoundIndicator } from "../objects/game/RoundIndicator";
+import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
+import NetworkManager from "../managers/NetworkManager";
+import { CardData } from "../type";
+import Common from "../objects/game/Common";
 
 export default class GameScene extends Phaser.Scene {
   isMultiplayer: boolean;
@@ -23,7 +23,7 @@ export default class GameScene extends Phaser.Scene {
   reconnectionOverlay!: ReconnectionOverlay;
 
   constructor() {
-    super({ key: 'GameScene' });
+    super({ key: "GameScene" });
     this.isMultiplayer = false;
   }
 
@@ -52,9 +52,12 @@ export default class GameScene extends Phaser.Scene {
 
     // Create trump indicator
     Common.createTrumpIndicator(this);
-    this.roundText = new RoundIndicator(this, this.isMultiplayer, 
-      this.networkManager!!, this.gameManager);
-    
+    this.roundText = new RoundIndicator(
+      this,
+      this.isMultiplayer,
+      this.networkManager!!,
+      this.gameManager,
+    );
 
     // Create trick area
     this.trickArea = new TrickArea(this);
@@ -79,13 +82,13 @@ export default class GameScene extends Phaser.Scene {
         i,
         playerInfo[i].name,
         playerInfo[i].emoji,
-        playerInfo[i].isHuman
+        playerInfo[i].isHuman,
       );
       this.players.push(player);
 
       // Listen for card play events from human player
       if (player.isHuman) {
-        player.hand.on('cardPlayed', (cardData: CardData) => {
+        player.hand.on("cardPlayed", (cardData: CardData) => {
           this.onHumanCardPlayed(cardData);
         });
       }
@@ -98,7 +101,7 @@ export default class GameScene extends Phaser.Scene {
     this.setupEventListeners();
 
     // Launch UI scene
-    this.scene.launch('UIScene', {
+    this.scene.launch("UIScene", {
       gameManager: this.gameManager,
       audioManager: this.audioManager,
       isMultiplayer: false,
@@ -110,8 +113,8 @@ export default class GameScene extends Phaser.Scene {
 
   setupMultiplayer() {
     if (!this.networkManager) {
-      console.error('No network manager provided for multiplayer!');
-      this.scene.start('MenuScene');
+      console.error("No network manager provided for multiplayer!");
+      this.scene.start("MenuScene");
       return;
     }
 
@@ -124,7 +127,7 @@ export default class GameScene extends Phaser.Scene {
     const localId = this.networkManager.playerId;
 
     // Find local player's seat index
-    const localPlayer = networkPlayers.find(p => p.id === localId);
+    const localPlayer = networkPlayers.find((p) => p.id === localId);
     const localSeatIndex = localPlayer ? localPlayer.seatIndex : 0;
 
     // Create player objects with relative positioning
@@ -140,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
         relativePosition,
         netPlayer.name,
         netPlayer.emoji,
-        isLocal // isHuman = isLocal in multiplayer
+        isLocal, // isHuman = isLocal in multiplayer
       );
       this.players.push(player);
 
@@ -150,7 +153,7 @@ export default class GameScene extends Phaser.Scene {
 
       // Listen for card play events from local player
       if (isLocal) {
-        player.hand.on('cardPlayed', (cardData: CardData) => {
+        player.hand.on("cardPlayed", (cardData: CardData) => {
           this.onMultiplayerCardPlayed(cardData);
         });
       }
@@ -164,7 +167,7 @@ export default class GameScene extends Phaser.Scene {
     this.setupNetworkListeners();
 
     // Launch UI scene
-    this.scene.launch('UIScene', {
+    this.scene.launch("UIScene", {
       gameManager: null, // No local game manager in multiplayer
       audioManager: this.audioManager,
       isMultiplayer: true,
@@ -180,25 +183,23 @@ export default class GameScene extends Phaser.Scene {
 
     // Create network indicator in top-right corner, to the left of settings icon
     // Settings icon is at (width - margin), so place this at (width - margin - 60)
-    this.networkIndicator = new NetworkIndicator(this, width - 110, 40);
+    this.networkIndicator = new NetworkIndicator(this, width - 150, 50);
 
     // Create reconnection overlay (hidden by default)
     this.reconnectionOverlay = new ReconnectionOverlay(this);
   }
 
-
-
   setupNetworkListeners() {
     // Connection quality changes
-    this.networkManager.on('connectionQualityChange', ({ quality }: any) => {
+    this.networkManager.on("connectionQualityChange", ({ quality }: any) => {
       if (this.networkIndicator) {
         this.networkIndicator.updateQuality(quality);
       }
     });
 
     // Reconnecting
-    this.networkManager.on('reconnecting', ({ attempt }: any) => {
-      console.log('GameScene: Reconnecting...', attempt);
+    this.networkManager.on("reconnecting", ({ attempt }: any) => {
+      console.log("GameScene: Reconnecting...", attempt);
       if (this.networkIndicator) {
         this.networkIndicator.showReconnecting(attempt);
       }
@@ -206,8 +207,8 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Reconnected
-    this.networkManager.on('reconnected', ({ message }: any) => {
-      console.log('GameScene: Reconnected!', message);
+    this.networkManager.on("reconnected", ({ message }: any) => {
+      console.log("GameScene: Reconnected!", message);
       if (this.networkIndicator) {
         this.networkIndicator.showReconnected();
       }
@@ -219,88 +220,91 @@ export default class GameScene extends Phaser.Scene {
       });
 
       // Show brief success message
-      const successText = this.add.text(this.cameras.main.width / 2, 100, 'Reconnected!', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '24px',
-        color: '#22c55e',
-        fontStyle: 'bold'
-      }).setOrigin(0.5).setDepth(600);
+      const successText = this.add
+        .text(this.cameras.main.width / 2, 100, "Reconnected!", {
+          fontFamily: "Arial, sans-serif",
+          fontSize: "24px",
+          color: "#22c55e",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5)
+        .setDepth(600);
 
       this.tweens.add({
         targets: successText,
         alpha: 0,
         y: 70,
         duration: 2000,
-        onComplete: () => successText.destroy()
+        onComplete: () => successText.destroy(),
       });
     });
 
     // Reconnection failed
-    this.networkManager.on('reconnectionFailed', ({ message }: any) => {
-      console.log('GameScene: Reconnection failed', message);
+    this.networkManager.on("reconnectionFailed", ({ message }: any) => {
+      console.log("GameScene: Reconnection failed", message);
       this.reconnectionOverlay.hide();
 
       // Show error and redirect to menu
-      this.events.emit('connectionLost', { message });
+      this.events.emit("connectionLost", { message });
 
       this.time.delayedCall(2000, () => {
-        this.scene.stop('UIScene');
-        this.scene.start('MenuScene');
+        this.scene.stop("UIScene");
+        this.scene.start("MenuScene");
       });
     });
 
     // Phase change
-    this.networkManager.on('phaseChange', ({ phase }: any) => {
-      this.events.emit('phaseChanged', phase);
+    this.networkManager.on("phaseChange", ({ phase }: any) => {
+      this.events.emit("phaseChanged", phase);
 
-      if (phase === 'playing') {
+      if (phase === "playing") {
         this.roundText.updateRoundText();
       }
 
-      if (phase === 'roundEnd') {
+      if (phase === "roundEnd") {
         const players = this.networkManager.getPlayers();
-        this.events.emit('roundComplete', {
-          players: players.map(p => ({
+        this.events.emit("roundComplete", {
+          players: players.map((p) => ({
             name: p.name,
             emoji: p.emoji,
             bid: p.bid,
             tricksWon: p.tricksWon,
             roundScore: p.roundScore,
             totalScore: p.score,
-          }))
+          })),
         });
       }
 
-      if (phase === 'gameOver') {
+      if (phase === "gameOver") {
         const players = this.networkManager.getPlayers();
         const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
         const winner = sortedPlayers[0];
         this.audioManager.playWinSound();
-        this.events.emit('gameComplete', {
+        this.events.emit("gameComplete", {
           winner: {
             name: winner.name,
             emoji: winner.emoji,
             score: winner.score,
           },
-          players: sortedPlayers.map(p => ({
+          players: sortedPlayers.map((p) => ({
             name: p.name,
             emoji: p.emoji,
             score: p.score,
-          }))
+          })),
         });
       }
     });
 
     // Turn change
-    this.networkManager.on('turnChange', ({ playerId, isMyTurn }: any) => {
-      this.players.forEach(p => {
+    this.networkManager.on("turnChange", ({ playerId, isMyTurn }: any) => {
+      this.players.forEach((p) => {
         if (p.networkId === playerId) {
           p.showTurnIndicator();
           if (isMyTurn) {
             // Enable card selection for local player with proper validation
             const leadSuit = this.networkManager.getLeadSuit();
             const phase = this.networkManager.getPhase();
-            if (phase === 'playing') {
+            if (phase === "playing") {
               p.hand.updatePlayableCards(leadSuit);
             }
           }
@@ -312,19 +316,21 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Card added to hand
-    this.networkManager.on('cardAdded', ({ card }: any) => {
-      const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+    this.networkManager.on("cardAdded", ({ card }: any) => {
+      const localPlayer = this.players.find(
+        (p) => p.networkId === this.networkManager.playerId,
+      );
       if (localPlayer) {
         localPlayer.hand.addCard(card);
       }
     });
 
     // Card played by any player
-    this.networkManager.on('cardPlayed', ({ playerId, card }: any) => {
+    this.networkManager.on("cardPlayed", ({ playerId, card }: any) => {
       this.audioManager.playCardSound();
 
       // Find player in local array
-      let player = this.players.find(p => p.networkId === playerId);
+      let player = this.players.find((p) => p.networkId === playerId);
       let relativePosition;
       let removedCard = null;
 
@@ -351,13 +357,13 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Trick cleared
-    this.networkManager.on('trickCleared', () => {
+    this.networkManager.on("trickCleared", () => {
       this.trickArea.clear();
     });
 
     // Trick winner
-    this.networkManager.on('trickWinner', (winnerId: any) => {
-      const winner = this.players.find(p => p.networkId === winnerId);
+    this.networkManager.on("trickWinner", (winnerId: any) => {
+      const winner = this.players.find((p) => p.networkId === winnerId);
       if (winner) {
         // Update tricks won count
         winner.addTrick();
@@ -376,13 +382,13 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Player bid
-    this.networkManager.on('playerBid', ({ playerId, bid }: any) => {
-      const player = this.players.find(p => p.networkId === playerId);
+    this.networkManager.on("playerBid", ({ playerId, bid }: any) => {
+      const player = this.players.find((p) => p.networkId === playerId);
       if (player) {
         // Update the local player's bid and stats display
         player.setBid(bid);
         const playerIndex = this.players.indexOf(player);
-        this.events.emit('bidPlaced', { playerIndex, bid });
+        this.events.emit("bidPlaced", { playerIndex, bid });
       } else {
         // This shouldn't happen in multiplayer - all players should be in the array
         console.warn(`Player ${playerId} not found for bid event`);
@@ -390,18 +396,23 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Round change
-    this.networkManager.on('roundChange', () => {
+    this.networkManager.on("roundChange", () => {
       // Reset all players for new round
-      this.players.forEach(player => {
+      this.players.forEach((player) => {
         player.reset();
       });
       this.roundText.updateRoundText();
     });
 
     // Lead suit changed - update playable cards if it's our turn
-    this.networkManager.on('leadSuitChange', (leadSuit: Suit) => {
-      if (this.networkManager.isMyTurn() && this.networkManager.getPhase() === 'playing') {
-        const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+    this.networkManager.on("leadSuitChange", (leadSuit: Suit) => {
+      if (
+        this.networkManager.isMyTurn() &&
+        this.networkManager.getPhase() === "playing"
+      ) {
+        const localPlayer = this.players.find(
+          (p) => p.networkId === this.networkManager.playerId,
+        );
         if (localPlayer) {
           localPlayer.hand.updatePlayableCards(leadSuit);
         }
@@ -409,37 +420,41 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Error handling
-    this.networkManager.on('error', (data: any) => {
-      console.error('Network error:', data);
+    this.networkManager.on("error", (data: any) => {
+      console.error("Network error:", data);
       // Show error message to user instead of silently redirecting
-      this.events.emit('networkError', { 
-        message: `Connection error: ${data.message || 'Unknown error'}` 
+      this.events.emit("networkError", {
+        message: `Connection error: ${data.message || "Unknown error"}`,
       });
     });
 
     // Remote player hand changes (for visual card backs)
-    this.networkManager.on('remoteHandChanged', ({ playerId, handCount }: any) => {
-      const player = this.players.find(p => p.networkId === playerId);
-      if (player) {
-        player.hand.updateCardCount(handCount);
-      }
-    });
+    this.networkManager.on(
+      "remoteHandChanged",
+      ({ playerId, handCount }: any) => {
+        const player = this.players.find((p) => p.networkId === playerId);
+        if (player) {
+          player.hand.updateCardCount(handCount);
+        }
+      },
+    );
 
     // Room left
-    this.networkManager.on('roomLeft', (data: any) => {
-      console.log('Room left event received:', data);
-      
+    this.networkManager.on("roomLeft", (data: any) => {
+      console.log("Room left event received:", data);
+
       // Show a message before redirecting
-      const message = data?.code === 1000 
-        ? 'Disconnected from game' 
-        : 'Connection lost - returning to menu';
-      
-      this.events.emit('connectionLost', { message });
-      
+      const message =
+        data?.code === 1000
+          ? "Disconnected from game"
+          : "Connection lost - returning to menu";
+
+      this.events.emit("connectionLost", { message });
+
       // Delay redirect to allow user to see what happened
       this.time.delayedCall(1500, () => {
-        this.scene.stop('UIScene');
-        this.scene.start('MenuScene');
+        this.scene.stop("UIScene");
+        this.scene.start("MenuScene");
       });
     });
   }
@@ -447,11 +462,13 @@ export default class GameScene extends Phaser.Scene {
   syncHandFromServer() {
     // Get current hand from server and display
     const hand = this.networkManager.getMyHand();
-    const localPlayer = this.players.find(p => p.networkId === this.networkManager.playerId);
+    const localPlayer = this.players.find(
+      (p) => p.networkId === this.networkManager.playerId,
+    );
 
     if (localPlayer) {
       // Always sync cards, even if hand is empty (cards might have been played)
-      console.log('GameScene: Syncing hand from server. Cards:', hand.length);
+      console.log("GameScene: Syncing hand from server. Cards:", hand.length);
       localPlayer.hand.setCards(hand, false);
     }
 
@@ -461,9 +478,13 @@ export default class GameScene extends Phaser.Scene {
       state.players.forEach((player: any, sessionId: string) => {
         if (sessionId !== this.networkManager.playerId) {
           const handCount = player.hand.length;
-          const localPlayerObj = this.players.find(p => p.networkId === sessionId);
+          const localPlayerObj = this.players.find(
+            (p) => p.networkId === sessionId,
+          );
           if (localPlayerObj) {
-            console.log(`GameScene: Updating card count for ${player.name}: ${handCount}`);
+            console.log(
+              `GameScene: Updating card count for ${player.name}: ${handCount}`,
+            );
             localPlayerObj.hand.updateCardCount(handCount);
           }
         }
@@ -475,7 +496,7 @@ export default class GameScene extends Phaser.Scene {
       const isMyTurn = currentTurnPlayerId === this.networkManager.playerId;
 
       // Update turn indicators for all players
-      this.players.forEach(p => {
+      this.players.forEach((p) => {
         if (p.networkId === currentTurnPlayerId) {
           p.showTurnIndicator();
         } else {
@@ -484,15 +505,18 @@ export default class GameScene extends Phaser.Scene {
         }
       });
 
-      if (phase === 'bidding' && isMyTurn) {
+      if (phase === "bidding" && isMyTurn) {
         // Emit phase changed event to trigger bidding UI
         this.time.delayedCall(500, () => {
-          this.events.emit('phaseChanged', phase);
+          this.events.emit("phaseChanged", phase);
         });
-      } else if (phase === 'playing' && isMyTurn && localPlayer) {
+      } else if (phase === "playing" && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards
-        const leadSuit = state.leadSuit || '';
-        console.log('GameScene: Reconnected during our turn, updating playable cards. Lead suit:', leadSuit);
+        const leadSuit = state.leadSuit || "";
+        console.log(
+          "GameScene: Reconnected during our turn, updating playable cards. Lead suit:",
+          leadSuit,
+        );
         localPlayer.hand.updatePlayableCards(leadSuit);
       }
     }
@@ -517,7 +541,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Phase changed
     this.gameManager.on(EVENTS.PHASE_CHANGED, (phase: any) => {
-      this.events.emit('phaseChanged', phase);
+      this.events.emit("phaseChanged", phase);
 
       if (phase === PHASE.PLAYING) {
         this.roundText.updateRoundText();
@@ -544,18 +568,18 @@ export default class GameScene extends Phaser.Scene {
 
     // Round complete
     this.gameManager.on(EVENTS.ROUND_COMPLETE, (data: any) => {
-      this.events.emit('roundComplete', data);
+      this.events.emit("roundComplete", data);
     });
 
     // Game complete
     this.gameManager.on(EVENTS.GAME_COMPLETE, (data: any) => {
       this.audioManager.playWinSound();
-      this.events.emit('gameComplete', data);
+      this.events.emit("gameComplete", data);
     });
 
     // Bid placed
     this.gameManager.on(EVENTS.BID_PLACED, ({ playerIndex, bid }: any) => {
-      this.events.emit('bidPlaced', { playerIndex, bid });
+      this.events.emit("bidPlaced", { playerIndex, bid });
     });
   }
 
@@ -614,7 +638,7 @@ export default class GameScene extends Phaser.Scene {
       this.reconnectionOverlay.destroy();
     }
 
-    this.scene.stop('UIScene');
-    this.scene.start('MenuScene');
+    this.scene.stop("UIScene");
+    this.scene.start("MenuScene");
   }
 }

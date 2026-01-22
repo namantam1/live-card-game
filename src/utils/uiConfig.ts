@@ -54,16 +54,16 @@ export const BIDDING_CONFIG = {
     buttonHeight: 80,
     buttonSpacing: 10,
     borderRadius: 20,
-    fontSize: '30px',
-    titleFontSize: '20px',
+    fontSize: "30px",
+    titleFontSize: "20px",
   },
   MOBILE: {
-    buttonWidth: 60,        // Larger for easier tapping
+    buttonWidth: 60, // Larger for easier tapping
     buttonHeight: 50,
     buttonSpacing: 10,
     borderRadius: 10,
-    fontSize: '20px',
-    titleFontSize: '22px',
+    fontSize: "20px",
+    titleFontSize: "22px",
   },
 };
 
@@ -71,13 +71,13 @@ export const BIDDING_CONFIG = {
 export const SCOREBOARD_CONFIG = {
   DESKTOP: {
     margin: 10,
-    marginTop: 40,
-    height: 60,
-    padding: 25,
-    spacing: 10,
-    roundFontSize: '30px',
-    emojiFontSize: '30px',
-    scoreFontSize: '30px',
+    marginTop: 50,
+    height: 70,
+    padding: 30,
+    spacing: 15,
+    roundFontSize: "40px",
+    emojiFontSize: "40px",
+    scoreFontSize: "40px",
   },
   MOBILE: {
     margin: 15,
@@ -85,25 +85,21 @@ export const SCOREBOARD_CONFIG = {
     height: 50,
     padding: 20,
     spacing: 10,
-    roundFontSize: '22px',
-    emojiFontSize: '22px',
-    scoreFontSize: '22px',
+    roundFontSize: "22px",
+    emojiFontSize: "22px",
+    scoreFontSize: "22px",
   },
 };
 
 // Settings icon configuration
 export const SETTINGS_ICON_CONFIG = {
   DESKTOP: {
-    iconSize: 28,          // Increased for better touch target
-    fontSize: '36px',      // Increased icon font size
-    margin: 40,
-    hitAreaPadding: 12,    // Extra padding for hit area
+    iconSize: 40, // Increased for better touch target
+    margin: 50,
   },
   MOBILE: {
-    iconSize: 28,          // Increased for better touch target
-    fontSize: '36px',      // Increased icon font size
-    margin: 40,
-    hitAreaPadding: 12,    // Extra padding for hit area
+    iconSize: 40, // Increased for better touch target
+    margin: 50,
   },
 };
 
@@ -111,60 +107,60 @@ export const SETTINGS_ICON_CONFIG = {
 export const FONT_CONFIG = {
   DESKTOP: {
     // Game UI
-    trumpIndicator: '22px',
-    trumpSymbol: '35px',
-    roundIndicator: '11px',
+    trumpIndicator: "22px",
+    trumpSymbol: "35px",
+    roundIndicator: "11px",
 
     // Player labels
-    playerName: '20px',
-    playerStats: '20px',
+    playerName: "20px",
+    playerStats: "20px",
 
     // Menu
-    menuTitle: '100px',
-    menuSpadeIcon: '180px',
-    menuSubtitle: '25px',
-    menuButton: '30px',
+    menuTitle: "100px",
+    menuSpadeIcon: "180px",
+    menuSubtitle: "25px",
+    menuButton: "30px",
 
     // Lobby
-    lobbyTitle: '100px',
-    lobbySubtitle: '25px',
-    lobbyButton: '30px',
+    lobbyTitle: "100px",
+    lobbySubtitle: "25px",
+    lobbyButton: "30px",
 
     // Modals
-    modalTitle: '28px',
-    modalContent: '16px',
+    modalTitle: "28px",
+    modalContent: "16px",
 
     // Settings
-    settingsLabel: '22px',
+    settingsLabel: "22px",
 
     // Action buttons
-    actionButton: '20px',
+    actionButton: "20px",
   },
   MOBILE: {
     // Game UI
-    trumpIndicator: '14px',      // Slightly larger for mobile
-    trumpSymbol: '26px',
-    roundIndicator: '13px',
+    trumpIndicator: "14px", // Slightly larger for mobile
+    trumpSymbol: "26px",
+    roundIndicator: "13px",
 
     // Player labels
-    playerName: '18px',
-    playerStats: '16px',
+    playerName: "18px",
+    playerStats: "16px",
 
     // Menu
-    menuTitle: '56px',
-    menuSpadeIcon: '72px',
-    menuSubtitle: '20px',
-    menuButton: '20px',
+    menuTitle: "56px",
+    menuSpadeIcon: "72px",
+    menuSubtitle: "20px",
+    menuButton: "20px",
 
     // Modals
-    modalTitle: '28px',
-    modalContent: '16px',
+    modalTitle: "28px",
+    modalContent: "16px",
 
     // Settings
-    settingsLabel: '22px',
+    settingsLabel: "22px",
 
     // Action buttons
-    actionButton: '20px',
+    actionButton: "20px",
   },
 };
 
@@ -204,9 +200,9 @@ export const TURN_INDICATOR_CONFIG = {
  * @returns {object} - Responsive config based on screen size
  */
 export const getResponsiveConfig = (
-  config: { DESKTOP: any; MOBILE: any; }, 
-  width: number, 
-  height: number
+  config: { DESKTOP: any; MOBILE: any },
+  width: number,
+  height: number,
 ): Record<string, any> => {
   return isMobile(width, height) ? config.MOBILE : config.DESKTOP;
 };
@@ -218,8 +214,12 @@ export const getResponsiveConfig = (
  * @param {number} height - Screen height
  * @returns {string} - Font size string (e.g., '16px')
  */
-export const getFontSize = (key: string, width: number, height: number): string => {
+export const getFontSize = (
+  key: string,
+  width: number,
+  height: number,
+): string => {
   const config = getResponsiveConfig(FONT_CONFIG, width, height);
   // console.log(`getFontSize: key=${key}, width=${width}, height=${height} => fontSize=${config[key] || '14px'}`);
-  return config[key] || '14px';
+  return config[key] || "14px";
 };

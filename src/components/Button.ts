@@ -31,7 +31,12 @@ interface IconButtonConfig {
 }
 
 export default class Button {
-  static create(scene: Phaser.Scene, x: number, y: number, config: ButtonConfig): Phaser.GameObjects.Container {
+  static create(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    config: ButtonConfig,
+  ): Phaser.GameObjects.Container {
     const {
       width,
       height,
@@ -39,12 +44,12 @@ export default class Button {
       onClick,
       bgColor = 0x6366f1,
       borderRadius = 10,
-      fontSize = '18px',
-      fontFamily = 'Arial, sans-serif',
+      fontSize = "18px",
+      fontFamily = "Arial, sans-serif",
       hoverScale = 1.05,
       pressScale = 0.95,
       playSound = false,
-      audioManager = null
+      audioManager = null,
     } = config;
 
     // Create container
@@ -56,40 +61,47 @@ export default class Button {
     bg.fillRoundedRect(-width / 2, -height / 2, width, height, borderRadius);
 
     // Text
-    const btnText = scene.add.text(0, 0, text, {
-      fontFamily,
-      fontSize,
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
+    const btnText = scene.add
+      .text(0, 0, text, {
+        fontFamily,
+        fontSize,
+        fontStyle: "bold",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
 
     container.add([bg, btnText]);
 
     // Make interactive
     container.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      hitArea: new Phaser.Geom.Rectangle(
+        -width / 2,
+        -height / 2,
+        width,
+        height,
+      ),
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true
+      useHandCursor: true,
     });
 
     // State tracking
     let isPressed = false;
 
     // Hover (desktop only)
-    container.on('pointerover', () => {
+    container.on("pointerover", () => {
       if (!isPressed && !scene.sys.game.device.input.touch) {
         container.setScale(hoverScale);
       }
     });
 
-    container.on('pointerout', () => {
+    container.on("pointerout", () => {
       if (!isPressed) {
         container.setScale(1);
       }
     });
 
     // Press
-    container.on('pointerdown', () => {
+    container.on("pointerdown", () => {
       isPressed = true;
       container.setScale(pressScale);
       if (playSound && audioManager) {
@@ -98,7 +110,7 @@ export default class Button {
     });
 
     // Release and execute callback
-    container.on('pointerup', () => {
+    container.on("pointerup", () => {
       if (isPressed) {
         isPressed = false;
         container.setScale(1);
@@ -109,21 +121,27 @@ export default class Button {
     return container;
   }
 
-  static createIconButton(scene: Phaser.Scene, x: number, y: number, config: IconButtonConfig): Phaser.GameObjects.Container {
+  static createIconButton(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    config: IconButtonConfig,
+  ): Phaser.GameObjects.Container {
     const {
       iconSize = 24,
-      icon = '\u2699',
-      fontSize = '24px',
+      icon = "\u2699",
       onClick,
       bgColor = 0x1e293b,
       bgAlpha = 0.9,
       borderColor = 0x6366f1,
       borderAlpha = 0.5,
-      iconColor = '#94a3b8',
-      iconHoverColor = '#ffffff',
+      iconColor = "#94a3b8",
+      iconHoverColor = "#ffffff",
       hoverScale = 1.1,
-      audioManager
+      audioManager,
     } = config;
+
+    const fontSize = `${iconSize * 2}px`;
 
     const container = scene.add.container(x, y);
 
@@ -135,11 +153,13 @@ export default class Button {
     bg.strokeCircle(0, 0, iconSize);
 
     // Icon text
-    const iconText = scene.add.text(0, 0, icon, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: fontSize,
-      color: iconColor,
-    }).setOrigin(0.5);
+    const iconText = scene.add
+      .text(0, -iconSize / 10, icon, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: fontSize,
+        color: iconColor,
+      })
+      .setOrigin(0.5);
 
     container.add([bg, iconText]);
 
@@ -150,7 +170,7 @@ export default class Button {
       hitArea: new Phaser.Geom.Circle(0, 0, hitAreaRadius),
       hitAreaCallback: Phaser.Geom.Circle.Contains,
       useHandCursor: true,
-      pixelPerfect: false
+      pixelPerfect: false,
     });
     container.setDepth(1000);
 
@@ -164,7 +184,7 @@ export default class Button {
       }
     };
 
-    container.on('pointerover', () => {
+    container.on("pointerover", () => {
       if (!isPressed && !scene.sys.game.device.input.touch) {
         iconText.setColor(iconHoverColor);
         killActiveTween();
@@ -172,12 +192,12 @@ export default class Button {
           targets: container,
           scaleX: hoverScale,
           scaleY: hoverScale,
-          duration: 100
+          duration: 100,
         });
       }
     });
 
-    container.on('pointerout', () => {
+    container.on("pointerout", () => {
       if (!isPressed) {
         iconText.setColor(iconColor);
         killActiveTween();
@@ -185,7 +205,7 @@ export default class Button {
           targets: container,
           scaleX: 1,
           scaleY: 1,
-          duration: 100
+          duration: 100,
         });
       } else {
         // Handle case where pointer leaves button while pressed (for mobile)
@@ -196,12 +216,12 @@ export default class Button {
           targets: container,
           scaleX: 1,
           scaleY: 1,
-          duration: 100
+          duration: 100,
         });
       }
     });
 
-    container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    container.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       isPressed = true;
       // Visual feedback: scale down
       killActiveTween();
@@ -210,7 +230,7 @@ export default class Button {
         scaleX: 0.9,
         scaleY: 0.9,
         duration: 50,
-        ease: 'Power2'
+        ease: "Power2",
       });
       // Prevent event from bubbling
       if (pointer.event) {
@@ -218,13 +238,15 @@ export default class Button {
       }
     });
 
-    container.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+    container.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (isPressed) {
         isPressed = false;
 
         // Check if pointer is still within bounds before triggering onClick
         const localPoint = container.getLocalPoint(pointer.x, pointer.y);
-        const distance = Math.sqrt(localPoint.x * localPoint.x + localPoint.y * localPoint.y);
+        const distance = Math.sqrt(
+          localPoint.x * localPoint.x + localPoint.y * localPoint.y,
+        );
 
         if (distance <= hitAreaRadius) {
           // Only trigger onClick if release happened within the button area
@@ -240,7 +262,7 @@ export default class Button {
           scaleX: 1,
           scaleY: 1,
           duration: 100,
-          ease: 'Power2'
+          ease: "Power2",
         });
 
         // Prevent event from bubbling
