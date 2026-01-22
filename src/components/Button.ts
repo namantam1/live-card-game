@@ -144,20 +144,31 @@ export default class Button {
     container.add([bg, iconText]);
 
     // Larger hit area for better touch targets (minimum 44px recommended for mobile)
-    const hitAreaRadius = Math.max(iconSize + 12, 44);
+    // Increased to 48px diameter (24px radius) for better mobile reliability
+    const hitAreaRadius = Math.max(iconSize + 12, 24);
     container.setInteractive({
       hitArea: new Phaser.Geom.Circle(0, 0, hitAreaRadius),
       hitAreaCallback: Phaser.Geom.Circle.Contains,
-      useHandCursor: true
+      useHandCursor: true,
+      pixelPerfect: false
     });
     container.setDepth(1000);
 
     let isPressed = false;
+    let activeTween: Phaser.Tweens.Tween | null = null;
+
+    // Kill any active tween before starting a new one
+    const killActiveTween = () => {
+      if (activeTween && activeTween.isPlaying()) {
+        activeTween.stop();
+      }
+    };
 
     container.on('pointerover', () => {
       if (!isPressed && !scene.sys.game.device.input.touch) {
         iconText.setColor(iconHoverColor);
-        scene.tweens.add({
+        killActiveTween();
+        activeTween = scene.tweens.add({
           targets: container,
           scaleX: hoverScale,
           scaleY: hoverScale,
@@ -169,7 +180,19 @@ export default class Button {
     container.on('pointerout', () => {
       if (!isPressed) {
         iconText.setColor(iconColor);
-        scene.tweens.add({
+        killActiveTween();
+        activeTween = scene.tweens.add({
+          targets: container,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 100
+        });
+      } else {
+        // Handle case where pointer leaves button while pressed (for mobile)
+        isPressed = false;
+        iconText.setColor(iconColor);
+        killActiveTween();
+        activeTween = scene.tweens.add({
           targets: container,
           scaleX: 1,
           scaleY: 1,
@@ -179,52 +202,51 @@ export default class Button {
     });
 
     container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      // console.log('Icon button pointer down');
       isPressed = true;
       // Visual feedback: scale down
-      scene.tweens.add({
+      killActiveTween();
+      activeTween = scene.tweens.add({
         targets: container,
         scaleX: 0.9,
         scaleY: 0.9,
-        duration: 100,
+        duration: 50,
         ease: 'Power2'
       });
-      if (audioManager) audioManager.playButtonSound();
-      onClick();
       // Prevent event from bubbling
-      pointer.event.stopPropagation();
+      if (pointer.event) {
+        pointer.event.stopPropagation();
+      }
     });
 
     container.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      // console.log('Icon button pointer up');
       if (isPressed) {
         isPressed = false;
+
+        // Check if pointer is still within bounds before triggering onClick
+        const localPoint = container.getLocalPoint(pointer.x, pointer.y);
+        const distance = Math.sqrt(localPoint.x * localPoint.x + localPoint.y * localPoint.y);
+
+        if (distance <= hitAreaRadius) {
+          // Only trigger onClick if release happened within the button area
+          if (audioManager) audioManager.playButtonSound();
+          onClick();
+        }
+
         iconText.setColor(iconColor);
         // Visual feedback: scale back to normal
-        scene.tweens.add({
+        killActiveTween();
+        activeTween = scene.tweens.add({
           targets: container,
           scaleX: 1,
           scaleY: 1,
           duration: 100,
           ease: 'Power2'
         });
-        // Prevent event from bubbling
-        pointer.event.stopPropagation();
-      }
-    });
 
-    // Handle case where pointer leaves button while pressed (for mobile)
-    container.on('pointerout', () => {
-      if (isPressed) {
-        isPressed = false;
-        iconText.setColor(iconColor);
-        // Reset scale if pointer leaves while pressed
-        scene.tweens.add({
-          targets: container,
-          scaleX: 1,
-          scaleY: 1,
-          duration: 100
-        });
+        // Prevent event from bubbling
+        if (pointer.event) {
+          pointer.event.stopPropagation();
+        }
       }
     });
 
