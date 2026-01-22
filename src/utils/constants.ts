@@ -1,4 +1,4 @@
-import { CARD_CONFIG } from '../config/uiConfig';
+import { CARD_CONFIG } from './uiConfig';
 
 // Game Constants
 export const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'] as const;

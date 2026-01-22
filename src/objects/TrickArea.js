@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Card from './Card';
 import { ANIMATION, COLORS } from '../utils/constants';
 import { getCardAssetKey } from '../utils/cards';
-import { CARD_CONFIG, isMobile } from '../config/uiConfig';
+import { CARD_CONFIG, isMobile } from '../utils/uiConfig';
 
 export default class TrickArea extends Phaser.GameObjects.Container {
   constructor(scene) {

@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { getFontSize } from "../../config/uiConfig";
+import { getFontSize } from "../../utils/uiConfig";
 import { Position } from "../../type";
 
 export default class Common {

@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import { COLORS } from "../../utils/constants";
-import { getFontSize } from "../../config/uiConfig";
-import Button from "../../utils/Button";
+import { getFontSize } from "../../utils/uiConfig";
+import Button from "../../components/Button";
 import AudioManager from "../../managers/AudioManager";
 
 export default abstract class BaseModal {

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Card from './Card';
 import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants';
 import { sortHand, getValidCards } from '../utils/cards';
-import { CARD_CONFIG, isMobile } from '../config/uiConfig';
+import { CARD_CONFIG, isMobile } from '../utils/uiConfig';
 
 export default class Hand extends Phaser.GameObjects.Container {
   constructor(scene, position, isHuman = false) {

@@ -144,7 +144,7 @@ export default class Button {
     container.add([bg, iconText]);
 
     // Larger hit area for better touch targets (minimum 44px recommended for mobile)
-    const hitAreaRadius = Math.max(iconSize + 12, 22);
+    const hitAreaRadius = Math.max(iconSize + 12, 44);
     container.setInteractive({
       hitArea: new Phaser.Geom.Circle(0, 0, hitAreaRadius),
       hitAreaCallback: Phaser.Geom.Circle.Contains,
@@ -179,6 +179,7 @@ export default class Button {
     });
 
     container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // console.log('Icon button pointer down');
       isPressed = true;
       // Visual feedback: scale down
       scene.tweens.add({
@@ -189,11 +190,13 @@ export default class Button {
         ease: 'Power2'
       });
       if (audioManager) audioManager.playButtonSound();
+      onClick();
       // Prevent event from bubbling
       pointer.event.stopPropagation();
     });
 
     container.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      // console.log('Icon button pointer up');
       if (isPressed) {
         isPressed = false;
         iconText.setColor(iconColor);
@@ -205,7 +208,6 @@ export default class Button {
           duration: 100,
           ease: 'Power2'
         });
-        onClick();
         // Prevent event from bubbling
         pointer.event.stopPropagation();
       }

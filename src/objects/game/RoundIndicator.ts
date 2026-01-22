@@ -1,4 +1,4 @@
-import { getFontSize } from "../../config/uiConfig";
+import { getFontSize } from "../../utils/uiConfig";
 import GameManager from "../../managers/GameManager";
 import NetworkManager from "../../managers/NetworkManager";
 import { TOTAL_ROUNDS } from "../../utils/constants";

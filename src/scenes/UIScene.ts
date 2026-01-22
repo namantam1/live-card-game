@@ -8,8 +8,8 @@ import {
   isMobile,
   getResponsiveConfig,
   getFontSize
-} from '../config/uiConfig';
-import Button from '../utils/Button';
+} from '../utils/uiConfig';
+import Button from '../components/Button';
 import ScoreBoard from '../objects/game/ScoreBoard';
 import BiddingUI from '../objects/game/BiddingUI';
 import RoundModal from '../objects/game/RoundModal';

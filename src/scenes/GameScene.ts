@@ -4,13 +4,12 @@ import TrickArea from '../objects/TrickArea';
 import GameManager from '../managers/GameManager';
 import AudioManager from '../managers/AudioManager';
 import NetworkIndicator from '../components/NetworkIndicator';
-import { COLORS, PHASE, EVENTS, TOTAL_ROUNDS, Suit } from '../utils/constants';
-import { getFontSize } from '../config/uiConfig';
+import { PHASE, EVENTS, Suit } from '../utils/constants';
 import { RoundIndicator } from '../objects/game/RoundIndicator';
 import { ReconnectionOverlay } from '../objects/game/ReconnectionOverlay';
-import Common from '../objects/game/common';
 import NetworkManager from '../managers/NetworkManager';
 import { CardData } from '../type';
+import Common from '../objects/game/Common';
 
 export default class GameScene extends Phaser.Scene {
   isMultiplayer: boolean;

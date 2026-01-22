@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { SUITS, RANKS, COLORS } from '../utils/constants';
-import { CARD_CONFIG } from '../config/uiConfig';
+import { CARD_CONFIG } from '../utils/uiConfig';
 
 export default class BootScene extends Phaser.Scene {
   constructor() {

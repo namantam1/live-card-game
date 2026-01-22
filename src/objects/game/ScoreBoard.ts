@@ -3,7 +3,7 @@ import {
   getResponsiveConfig,
   isMobile,
   SCOREBOARD_CONFIG,
-} from "../../config/uiConfig";
+} from "../../utils/uiConfig";
 import { TOTAL_ROUNDS } from "../../utils/constants";
 
 export default class ScoreBoard {

@@ -3,8 +3,8 @@ import { COLORS, MAX_BID } from '../../utils/constants';
 import {
   BIDDING_CONFIG,
   getResponsiveConfig,
-} from '../../config/uiConfig';
-import Button from '../../utils/Button';
+} from '../../utils/uiConfig';
+import Button from '../../components/Button';
 import AudioManager from '../../managers/AudioManager';
 
 export default class BiddingUI {

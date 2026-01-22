@@ -1,9 +1,9 @@
 import NetworkIndicator from "../components/NetworkIndicator";
-import { CARD_CONFIG, getResponsiveConfig, SETTINGS_ICON_CONFIG } from "../config/uiConfig";
+import { CARD_CONFIG, getResponsiveConfig, SETTINGS_ICON_CONFIG } from "../utils/uiConfig";
 import AudioManager from "../managers/AudioManager";
 import SettingsModal from "../objects/game/SettingsModal";
 import { CardData } from "../type";
-import Button from "../utils/Button";
+import Button from "../components/Button";
 import { createDeck } from "../utils/cards";
 import { COLORS, RANKS, SUITS } from "../utils/constants";
 

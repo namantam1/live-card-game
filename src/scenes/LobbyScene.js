@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import { COLORS, ANIMATION, SERVER } from '../utils/constants';
 import NetworkManager from '../managers/NetworkManager';
 import NetworkIndicator from '../components/NetworkIndicator';
-import Button from '../utils/Button';
-import { getFontSize } from '../config/uiConfig';
+import Button from '../components/Button';
+import { getFontSize } from '../utils/uiConfig';
 
 export default class LobbyScene extends Phaser.Scene {
   constructor() {

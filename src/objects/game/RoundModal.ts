@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
-import { getFontSize } from '../../config/uiConfig';
+import { getFontSize } from '../../utils/uiConfig';
 import AudioManager from '../../managers/AudioManager';
 
 interface RoundModalData {

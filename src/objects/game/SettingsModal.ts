@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
-import Button from '../../utils/Button';
-import { getFontSize } from '../../config/uiConfig';
+import Button from '../../components/Button';
+import { getFontSize } from '../../utils/uiConfig';
 import AudioManager from '../../managers/AudioManager';
 import { COLORS } from '../../utils/constants';
 
@@ -124,6 +124,7 @@ export default class SettingsModal extends BaseModal {
   }
 
   showSettings() {
+    console.log('Showing settings modal');
     this.show();
   }
 }
