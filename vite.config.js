@@ -61,7 +61,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Cache game code with network first
-            urlPattern: /^https?:\/\/.*\.(js|css|html)$/,
+            urlPattern: /^https?:\/\/.*\.(js|css|html|map)$/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'game-code-cache',
