@@ -55,7 +55,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp,mp3,ogg,wav,map}'],
 
         // Increase file size limit for large audio files (bgm.mp3 is ~9MB)
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024, // 20 MB
 
         // Runtime caching strategies
         runtimeCaching: [
