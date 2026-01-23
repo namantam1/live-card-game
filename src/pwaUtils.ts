@@ -42,7 +42,7 @@ export function registerServiceWorker() {
 /**
  * Simple toast notification for PWA events
  */
-function showToast(message) {
+function showToast(message: string): void {
   // Create toast element
   const toast = document.createElement('div');
   toast.textContent = message;
@@ -93,16 +93,16 @@ function showToast(message) {
 /**
  * Check if the app is running as a PWA
  */
-export function isPWA() {
+export function isPWA(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
+         (window.navigator as any).standalone === true;
 }
 
 /**
  * Force landscape orientation on mobile devices
  * Only enforces on mobile, allows desktop to be flexible
  */
-export function enforceLandscapeOnMobile() {
+export function enforceLandscapeOnMobile(): void {
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
@@ -119,7 +119,7 @@ export function enforceLandscapeOnMobile() {
   }
 
   // Function to check and show warning
-  function checkOrientation() {
+  function checkOrientation(): void {
     const isPortrait = window.innerHeight > window.innerWidth;
 
     if (isPortrait) {
@@ -130,7 +130,7 @@ export function enforceLandscapeOnMobile() {
   }
 
   // Show orientation warning overlay
-  function showOrientationWarning() {
+  function showOrientationWarning(): void {
     let overlay = document.getElementById('orientation-overlay');
 
     if (!overlay) {
@@ -167,7 +167,7 @@ export function enforceLandscapeOnMobile() {
   }
 
   // Hide orientation warning overlay
-  function hideOrientationWarning() {
+  function hideOrientationWarning(): void {
     const overlay = document.getElementById('orientation-overlay');
     if (overlay) {
       overlay.style.display = 'none';

@@ -5,35 +5,35 @@ export type Position = {
   y: number;
 };
 
-export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+export type DifficultyLevel = "easy" | "medium" | "hard";
 
 export interface BotContext {
   tricksNeeded?: number;
   tricksWon?: number;
 }
 
-interface TrickEntry {
+export interface TrickEntry {
   playerIndex: number;
-  card: Card;
+  card: CardData;
 }
 
-interface CardData {
+export interface CardData {
   suit: Suit;
   rank: Rank;
   id: string;
   value: number;
 }
 
-type ConnectionQuality = "good" | "fair" | "poor" | "offline";
+export type ConnectionQuality = "good" | "fair" | "poor" | "offline";
 
-interface CardSchema {
+export interface CardSchema {
   id: string;
   suit: string;
   rank: string;
   value: number;
 }
 
-interface PlayerSchema {
+export interface PlayerSchema {
   id: string;
   name: string;
   emoji: string;
@@ -52,12 +52,12 @@ interface PlayerSchema {
   ) => void;
 }
 
-interface TrickEntrySchema {
+export interface TrickEntrySchema {
   playerId: string;
   card: CardSchema;
 }
 
-interface PlayerData {
+export interface PlayerData {
   id: string;
   name: string;
   emoji: string;
@@ -71,7 +71,7 @@ interface PlayerData {
   isLocal: boolean;
 }
 
-interface RoomAvailability {
+export interface RoomAvailability {
   roomId: string;
   metadata?: {
     roomCode?: string;

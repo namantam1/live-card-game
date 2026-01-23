@@ -1,6 +1,6 @@
 import { TRUMP_SUIT, MAX_BID, Suit } from "../utils/constants";
 import { getCardValue, getValidCards } from "../utils/cards";
-import { CardData, TrickEntry, DifficultyLevel, BotContext } from '../type';
+import { CardData, TrickEntry, DifficultyLevel, BotContext } from "../type";
 
 export default class BotAI {
   private difficulty: DifficultyLevel;
@@ -8,7 +8,6 @@ export default class BotAI {
   constructor(difficulty: DifficultyLevel = "medium") {
     this.difficulty = difficulty;
   }
-
 
   calculateBid(hand: CardData[]): number {
     switch (this.difficulty) {

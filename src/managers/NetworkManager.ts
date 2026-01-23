@@ -28,12 +28,12 @@ export default class NetworkManager {
   private maxReconnectAttempts: number;
   private reconnectAttempts: number;
   private reconnectDelay: number;
-  private reconnectTimer: NodeJS.Timeout | null;
+  private reconnectTimer: number | null;
 
   // Connection monitoring
   private connectionQuality: ConnectionQuality;
   private lastPingTime: number;
-  private pingInterval: NodeJS.Timeout | null;
+  private pingInterval: number | null;
   private pingTimeout: number;
   private serverUrl: string | null;
 

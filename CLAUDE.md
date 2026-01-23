@@ -5,20 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Call Break is a multiplayer card game built with Phaser 3 and Colyseus. The project consists of:
+
 - **Client**: Phaser 3 game with PWA support (Vite build)
 - **Server**: Colyseus multiplayer server (TypeScript)
 
 ## Development Commands
 
 ### Client (Root Directory)
+
 ```bash
 npm run dev                    # Start dev server (http://localhost:3000)
 npm run build                  # Build for production
 npm run preview                # Preview production build
-npm run generate:pwa-assets    # Generate PWA icons/assets
 ```
 
 ### Server (server/ Directory)
+
 ```bash
 cd server
 npm run dev                    # Start dev server with hot reload (port 2567)
@@ -33,6 +35,7 @@ npm start                      # Run production server from dist/
 **Main Entry**: `src/main.js` - Phaser game initialization with scene registration and PWA setup
 
 **Scene Flow**:
+
 1. `BootScene` - Asset loading (cards, audio)
 2. `MenuScene` - Main menu (solo vs multiplayer)
 3. `LobbyScene` - Multiplayer lobby (create/join rooms)
@@ -40,11 +43,13 @@ npm start                      # Run production server from dist/
 5. `UIScene` - HUD overlay (scores, bids, controls)
 
 **Managers** (Singleton-like services):
+
 - `GameManager` - Solo game state, turn logic, scoring (EventEmitter pattern)
 - `NetworkManager` - Colyseus client wrapper for multiplayer
 - `AudioManager` - Sound effects and background music
 
 **Game Objects**:
+
 - `Card` (TypeScript) - Individual card with suit/rank
 - `Hand` - Player's hand of cards with fan layout
 - `Player` - Player entity (hand, score, bid)
@@ -59,6 +64,7 @@ npm start                      # Run production server from dist/
 **Entry**: `server/src/index.ts` - Express + Colyseus server setup
 
 **Game Room**: `server/src/rooms/CallBreakRoom.ts` - Main multiplayer room handling:
+
 - Room creation with 6-digit codes
 - Player join/leave
 - Game state synchronization

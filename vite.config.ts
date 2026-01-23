@@ -9,7 +9,7 @@ export default defineConfig({
     sourcemap: true,
   },
   resolve: {
-    extensions: ['.js', '.ts'],
+    extensions: ['.ts', '.tsx', '.mts', '.js'],
   },
   server: {
     port: 3000,
