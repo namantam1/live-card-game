@@ -15,6 +15,7 @@ export default class Common {
     // Modern dark gradient background
     const graphics = scene.add.graphics();
     graphics.fillGradientStyle(0x0a0a1a, 0x0a0a1a, 0x1a1a2e, 0x1a1a2e);
+    // graphics.fillGradientStyle(0x1a1a2e, 0x1a1a2e, 0x16213e, 0x16213e);
     graphics.fillRect(0, 0, width, height);
 
     // Subtle grid pattern
@@ -34,6 +35,32 @@ export default class Common {
     graphics.fillCircle(width * 0.85, height * 0.8, 220);
     graphics.fillStyle(0x06b6d4, 0.05);
     graphics.fillCircle(width * 0.5, height * 0.5, 300);
+
+    // Create a few floating card backs
+    const positions = [
+      { x: width * 0.15, y: height * 0.3, delay: 0 },
+      { x: width * 0.85, y: height * 0.4, delay: 500 },
+      { x: width * 0.1, y: height * 0.7, delay: 1000 },
+      { x: width * 0.9, y: height * 0.8, delay: 1500 },
+    ];
+
+    positions.forEach(({ x, y, delay }) => {
+      const card = scene.add
+        .image(x, y, "card-back")
+        .setScale(0.5)
+        .setAlpha(0.3);
+
+      scene.tweens.add({
+        targets: card,
+        y: y - 20,
+        rotation: Phaser.Math.DegToRad(Phaser.Math.Between(-15, 15)),
+        duration: 2000,
+        delay,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    });
   }
 
   static createTable(scene: Scene): void {

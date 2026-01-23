@@ -55,23 +55,23 @@ export default class DebugScene extends Phaser.Scene {
     const scoreboard = new ScoreBoard(this, false, players, 0);
     scoreboard.updateScoreboard(players, 2);
 
-    const roundModal = new RoundModal(
-      this,
-      () => {
-        console.log("Continue to next round");
-      },
-      null as any,
-    );
-    this.time.delayedCall(1000, () => {
-      roundModal.showRoundResults({
-        players: [
-          { name: "Alice", tricksWon: 3, bid: 2, roundScore: 10 },
-          { name: "Bob", tricksWon: 1, bid: 2, roundScore: -5 },
-          { name: "Charlie", tricksWon: 2, bid: 2, roundScore: 0 },
-          { name: "Diana", tricksWon: 4, bid: 3, roundScore: 15 },
-        ],
-      });
-    });
+    // const roundModal = new RoundModal(
+    //   this,
+    //   () => {
+    //     console.log("Continue to next round");
+    //   },
+    //   null as any,
+    // );
+    // this.time.delayedCall(1000, () => {
+    //   roundModal.showRoundResults({
+    //     players: [
+    //       { name: "Alice", tricksWon: 3, bid: 2, roundScore: 10 },
+    //       { name: "Bob", tricksWon: 1, bid: 2, roundScore: -5 },
+    //       { name: "Charlie", tricksWon: 2, bid: 2, roundScore: 0 },
+    //       { name: "Diana", tricksWon: 4, bid: 3, roundScore: 15 },
+    //     ],
+    //   });
+    // });
 
     // const gameOverModal = new GameOverModal(
     //   this,

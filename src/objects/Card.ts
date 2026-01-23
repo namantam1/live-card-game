@@ -1,7 +1,7 @@
-import Phaser, { Scene } from 'phaser';
-import { CARD, ANIMATION, COLORS } from '../utils/constants';
-import { getCardAssetKey } from '../utils/cards';
-import { CardData } from '../type';
+import Phaser, { Scene } from "phaser";
+import { CARD, ANIMATION, COLORS } from "../utils/constants";
+import { getCardAssetKey } from "../utils/cards";
+import { CardData } from "../type";
 
 export interface CardConfig {
   x: number;
@@ -35,7 +35,9 @@ export default class Card {
     this.container = scene.add.container(config.x, config.y);
 
     // Create card sprite
-    const textureKey = this.isFaceDown ? 'card-back' : getCardAssetKey(config.cardData);
+    const textureKey = this.isFaceDown
+      ? "card-back"
+      : getCardAssetKey(config.cardData);
     const scale = this.isFaceDown ? CARD.SCALE * 0.9 : CARD.SCALE;
     this.sprite = scene.add.image(0, 0, textureKey);
     this.sprite.setScale(scale);
@@ -70,7 +72,7 @@ export default class Card {
           targets: this.container,
           y: this.originalY - CARD.HOVER_LIFT,
           duration: 200,
-          ease: 'Back.easeOut',
+          ease: "Back.easeOut",
         });
         this.showGlow();
       }
@@ -89,7 +91,7 @@ export default class Card {
           targets: this.container,
           y: this.originalY,
           duration: 150,
-          ease: 'Quad.easeOut',
+          ease: "Quad.easeOut",
         });
       }
 
@@ -112,15 +114,15 @@ export default class Card {
   }
 
   setupInteraction() {
-    this.container.on('pointerover', this.onHover, this);
-    this.container.on('pointerout', this.onHoverEnd, this);
-    this.container.on('pointerdown', this.onPointerDown, this);
+    this.container.on("pointerover", this.onHover, this);
+    this.container.on("pointerout", this.onHoverEnd, this);
+    this.container.on("pointerdown", this.onPointerDown, this);
   }
 
   removeInteraction() {
-    this.container.off('pointerover', this.onHover, this);
-    this.container.off('pointerout', this.onHoverEnd, this);
-    this.container.off('pointerdown', this.onPointerDown, this);
+    this.container.off("pointerover", this.onHover, this);
+    this.container.off("pointerout", this.onHoverEnd, this);
+    this.container.off("pointerdown", this.onPointerDown, this);
   }
 
   onHover() {
@@ -133,7 +135,7 @@ export default class Card {
       scaleX: 1.05,
       scaleY: 1.05,
       duration: 100,
-      ease: 'Back.easeOut',
+      ease: "Back.easeOut",
     });
   }
 
@@ -147,7 +149,7 @@ export default class Card {
       scaleX: 1,
       scaleY: 1,
       duration: 100,
-      ease: 'Quad.easeOut',
+      ease: "Quad.easeOut",
     });
   }
 
@@ -173,7 +175,7 @@ export default class Card {
       -cardHeight / 2 - 2,
       cardWidth,
       cardHeight + 4,
-      8
+      8,
     );
     this.glow.setVisible(true);
   }
@@ -182,16 +184,19 @@ export default class Card {
     this.glow.setVisible(false);
   }
 
-  flip(toFaceDown = false) {
+  flip(cardData: CardData, toFaceDown = false) {
+    this.cardData = cardData;
     return new Promise((resolve) => {
       // Flip animation - scale X to 0, change texture, scale back
       this.scene.tweens.add({
         targets: this.sprite,
         scaleX: 0,
         duration: 100,
-        ease: 'Quad.easeIn',
+        ease: "Quad.easeIn",
         onComplete: () => {
-          const textureKey = toFaceDown ? 'card-back' : getCardAssetKey(this.cardData);
+          const textureKey = toFaceDown
+            ? "card-back"
+            : getCardAssetKey(this.cardData);
           this.sprite.setTexture(textureKey);
           this.isFaceDown = toFaceDown;
 
@@ -199,7 +204,7 @@ export default class Card {
             targets: this.sprite,
             scaleX: CARD.SCALE,
             duration: 100,
-            ease: 'Quad.easeOut',
+            ease: "Quad.easeOut",
             onComplete: resolve,
           });
         },
@@ -236,9 +241,9 @@ export default class Card {
       alpha,
       animate = false,
       duration = 200,
-      ease = 'Quad.easeOut',
+      ease = "Quad.easeOut",
       delay = 0,
-      onComplete
+      onComplete,
     } = config;
 
     // Update originalY if y is provided
@@ -292,14 +297,19 @@ export default class Card {
   }
 
   // Legacy methods - kept for backward compatibility with TrickArea
-  animateTo(x: number, y: number, duration = ANIMATION.CARD_PLAY, rotation = 0) {
+  animateTo(
+    x: number,
+    y: number,
+    duration = ANIMATION.CARD_PLAY,
+    rotation = 0,
+  ) {
     return this.moveTo({
       x,
       y,
       rotation: Phaser.Math.DegToRad(rotation),
       animate: true,
       duration,
-      ease: 'Cubic.easeOut',
+      ease: "Cubic.easeOut",
     });
   }
 
@@ -309,7 +319,7 @@ export default class Card {
       y,
       animate: true,
       duration,
-      ease: 'Back.easeOut',
+      ease: "Back.easeOut",
     });
   }
 
