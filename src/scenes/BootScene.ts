@@ -19,15 +19,13 @@ export default class BootScene extends Phaser.Scene {
     const loadingText = this.add
       .text(centerX, centerY - 50, "Loading...", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
+        fontSize: "28px",
         color: "#ffffff",
       })
       .setOrigin(0.5);
 
     // Progress bar background
-    const progressBarBg = this.add
-      .rectangle(centerX, centerY, 400, 30, 0x1e293b)
-      .setOrigin(0.5);
+    this.add.rectangle(centerX, centerY, 400, 30, 0x1e293b).setOrigin(0.5);
 
     // Progress bar fill
     const progressBar = this.add
@@ -36,9 +34,9 @@ export default class BootScene extends Phaser.Scene {
 
     // Percentage text
     const percentText = this.add
-      .text(centerX, centerY + 50, "0%", {
+      .text(centerX, centerY + 45, "0%", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "18px",
+        fontSize: "22px",
         color: "#94a3b8",
       })
       .setOrigin(0.5);

@@ -42,6 +42,26 @@ export default class MenuScene extends Phaser.Scene {
       () => this.moveToScreen("LobbyScene"),
       0x8b5cf6,
     );
+
+    // Credit text at bottom right
+    this.createCreditText(width, height);
+  }
+
+  createCreditText(width: number, height: number) {
+    const padding = 20;
+    const creditText = this.add
+      .text(width - padding, height - padding, "Crafted by “Naman” with ❤️", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: getFontSize("credit", width, height),
+        color: "#b4b8da",
+      })
+      .setOrigin(1, 1)
+      .setInteractive({ useHandCursor: true });
+
+    // Click to open GitHub profile
+    creditText.on("pointerdown", () => {
+      window.open("https://github.com/namantam1", "_blank");
+    });
   }
 
   moveToScreen(screenKey: string) {

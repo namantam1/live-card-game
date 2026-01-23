@@ -120,6 +120,7 @@ export const FONT_CONFIG = {
     menuSpadeIcon: "180px",
     menuSubtitle: "25px",
     menuButton: "30px",
+    credit: "30px",
 
     // Lobby
     lobbyTitle: "100px",
@@ -151,6 +152,7 @@ export const FONT_CONFIG = {
     menuSpadeIcon: "72px",
     menuSubtitle: "20px",
     menuButton: "20px",
+    credit: "14px",
 
     // Modals
     modalTitle: "28px",
