@@ -166,11 +166,11 @@ export default class Hand extends Phaser.GameObjects.Container {
     });
   }
 
-  updatePlayableCards(leadSuit: Suit) {
+  updatePlayableCards(leadSuit: Suit, currentTrick: any[] = []) {
     if (!this.isHuman) return;
 
     const cardDataArray = this.cards.map((c) => c.cardData);
-    const validCards = getValidCards(cardDataArray, leadSuit);
+    const validCards = getValidCards(cardDataArray, leadSuit, currentTrick);
     const validIds = new Set(validCards.map((c) => c.id));
 
     this.cards.forEach((card) => {

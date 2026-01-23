@@ -175,7 +175,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     console.log("Updating playable cards for current turn:", this.currentTurn);
     this.players.forEach((player, index) => {
       if (index === this.currentTurn && player.isHuman) {
-        player.updatePlayableCards(this.leadSuit!);
+        player.updatePlayableCards(this.leadSuit!, this.currentTrick);
       } else {
         player.disableAllCards();
       }
@@ -190,7 +190,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Validate move
     const hand = player.getCardData();
-    const validCards = getValidCards(hand, this.leadSuit!);
+    const validCards = getValidCards(hand, this.leadSuit!, this.currentTrick);
     if (!validCards.find((c) => c.id === cardData.id)) return;
 
     // Set lead suit if first card
@@ -230,7 +230,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     const player = this.players[this.currentTurn];
     const hand = player.getCardData();
-    const validCards = getValidCards(hand, this.leadSuit!);
+    const validCards = getValidCards(hand, this.leadSuit!, this.currentTrick);
 
     // Simple bot strategy: play lowest valid card
     validCards.sort((a, b) => a.value - b.value);

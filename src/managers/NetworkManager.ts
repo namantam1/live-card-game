@@ -428,6 +428,14 @@ export default class NetworkManager {
     return this.room?.state.leadSuit || "";
   }
 
+  getCurrentTrick(): any[] {
+    if (!this.room?.state.currentTrick) return [];
+    return Array.from(this.room.state.currentTrick).map((entry) => ({
+      playerIndex: (entry as TrickEntrySchema).playerId,
+      card: this.cardToObject((entry as TrickEntrySchema).card),
+    }));
+  }
+
   getRoomCode(): string | null {
     return this.roomCode;
   }

@@ -128,8 +128,8 @@ export default class Player {
     return this.hand.setCards(cardDataArray, animate);
   }
 
-  updatePlayableCards(leadSuit: Suit) {
-    this.hand.updatePlayableCards(leadSuit);
+  updatePlayableCards(leadSuit: Suit, currentTrick: any[] = []) {
+    this.hand.updatePlayableCards(leadSuit, currentTrick);
   }
 
   disableAllCards() {

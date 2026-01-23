@@ -93,7 +93,9 @@ export default class BotAI {
     currentTrick: TrickEntry[] = [],
     context: BotContext = {},
   ): CardData {
-    const validCards = leadSuit ? getValidCards(hand, leadSuit) : hand;
+    const validCards = leadSuit
+      ? getValidCards(hand, leadSuit, currentTrick)
+      : hand;
 
     if (validCards.length === 1) {
       return validCards[0];

@@ -303,9 +303,10 @@ export default class GameScene extends Phaser.Scene {
           if (isMyTurn) {
             // Enable card selection for local player with proper validation
             const leadSuit = this.networkManager.getLeadSuit();
+            const currentTrick = this.networkManager.getCurrentTrick();
             const phase = this.networkManager.getPhase();
             if (phase === "playing") {
-              p.hand.updatePlayableCards(leadSuit);
+              p.hand.updatePlayableCards(leadSuit, currentTrick);
             }
           }
         } else {
@@ -420,7 +421,8 @@ export default class GameScene extends Phaser.Scene {
           (p) => p.networkId === this.networkManager.playerId,
         );
         if (localPlayer) {
-          localPlayer.hand.updatePlayableCards(leadSuit);
+          const currentTrick = this.networkManager.getCurrentTrick();
+          localPlayer.hand.updatePlayableCards(leadSuit, currentTrick);
         }
       }
     });
@@ -519,11 +521,12 @@ export default class GameScene extends Phaser.Scene {
       } else if (phase === "playing" && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards
         const leadSuit = state.leadSuit || "";
+        const currentTrick = this.networkManager.getCurrentTrick();
         console.log(
           "GameScene: Reconnected during our turn, updating playable cards. Lead suit:",
           leadSuit,
         );
-        localPlayer.hand.updatePlayableCards(leadSuit);
+        localPlayer.hand.updatePlayableCards(leadSuit, currentTrick);
       }
     }
   }
