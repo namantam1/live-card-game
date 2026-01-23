@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PHASE } from "../utils/constants";
+import { EVENTS, PHASE } from "../utils/constants";
 import { SETTINGS_ICON_CONFIG, getResponsiveConfig } from "../utils/uiConfig";
 import Button from "../components/Button";
 import ScoreBoard from "../objects/game/ScoreBoard";
@@ -156,24 +156,21 @@ export default class UIScene extends Phaser.Scene {
   }
 
   setupSoloEventListeners() {
-    // Listen for phase changes from game scene
-    this.gameScene.events.on("phaseChanged", (phase: any) => {
-      if (phase === PHASE.BIDDING) {
-        // Check if it's human's turn to bid
-        if (this.gameManager && this.gameManager.biddingPlayer === 0) {
-          this.biddingUI.show();
-        }
+    // Listen for turn changes during bidding
+    this.gameManager?.on(EVENTS.TURN_CHANGED, (playerIndex: number) => {
+      const phase = this.gameManager?.phase;
+      if (phase === PHASE.BIDDING && playerIndex === 0) {
+        // It's the human's turn to bid
+        this.time.delayedCall(300, () => this.biddingUI.show());
       }
     });
 
-    // Bid placed
+    // Bid placed - no need to manually check for next bidder anymore
+    // The TURN_CHANGED event will handle showing the UI
     this.gameScene.events.on("bidPlaced", ({ playerIndex }: any) => {
-      // If next bidder is human, show bidding UI
-      if (playerIndex < 3) {
-        const nextBidder = playerIndex + 1;
-        if (nextBidder === 0) {
-          this.time.delayedCall(500, () => this.biddingUI.show());
-        }
+      // Just hide if it was the human who bid
+      if (playerIndex === 0) {
+        this.biddingUI.hide();
       }
     });
   }

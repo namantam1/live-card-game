@@ -87,7 +87,8 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     this.trickNumber = 0;
     this.leadSuit = null;
     this.currentTrick = [];
-    this.biddingPlayer = 0;
+    // Rotate the starting bidder each round (round 1 -> player 0, round 2 -> player 1, etc.)
+    this.biddingPlayer = (this.currentRound - 1) % NUM_PLAYERS;
 
     // Reset players for new round
     this.players.forEach((p) => p.reset());
@@ -117,10 +118,11 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
   async runBidding() {
     for (let i = 0; i < NUM_PLAYERS; i++) {
-      this.biddingPlayer = i;
-      this.emit(EVENTS.TURN_CHANGED, i);
+      // Calculate actual player index with rotation
+      const playerIndex = (this.biddingPlayer + i) % NUM_PLAYERS;
+      this.emit(EVENTS.TURN_CHANGED, playerIndex);
 
-      const player = this.players[i];
+      const player = this.players[playerIndex];
 
       if (player.isHuman) {
         // Wait for human bid (handled by UI)
@@ -130,15 +132,20 @@ export default class GameManager extends Phaser.Events.EventEmitter {
         await this.delay(ANIMATION.BOT_THINK);
         const bid = this.calculateBotBid(player);
         player.setBid(bid);
-        this.emit(EVENTS.BID_PLACED, { playerIndex: i, bid });
+        this.emit(EVENTS.BID_PLACED, { playerIndex, bid });
       }
     }
 
-    // Start playing phase
-    this.currentTurn = 0;
+    // Start playing phase - the first bidder leads
+    this.currentTurn = this.biddingPlayer;
     this.setPhase(PHASE.PLAYING);
-    this.emit(EVENTS.TURN_CHANGED, 0);
+    this.emit(EVENTS.TURN_CHANGED, this.biddingPlayer);
     this.updatePlayableCards();
+
+    // If first player is a bot, automatically play
+    if (!this.players[this.currentTurn].isHuman) {
+      await this.playBotTurn();
+    }
   }
 
   waitForHumanBid() {

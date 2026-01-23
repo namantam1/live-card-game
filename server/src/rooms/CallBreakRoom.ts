@@ -202,7 +202,8 @@ export class CallBreakRoom extends Room<GameState> {
     this.state.phase = 'dealing';
     this.state.trickNumber = 0;
     this.state.leadSuit = '';
-    this.state.biddingPlayerIndex = 0;
+    // Rotate the starting bidder each round (round 1 -> player 0, round 2 -> player 1, etc.)
+    this.state.biddingPlayerIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
     this.state.currentTrick.clear();
 
     // Reset player round state
@@ -222,7 +223,7 @@ export class CallBreakRoom extends Room<GameState> {
     // Start bidding after a short delay
     this.clock.setTimeout(() => {
       this.state.phase = 'bidding';
-      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if first player is a bot
       this.checkBotTurn();
@@ -268,9 +269,10 @@ export class CallBreakRoom extends Room<GameState> {
     this.state.biddingPlayerIndex++;
 
     if (this.state.biddingPlayerIndex >= NUM_PLAYERS) {
-      // All bids placed, start playing
+      // All bids placed, start playing - first bidder starts
+      const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
       this.state.phase = 'playing';
-      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
 
       // Check if first player in playing phase is a bot
       this.checkBotTurn();
