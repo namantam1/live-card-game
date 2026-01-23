@@ -21,11 +21,11 @@ export default class Player {
   roundScore: number;
   position: Position;
   hand: Hand;
-  networkId: undefined;
-  absoluteSeatIndex: undefined;
-  nameLabel: any;
-  statsLabel: any;
-  turnIndicator: any;
+  networkId: string | null = null;
+  absoluteSeatIndex: number | null = null;
+  nameLabel!: Phaser.GameObjects.Text;
+  statsLabel!: Phaser.GameObjects.Text;
+  turnIndicator!: Phaser.GameObjects.Graphics;
 
   constructor(
     scene: Scene,
@@ -55,8 +55,6 @@ export default class Player {
 
     // Create player label
     this.createLabel();
-    this.networkId = undefined;
-    this.absoluteSeatIndex = undefined;
   }
 
   createLabel() {

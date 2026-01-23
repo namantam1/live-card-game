@@ -1,15 +1,40 @@
-import Phaser from 'phaser';
+import Phaser, { Scene } from "phaser";
 import {
-  PHASE, EVENTS, TOTAL_ROUNDS, CARDS_PER_PLAYER, NUM_PLAYERS,
-  ANIMATION, TRUMP_SUIT, MAX_BID
-} from '../utils/constants';
+  PHASE,
+  EVENTS,
+  TOTAL_ROUNDS,
+  CARDS_PER_PLAYER,
+  NUM_PLAYERS,
+  ANIMATION,
+  TRUMP_SUIT,
+  MAX_BID,
+  Suit,
+} from "../utils/constants";
 import {
-  createDeck, shuffleDeck, sortHand, findTrickWinner,
-  getValidCards, calculateScore
-} from '../utils/cards';
+  createDeck,
+  shuffleDeck,
+  sortHand,
+  findTrickWinner,
+  getValidCards,
+  calculateScore,
+} from "../utils/cards";
+import Player from "../objects/Player";
+import TrickArea from "../objects/TrickArea";
+import { CardData, TrickEntry } from "../type";
 
 export default class GameManager extends Phaser.Events.EventEmitter {
-  constructor(scene) {
+  scene: Scene;
+  players: Player[];
+  trickArea: TrickArea | null;
+  phase: string;
+  currentRound: number;
+  currentTurn: number;
+  leadSuit: Suit | null;
+  trickNumber: number;
+  biddingPlayer: number;
+  currentTrick: TrickEntry[];
+  playerInfo: { name: string; emoji: string; isHuman: boolean }[];
+  constructor(scene: Scene) {
     super();
 
     this.scene = scene;
@@ -27,22 +52,22 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Player info
     this.playerInfo = [
-      { name: 'You', emoji: '\uD83D\uDE0E', isHuman: true },
-      { name: 'Ace', emoji: '\uD83E\uDD16', isHuman: false },
-      { name: 'Max', emoji: '\uD83E\uDD8A', isHuman: false },
-      { name: 'Zara', emoji: '\uD83D\uDC31', isHuman: false },
+      { name: "You", emoji: "\uD83D\uDE0E", isHuman: true },
+      { name: "Ace", emoji: "\uD83E\uDD16", isHuman: false },
+      { name: "Max", emoji: "\uD83E\uDD8A", isHuman: false },
+      { name: "Zara", emoji: "\uD83D\uDC31", isHuman: false },
     ];
   }
 
-  setPlayers(players) {
+  setPlayers(players: Player[]) {
     this.players = players;
   }
 
-  setTrickArea(trickArea) {
+  setTrickArea(trickArea: TrickArea) {
     this.trickArea = trickArea;
   }
 
-  setPhase(phase) {
+  setPhase(phase: string) {
     this.phase = phase;
     this.emit(EVENTS.PHASE_CHANGED, phase);
   }
@@ -50,7 +75,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   // Start a new game
   async startGame() {
     this.currentRound = 1;
-    this.players.forEach(p => p.fullReset());
+    this.players.forEach((p) => p.fullReset());
     await this.startRound();
   }
 
@@ -65,7 +90,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     this.biddingPlayer = 0;
 
     // Reset players for new round
-    this.players.forEach(p => p.reset());
+    this.players.forEach((p) => p.reset());
 
     // Deal cards
     await this.dealCards();
@@ -80,7 +105,10 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Deal 13 cards to each player
     const dealPromises = this.players.map((player, index) => {
-      const cards = deck.slice(index * CARDS_PER_PLAYER, (index + 1) * CARDS_PER_PLAYER);
+      const cards = deck.slice(
+        index * CARDS_PER_PLAYER,
+        (index + 1) * CARDS_PER_PLAYER,
+      );
       return player.setCards(sortHand(cards), true);
     });
 
@@ -115,36 +143,39 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
   waitForHumanBid() {
     return new Promise((resolve) => {
-      this.once('humanBidPlaced', resolve);
+      this.once("humanBidPlaced", resolve);
     });
   }
 
-  placeHumanBid(bid) {
+  placeHumanBid(bid: number) {
     const player = this.players[0];
     player.setBid(bid);
     this.emit(EVENTS.BID_PLACED, { playerIndex: 0, bid });
-    this.emit('humanBidPlaced');
+    this.emit("humanBidPlaced");
   }
 
-  calculateBotBid(player) {
+  calculateBotBid(player: Player): number {
     const hand = player.getCardData();
-    const highCards = hand.filter(c => c.value >= 11).length;
-    const spades = hand.filter(c => c.suit === TRUMP_SUIT).length;
-    return Math.max(1, Math.min(MAX_BID, Math.floor((highCards + spades) / 2) + 1));
+    const highCards = hand.filter((c) => c.value >= 11).length;
+    const spades = hand.filter((c) => c.suit === TRUMP_SUIT).length;
+    return Math.max(
+      1,
+      Math.min(MAX_BID, Math.floor((highCards + spades) / 2) + 1),
+    );
   }
 
   updatePlayableCards() {
-    console.log('Updating playable cards for current turn:', this.currentTurn);
+    console.log("Updating playable cards for current turn:", this.currentTurn);
     this.players.forEach((player, index) => {
       if (index === this.currentTurn && player.isHuman) {
-        player.updatePlayableCards(this.leadSuit);
+        player.updatePlayableCards(this.leadSuit!);
       } else {
         player.disableAllCards();
       }
     });
   }
 
-  async playCard(cardData, playerIndex) {
+  async playCard(cardData: CardData, playerIndex: number) {
     if (this.phase !== PHASE.PLAYING) return;
     if (playerIndex !== this.currentTurn) return;
 
@@ -152,8 +183,8 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Validate move
     const hand = player.getCardData();
-    const validCards = getValidCards(hand, this.leadSuit);
-    if (!validCards.find(c => c.id === cardData.id)) return;
+    const validCards = getValidCards(hand, this.leadSuit!);
+    if (!validCards.find((c) => c.id === cardData.id)) return;
 
     // Set lead suit if first card
     if (this.currentTrick.length === 0) {
@@ -164,7 +195,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     const cardObject = player.removeCard(cardData);
 
     // Play card to center
-    await this.trickArea.playCard(cardData, playerIndex, cardObject);
+    await this.trickArea!.playCard(cardData, playerIndex, cardObject);
 
     // Add to current trick
     this.currentTrick.push({ playerIndex, card: cardData });
@@ -192,7 +223,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     const player = this.players[this.currentTurn];
     const hand = player.getCardData();
-    const validCards = getValidCards(hand, this.leadSuit);
+    const validCards = getValidCards(hand, this.leadSuit!);
 
     // Simple bot strategy: play lowest valid card
     validCards.sort((a, b) => a.value - b.value);
@@ -205,14 +236,14 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     this.setPhase(PHASE.TRICK_END);
 
     // Find winner
-    const winnerIndex = findTrickWinner(this.currentTrick, this.leadSuit);
+    const winnerIndex = findTrickWinner(this.currentTrick, this.leadSuit!);
     this.players[winnerIndex].addTrick();
 
     this.emit(EVENTS.TRICK_COMPLETE, { winnerIndex });
 
     // Collect cards animation
     await this.delay(500);
-    await this.trickArea.collectTrick(winnerIndex);
+    await this.trickArea!.collectTrick(winnerIndex);
 
     // Reset for next trick
     this.currentTrick = [];
@@ -240,14 +271,14 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     this.setPhase(PHASE.ROUND_END);
 
     // Calculate scores
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       const score = calculateScore(player.bid, player.tricksWon);
       player.setRoundScore(score);
     });
 
     this.emit(EVENTS.ROUND_COMPLETE, {
       round: this.currentRound,
-      players: this.players.map(p => ({
+      players: this.players.map((p) => ({
         name: p.name,
         bid: p.bid,
         tricksWon: p.tricksWon,
@@ -274,7 +305,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     this.emit(EVENTS.GAME_COMPLETE, {
       winner: sortedPlayers[0],
-      players: sortedPlayers.map(p => ({
+      players: sortedPlayers.map((p) => ({
         name: p.name,
         emoji: p.emoji,
         score: p.score,
@@ -283,12 +314,12 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   }
 
   async restartGame() {
-    this.trickArea.clear();
+    this.trickArea?.clear();
     await this.startGame();
   }
 
-  delay(ms) {
-    return new Promise(resolve => this.scene.time.delayedCall(ms, resolve));
+  delay(ms: number) {
+    return new Promise((resolve) => this.scene.time.delayedCall(ms, resolve));
   }
 
   // Getters for UI

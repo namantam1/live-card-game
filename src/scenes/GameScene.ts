@@ -18,7 +18,7 @@ export default class GameScene extends Phaser.Scene {
   roundText!: RoundIndicator;
   gameManager!: GameManager;
   trickArea!: TrickArea;
-  players!: any[];
+  players!: Player[];
   networkIndicator!: NetworkIndicator;
   reconnectionOverlay!: ReconnectionOverlay;
 

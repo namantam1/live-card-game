@@ -1,5 +1,14 @@
+import { Scene } from "phaser";
+
 export default class AudioManager {
-  constructor(scene) {
+  scene: any;
+  enabled: boolean;
+  musicEnabled: boolean;
+  soundEnabled: boolean;
+  bgMusic: Phaser.Sound.BaseSound | null;
+  audioContext: AudioContext | null;
+  initialized: boolean;
+  constructor(scene: Scene) {
     this.scene = scene;
     this.enabled = true;
     this.musicEnabled = true;
@@ -18,13 +27,15 @@ export default class AudioManager {
   ensureAudioContext() {
     if (!this.audioContext) {
       try {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.audioContext = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
       } catch (e) {
-        console.log('Could not create AudioContext');
+        console.log("Could not create AudioContext");
       }
     }
     // Resume if suspended
-    if (this.audioContext?.state === 'suspended') {
+    if (this.audioContext?.state === "suspended") {
       this.audioContext.resume();
     }
   }
@@ -34,17 +45,17 @@ export default class AudioManager {
     if (this.bgMusic && this.bgMusic.isPlaying) return;
 
     try {
-      if (this.scene.cache.audio.exists('bgm')) {
+      if (this.scene.cache.audio.exists("bgm")) {
         if (!this.bgMusic) {
-          this.bgMusic = this.scene.sound.add('bgm', {
+          this.bgMusic = this.scene.sound.add("bgm", {
             volume: 0.3,
             loop: true,
           });
         }
-        this.bgMusic.play();
+        this.bgMusic!.play();
       }
     } catch (e) {
-      console.log('Could not start background music');
+      console.log("Could not start background music");
     }
   }
 
@@ -106,10 +117,13 @@ export default class AudioManager {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
 
     gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      this.audioContext.currentTime + 0.1,
+    );
 
     oscillator.start(this.audioContext.currentTime);
     oscillator.stop(this.audioContext.currentTime + 0.1);
@@ -121,20 +135,23 @@ export default class AudioManager {
     if (!this.audioContext) return;
 
     [400, 500, 600].forEach((freq, i) => {
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
+      gainNode.connect(this.audioContext!.destination);
 
       oscillator.frequency.value = freq;
-      oscillator.type = 'triangle';
+      oscillator.type = "triangle";
 
-      gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.15, this.audioContext!.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        this.audioContext!.currentTime + 0.3,
+      );
 
-      oscillator.start(this.audioContext.currentTime + i * 0.05);
-      oscillator.stop(this.audioContext.currentTime + 0.3);
+      oscillator.start(this.audioContext!.currentTime + i * 0.05);
+      oscillator.stop(this.audioContext!.currentTime + 0.3);
     });
   }
 
@@ -150,10 +167,13 @@ export default class AudioManager {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = 600;
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
 
     gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      this.audioContext.currentTime + 0.05,
+    );
 
     oscillator.start(this.audioContext.currentTime);
     oscillator.stop(this.audioContext.currentTime + 0.05);
@@ -165,20 +185,23 @@ export default class AudioManager {
     if (!this.audioContext) return;
 
     [523, 659, 784, 1047].forEach((freq, i) => {
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
+      gainNode.connect(this.audioContext!.destination);
 
       oscillator.frequency.value = freq;
-      oscillator.type = 'sine';
+      oscillator.type = "sine";
 
-      gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+      gainNode.gain.setValueAtTime(0.2, this.audioContext!.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        this.audioContext!.currentTime + 0.4,
+      );
 
-      oscillator.start(this.audioContext.currentTime + i * 0.1);
-      oscillator.stop(this.audioContext.currentTime + 0.4);
+      oscillator.start(this.audioContext!.currentTime + i * 0.1);
+      oscillator.stop(this.audioContext!.currentTime + 0.4);
     });
   }
 
