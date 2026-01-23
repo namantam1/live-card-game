@@ -7,6 +7,7 @@ import {
 import { Position } from "../../type";
 import Button from "../../components/Button";
 import AudioManager from "../../managers/AudioManager";
+import CanvasInput from "phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput";
 
 export default class Common {
   static createBackground(scene: Scene): void {
@@ -275,5 +276,51 @@ export default class Common {
       onClick: config.onClick,
       audioManager: config.audioManager,
     });
+  }
+
+  static createInputField(
+    scene: Scene,
+    config: { x: number; y: number; width: number; uppercase?: boolean },
+  ) {
+    const { x, y, width, uppercase = false } = config;
+    // Create rexUI CanvasInput (truly canvas-based)
+    const canvasInput = scene.add
+      .rexCanvasInput(x, y, width, 50, {
+        background: {
+          color: 0x1e293b,
+          stroke: 0x475569,
+          strokeThickness: 2,
+          cornerRadius: 8,
+          "focus.stroke": 0x6366f1,
+        },
+        style: {
+          fontSize: "18px",
+          fontFamily: "Arial, sans-serif",
+          color: "#ffffff",
+        },
+        wrap: {
+          hAlign: "center",
+          vAlign: "center",
+        },
+        text: "",
+        maxLength: uppercase ? 4 : 20,
+      })
+      .setOrigin(0.5)
+      .setDepth(100);
+
+    // Transform to uppercase if needed
+    if (uppercase) {
+      canvasInput.on("textchange", (canvasInput: CanvasInput) => {
+        const { text, cursorPosition } = canvasInput;
+        if (!text) return;
+        const upper = canvasInput.text.toUpperCase();
+        if (canvasInput.text !== upper) {
+          canvasInput.setText(upper);
+          canvasInput.setCursorPosition(cursorPosition);
+        }
+      });
+    }
+
+    return canvasInput;
   }
 }

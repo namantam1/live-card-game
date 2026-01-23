@@ -201,7 +201,7 @@ export default class NetworkIndicator {
     });
   }
 
-  destroy(fromScene: boolean) {
+  destroy(fromScene: boolean = false) {
     if (this.pulseAnimation) {
       this.pulseAnimation.stop();
     }
