@@ -1,24 +1,50 @@
-import { CARD_CONFIG } from './uiConfig';
+import { CARD_CONFIG } from "./uiConfig";
 
 // Game Constants
-export const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'] as const;
-export const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const;
+export const SUITS = ["spades", "hearts", "diamonds", "clubs"] as const;
+export const RANKS = [
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+  "A",
+] as const;
 
-export type Suit = typeof SUITS[number];
-export type Rank = typeof RANKS[number];
+export type Suit = (typeof SUITS)[number];
+export type Rank = (typeof RANKS)[number];
 
 export const RANK_VALUES: Record<Rank, number> = {
-  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
-  '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+  "2": 2,
+  "3": 3,
+  "4": 4,
+  "5": 5,
+  "6": 6,
+  "7": 7,
+  "8": 8,
+  "9": 9,
+  "10": 10,
+  J: 11,
+  Q: 12,
+  K: 13,
+  A: 14,
 };
 
-export const TRUMP_SUIT: Suit = 'spades';
+export const TRUMP_SUIT: Suit = "spades";
 export const TOTAL_ROUNDS = 5;
 export const CARDS_PER_PLAYER = 13;
 export const NUM_PLAYERS = 4;
-export const MAX_BID = 8;  // Maximum allowed bid value
+export const MAX_BID = 8; // Maximum allowed bid value
 
 // Player positions (for 4 players around a table)
+export type Position = "bottom" | "left" | "top" | "right";
 export interface PlayerPosition {
   x: number;
   y: number;
@@ -27,11 +53,11 @@ export interface PlayerPosition {
   labelX?: number;
 }
 
-export const PLAYER_POSITIONS: Record<'bottom' | 'left' | 'top' | 'right', PlayerPosition> = {
+export const PLAYER_POSITIONS: Record<Position, PlayerPosition> = {
   bottom: { x: 0.5, y: 0.85, rotation: 0, labelY: 0.95 },
-  left: { x: 0.20, y: 0.5, rotation: 90, labelX: 0.13 },   // Closer to table center
+  left: { x: 0.2, y: 0.5, rotation: 90, labelX: 0.13 }, // Closer to table center
   top: { x: 0.5, y: 0.15, rotation: 180, labelY: 0.05 },
-  right: { x: 0.80, y: 0.5, rotation: -90, labelX: 0.87 }, // Closer to table center
+  right: { x: 0.8, y: 0.5, rotation: -90, labelX: 0.87 }, // Closer to table center
 };
 
 // Animation durations (in ms)
@@ -70,32 +96,32 @@ export const COLORS = {
 
 // Game phases
 export const PHASE = {
-  IDLE: 'idle',
-  DEALING: 'dealing',
-  BIDDING: 'bidding',
-  PLAYING: 'playing',
-  TRICK_END: 'trickEnd',
-  ROUND_END: 'roundEnd',
-  GAME_OVER: 'gameOver',
+  IDLE: "idle",
+  DEALING: "dealing",
+  BIDDING: "bidding",
+  PLAYING: "playing",
+  TRICK_END: "trickEnd",
+  ROUND_END: "roundEnd",
+  GAME_OVER: "gameOver",
 } as const;
 
-export type GamePhase = typeof PHASE[keyof typeof PHASE];
+export type GamePhase = (typeof PHASE)[keyof typeof PHASE];
 
 // Events
 export const EVENTS = {
-  CARD_PLAYED: 'cardPlayed',
-  TRICK_COMPLETE: 'trickComplete',
-  ROUND_COMPLETE: 'roundComplete',
-  GAME_COMPLETE: 'gameComplete',
-  BID_PLACED: 'bidPlaced',
-  TURN_CHANGED: 'turnChanged',
-  PHASE_CHANGED: 'phaseChanged',
+  CARD_PLAYED: "cardPlayed",
+  TRICK_COMPLETE: "trickComplete",
+  ROUND_COMPLETE: "roundComplete",
+  GAME_COMPLETE: "gameComplete",
+  BID_PLACED: "bidPlaced",
+  TURN_CHANGED: "turnChanged",
+  PHASE_CHANGED: "phaseChanged",
 } as const;
 
-export type GameEvent = typeof EVENTS[keyof typeof EVENTS];
+export type GameEvent = (typeof EVENTS)[keyof typeof EVENTS];
 
 // Server configuration
 export const SERVER = {
   // Use environment variable in production, fallback to localhost for development
-  URL: (import.meta as any).env.VITE_SERVER_URL || 'ws://localhost:2567',
+  URL: (import.meta as any).env.VITE_SERVER_URL || "ws://localhost:2567",
 } as const;

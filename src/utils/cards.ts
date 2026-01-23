@@ -1,5 +1,5 @@
-import { CardData, TrickEntry } from '../type';
-import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT, Suit } from './constants';
+import { CardData, TrickEntry } from "../type";
+import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT, Suit } from "./constants";
 
 /**
  * Create a standard 52-card deck
@@ -98,20 +98,22 @@ export function sortHand(hand: CardData[]) {
  * @param {string|null} leadSuit - The suit that was led (null if leading)
  * @returns {Array} - Valid cards to play
  */
-export function getValidCards(hand: any[], leadSuit: string | null): Array<any> {
+export function getValidCards(hand: any[], leadSuit: Suit): Array<any> {
   if (!leadSuit) {
     // Leading - can play anything
     return hand;
   }
 
   // Must follow lead suit if possible
-  const leadSuitCards = hand.filter((c: { suit: any; }) => c.suit === leadSuit);
+  const leadSuitCards = hand.filter((c: { suit: any }) => c.suit === leadSuit);
   if (leadSuitCards.length > 0) {
     return leadSuitCards;
   }
 
   // If can't follow, must play spades if possible
-  const spadeCards = hand.filter((c: { suit: string; }) => c.suit === TRUMP_SUIT);
+  const spadeCards = hand.filter(
+    (c: { suit: string }) => c.suit === TRUMP_SUIT,
+  );
   if (spadeCards.length > 0) {
     return spadeCards;
   }

@@ -1,24 +1,39 @@
-import Phaser from 'phaser';
-import Card from './Card';
-import { CARD, ANIMATION, PLAYER_POSITIONS } from '../utils/constants';
-import { sortHand, getValidCards } from '../utils/cards';
-import { CARD_CONFIG, isMobile } from '../utils/uiConfig';
+import Phaser, { Scene } from "phaser";
+import Card from "./Card";
+import {
+  CARD,
+  ANIMATION,
+  PLAYER_POSITIONS,
+  Position,
+  Suit,
+} from "../utils/constants";
+import { sortHand, getValidCards } from "../utils/cards";
+import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
+import { CardData } from "../type";
 
 export default class Hand extends Phaser.GameObjects.Container {
-  constructor(scene, position, isHuman = false) {
+  isHuman: boolean;
+  cards: Card[];
+  cardScale: number;
+  handOverlap: number;
+  playerPosition: string;
+
+  constructor(scene: Scene, position: Position, isHuman = false) {
     const { width, height } = scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[position];
 
     super(scene, width * posConfig.x, height * posConfig.y);
 
-    this.position = position;
+    this.playerPosition = position;
     this.isHuman = isHuman;
     this.cards = [];
     this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
 
     // Calculate responsive card scale based on screen size using centralized config
     const mobile = isMobile(width, height);
-    this.cardScale = mobile ? CARD_CONFIG.MOBILE_SCALE : CARD_CONFIG.DESKTOP_SCALE;
+    this.cardScale = mobile
+      ? CARD_CONFIG.MOBILE_SCALE
+      : CARD_CONFIG.DESKTOP_SCALE;
     this.handOverlap = mobile
       ? CARD_CONFIG.HAND_OVERLAP * CARD_CONFIG.MOBILE_OVERLAP_MULTIPLIER
       : CARD_CONFIG.HAND_OVERLAP;
@@ -26,7 +41,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  setCards(cardDataArray, animate = true) {
+  setCards(cardDataArray: CardData[], animate = true) {
     // Clear existing cards
     this.clearCards();
 
@@ -42,7 +57,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     }
   }
 
-  async dealCards(cardDataArray) {
+  async dealCards(cardDataArray: CardData[]): Promise<void> {
     const { width, height } = this.scene.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -57,11 +72,13 @@ export default class Hand extends Phaser.GameObjects.Container {
         y: centerY,
         cardData,
         faceDown,
-        onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+        onClick: this.isHuman
+          ? (data) => this.emit("cardPlayed", data, card)
+          : undefined,
       });
 
       // Set initial small scale
-      await card.moveTo({ scale: 0.3 * this.cardScale / CARD.SCALE });
+      await card.moveTo({ scale: (0.3 * this.cardScale) / CARD.SCALE });
 
       // Calculate target position in hand
       const targetPos = this.getCardPosition(i, cardDataArray.length);
@@ -74,7 +91,7 @@ export default class Hand extends Phaser.GameObjects.Container {
         scale: this.cardScale,
         animate: true,
         duration: ANIMATION.CARD_DEAL,
-        ease: 'Quad.easeOut',
+        ease: "Quad.easeOut",
       });
 
       this.cards.push(card);
@@ -83,7 +100,7 @@ export default class Hand extends Phaser.GameObjects.Container {
     return Promise.resolve();
   }
 
-  createCards(cardDataArray) {
+  createCards(cardDataArray: CardData[]): void {
     cardDataArray.forEach((cardData) => {
       const faceDown = !this.isHuman;
       const card = new Card(this.scene, {
@@ -91,13 +108,15 @@ export default class Hand extends Phaser.GameObjects.Container {
         y: 0,
         cardData,
         faceDown,
-        onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+        onClick: this.isHuman
+          ? (data) => this.emit("cardPlayed", data, card)
+          : undefined,
       });
       this.cards.push(card);
     });
   }
 
-  getCardPosition(index, total) {
+  getCardPosition(index: number, total: number) {
     const overlap = this.isHuman ? this.handOverlap : this.handOverlap * 0.4;
     const totalSpan = (total - 1) * overlap;
     const startOffset = -totalSpan / 2;
@@ -108,18 +127,19 @@ export default class Hand extends Phaser.GameObjects.Container {
     const angleOffset = (index - middleIndex) * fanAngle;
 
     // For left/right positions, stack cards vertically instead of horizontally
-    const isVertical = this.position === 'left' || this.position === 'right';
+    const isVertical =
+      this.playerPosition === "left" || this.playerPosition === "right";
 
     if (isVertical) {
       return {
         x: 0,
-        y: startOffset + (index * overlap),
+        y: startOffset + index * overlap,
         rotation: Phaser.Math.DegToRad(angleOffset),
       };
     }
 
     return {
-      x: startOffset + (index * overlap),
+      x: startOffset + index * overlap,
       y: 0,
       rotation: Phaser.Math.DegToRad(angleOffset),
     };
@@ -141,33 +161,33 @@ export default class Hand extends Phaser.GameObjects.Container {
         scale: this.cardScale,
         animate,
         duration: 200,
-        ease: 'Quad.easeOut',
+        ease: "Quad.easeOut",
       });
     });
   }
 
-  updatePlayableCards(leadSuit) {
+  updatePlayableCards(leadSuit: Suit) {
     if (!this.isHuman) return;
 
-    const cardDataArray = this.cards.map(c => c.cardData);
+    const cardDataArray = this.cards.map((c) => c.cardData);
     const validCards = getValidCards(cardDataArray, leadSuit);
-    const validIds = new Set(validCards.map(c => c.id));
+    const validIds = new Set(validCards.map((c) => c.id));
 
-    this.cards.forEach(card => {
+    this.cards.forEach((card) => {
       card.setPlayable(validIds.has(card.cardData.id));
     });
   }
 
   disableAllCards() {
-    this.cards.forEach(card => card.setPlayable(false));
+    this.cards.forEach((card) => card.setPlayable(false));
   }
 
   enableInteraction() {
     // Enable all cards as playable (validation will happen on server)
-    this.cards.forEach(card => card.setPlayable(true));
+    this.cards.forEach((card) => card.setPlayable(true));
   }
 
-  addCard(cardData, animate = true) {
+  addCard(cardData: CardData, animate = true) {
     const faceDown = !this.isHuman;
     const { width, height } = this.scene.cameras.main;
     const centerX = width / 2;
@@ -179,7 +199,9 @@ export default class Hand extends Phaser.GameObjects.Container {
       y: animate ? centerY : this.y,
       cardData,
       faceDown,
-      onClick: this.isHuman ? (data) => this.emit('cardPlayed', data, card) : undefined
+      onClick: this.isHuman
+        ? (data) => this.emit("cardPlayed", data, card)
+        : undefined,
     });
 
     if (animate) {
@@ -194,10 +216,11 @@ export default class Hand extends Phaser.GameObjects.Container {
     return card;
   }
 
-  removeCard(cardDataOrId) {
+  removeCard(cardDataOrId: CardData | string) {
     // Accept either cardData object or card ID string
-    const cardId = typeof cardDataOrId === 'string' ? cardDataOrId : cardDataOrId.id;
-    const index = this.cards.findIndex(c => c.cardData.id === cardId);
+    const cardId =
+      typeof cardDataOrId === "string" ? cardDataOrId : cardDataOrId.id;
+    const index = this.cards.findIndex((c) => c.cardData.id === cardId);
     if (index === -1) return null;
 
     const card = this.cards.splice(index, 1)[0];
@@ -220,24 +243,23 @@ export default class Hand extends Phaser.GameObjects.Container {
     return card;
   }
 
-  getCardByData(cardData) {
-    return this.cards.find(c => c.cardData.id === cardData.id);
+  getCardByData(cardData: CardData) {
+    return this.cards.find((c) => c.cardData.id === cardData.id);
   }
 
   clearCards() {
-    this.cards.forEach(card => card.destroy());
+    this.cards.forEach((card) => card.destroy());
     this.cards = [];
   }
 
   getCardData() {
-    return this.cards.map(c => c.cardData);
+    return this.cards.map((c) => c.cardData);
   }
 
   /**
    * Update the number of face-down placeholder cards (for remote players)
-   * @param {number} count - Number of cards to display
    */
-  updateCardCount(count) {
+  updateCardCount(count: number) {
     if (this.isHuman) return; // Only for non-human players
 
     const currentCount = this.cards.length;
@@ -249,8 +271,18 @@ export default class Hand extends Phaser.GameObjects.Container {
       const cardsToAdd = count - currentCount;
       for (let i = 0; i < cardsToAdd; i++) {
         // Create a dummy card object for placeholder
-        const dummyCard = { id: `placeholder_${Date.now()}_${i}`, suit: '', rank: '', value: 0 };
-        const card = new Card(this.scene, { x: this.x, y: this.y, cardData: dummyCard, faceDown: true });
+        const dummyCard: CardData = {
+          id: `placeholder_${Date.now()}_${i}`,
+          suit: "spades",
+          rank: "A",
+          value: 0,
+        };
+        const card = new Card(this.scene, {
+          x: this.x,
+          y: this.y,
+          cardData: dummyCard,
+          faceDown: true,
+        });
         this.cards.push(card);
       }
     } else {
