@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -24,6 +25,10 @@
   <link rel="shortcut icon" href="icons/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/dist/add-to-homescreen.min.css" />
+  <script src="https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/dist/add-to-homescreen.min.js"></script>
+
   <title>Call Break</title>
   <style>
     * {
@@ -31,13 +36,16 @@
       padding: 0;
       box-sizing: border-box;
     }
-    html, body {
+
+    html,
+    body {
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #1a1a2e;
       touch-action: none;
     }
+
     #game-container {
       width: 100%;
       height: 100%;
@@ -45,6 +53,7 @@
       align-items: center;
       justify-content: center;
     }
+
     canvas {
       display: block;
       margin: auto;
@@ -53,8 +62,25 @@
     }
   </style>
 </head>
+
 <body>
   <div id="game-container"></div>
   <script type="module" src="/src/main.ts"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      window.AddToHomeScreenInstance = window.AddToHomeScreen({
+        appName: 'Call Break',
+        appIconUrl: 'icons/apple-touch-icon.png',
+        assetUrl: 'https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/dist/assets/img/',
+        maxModalDisplayCount: -1,
+        displayOptions: { showMobile: true, showDesktop: true }, // show on mobile/desktop [Optional] Default: show everywhere
+        allowClose: true,
+        showArrow: true,
+      });
+
+      ret = window.AddToHomeScreenInstance.show('en');
+    });
+  </script>
 </body>
+
 </html>
