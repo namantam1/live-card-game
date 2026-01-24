@@ -265,10 +265,10 @@ export class CallBreakRoom extends Room<GameState> {
 
     console.log(`${player.name} bid ${bid}`);
 
-    // Move to next bidder or start playing
-    this.state.biddingPlayerIndex++;
+    // Count how many players have bid
+    const bidsPlaced = Array.from(this.state.players.values()).filter(p => p.bid > 0).length;
 
-    if (this.state.biddingPlayerIndex >= NUM_PLAYERS) {
+    if (bidsPlaced >= NUM_PLAYERS) {
       // All bids placed, start playing - first bidder starts
       const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
       this.state.phase = 'playing';
@@ -277,6 +277,8 @@ export class CallBreakRoom extends Room<GameState> {
       // Check if first player in playing phase is a bot
       this.checkBotTurn();
     } else {
+      // Move to next bidder with wrap-around
+      this.state.biddingPlayerIndex = (this.state.biddingPlayerIndex + 1) % NUM_PLAYERS;
       this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if next bidder is a bot
@@ -533,14 +535,18 @@ export class CallBreakRoom extends Room<GameState> {
     bot.bid = bid;
     console.log(`${bot.name} (bot) bid ${bid}`);
 
-    // Move to next bidder
-    this.state.biddingPlayerIndex++;
+    // Count how many players have bid
+    const bidsPlaced = Array.from(this.state.players.values()).filter(p => p.bid > 0).length;
 
-    if (this.state.biddingPlayerIndex >= NUM_PLAYERS) {
+    if (bidsPlaced >= NUM_PLAYERS) {
+      // All bids placed, start playing - first bidder starts
+      const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
       this.state.phase = 'playing';
-      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
       this.checkBotTurn();
     } else {
+      // Move to next bidder with wrap-around
+      this.state.biddingPlayerIndex = (this.state.biddingPlayerIndex + 1) % NUM_PLAYERS;
       this.state.currentTurn = this.state.playerOrder[this.state.biddingPlayerIndex] || '';
       this.checkBotTurn();
     }

@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { getValidCards } from "./cards";
 import { CardData, TrickEntry } from "../type";
+import { Rank, Suit } from "./constants";
 
 // Helper to create test cards
-const createCard = (rank: string, suit: string): CardData => ({
+const createCard = (rank: Rank, suit: Suit): CardData => ({
   id: `${rank}-${suit}`,
   rank,
   suit,
