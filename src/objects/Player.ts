@@ -1,13 +1,17 @@
 import Hand from "./Hand";
-import { PLAYER_POSITIONS, COLORS, Position, Suit } from "../utils/constants";
+import {
+  PLAYER_POSITIONS,
+  COLORS,
+  type Position,
+  type Suit,
+} from "../utils/constants";
 import {
   TURN_INDICATOR_CONFIG,
-  isMobile,
   getFontSize,
   getResponsiveConfig,
 } from "../utils/uiConfig";
 import { Scene } from "phaser";
-import { CardData } from "../type";
+import type { CardData } from "../type";
 
 export default class Player {
   scene: Scene;

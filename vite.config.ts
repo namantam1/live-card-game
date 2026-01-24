@@ -15,10 +15,6 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
-  test: {
-    globals: true,
-    environment: "node",
-  },
   plugins: [
     VitePWA({
       registerType: "prompt",
@@ -51,6 +47,7 @@ export default defineConfig({
             src: "icons/icon.svg",
             sizes: "any",
             type: "image/svg+xml",
+            purpose: "any",
           },
         ],
       },
@@ -121,7 +118,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: false, // Enable PWA in dev mode for testing
+        enabled: true, // Enable PWA in dev mode for testing
         type: "module",
       },
     }),

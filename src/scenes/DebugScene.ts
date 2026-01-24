@@ -6,7 +6,7 @@ import {
 } from "../utils/uiConfig";
 import AudioManager from "../managers/AudioManager";
 import SettingsModal from "../objects/game/SettingsModal";
-import { CardData } from "../type";
+import type { CardData } from "../type";
 import Button from "../components/Button";
 import { createDeck } from "../utils/cards";
 import { COLORS, RANKS, SUITS } from "../utils/constants";

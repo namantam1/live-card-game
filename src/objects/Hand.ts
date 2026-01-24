@@ -4,12 +4,12 @@ import {
   CARD,
   ANIMATION,
   PLAYER_POSITIONS,
-  Position,
-  Suit,
+  type Position,
+  type Suit,
 } from "../utils/constants";
 import { sortHand, getValidCards } from "../utils/cards";
 import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
-import { CardData } from "../type";
+import type { CardData } from "../type";
 
 export default class Hand extends Phaser.GameObjects.Container {
   isHuman: boolean;

@@ -1,7 +1,7 @@
 import Phaser, { Scene } from "phaser";
 import { CARD, ANIMATION, COLORS } from "../utils/constants";
 import { getCardAssetKey } from "../utils/cards";
-import { CardData } from "../type";
+import type { CardData } from "../type";
 
 export interface CardConfig {
   x: number;

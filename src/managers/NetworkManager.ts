@@ -8,7 +8,7 @@ import type {
   RoomAvailability,
   TrickEntrySchema,
 } from "../type";
-import { Suit } from "../utils/constants";
+import type { Suit } from "../utils/constants";
 
 type EventCallback = (data?: any) => void;
 
@@ -35,7 +35,6 @@ export default class NetworkManager {
   private lastPingTime: number;
   private pingInterval: number | null;
   private pingTimeout: number;
-  private serverUrl: string | null;
 
   // Saved state for reconnection (using new Colyseus reconnectionToken API)
   private reconnectionToken: string | null;
@@ -63,7 +62,6 @@ export default class NetworkManager {
     this.lastPingTime = Date.now();
     this.pingInterval = null;
     this.pingTimeout = 5000;
-    this.serverUrl = null;
 
     // Saved state for reconnection (using new Colyseus reconnectionToken API)
     this.reconnectionToken = null;
@@ -71,7 +69,6 @@ export default class NetworkManager {
 
   async connect(serverUrl: string): Promise<boolean> {
     try {
-      this.serverUrl = serverUrl;
       this.client = new Client(serverUrl);
       this.connected = true;
       this.reconnectAttempts = 0;

@@ -4,11 +4,11 @@ import TrickArea from "../objects/TrickArea";
 import GameManager from "../managers/GameManager";
 import AudioManager from "../managers/AudioManager";
 import NetworkIndicator from "../components/NetworkIndicator";
-import { PHASE, EVENTS, Suit } from "../utils/constants";
+import { PHASE, EVENTS, type Suit } from "../utils/constants";
 import { RoundIndicator } from "../objects/game/RoundIndicator";
 import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
 import NetworkManager from "../managers/NetworkManager";
-import { CardData } from "../type";
+import type { CardData } from "../type";
 import Common from "../objects/game/Common";
 
 export default class GameScene extends Phaser.Scene {
@@ -33,8 +33,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.cameras.main;
-
     // Fade in
     this.cameras.main.fadeIn(500);
 
@@ -179,7 +177,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createNetworkIndicator() {
-    const { width, height } = this.cameras.main;
+    const { width } = this.cameras.main;
 
     // Create network indicator in top-right corner, to the left of settings icon
     // Settings icon is at (width - margin), so place this at (width - margin - 60)

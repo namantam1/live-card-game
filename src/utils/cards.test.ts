@@ -168,7 +168,8 @@ describe("getValidCards - Card Play Rules", () => {
 
       const currentTrick: TrickEntry[] = [
         { playerIndex: 0, card: createCard("A", "hearts") },
-        { playerIndex: 1, card: createCard("K", "spades") },
+        { playerIndex: 1, card: createCard("3", "spades") },
+        { playerIndex: 2, card: createCard("K", "spades") },
       ];
 
       const validCards = getValidCards(hand, "hearts", currentTrick, false);

@@ -1,6 +1,11 @@
-import { TRUMP_SUIT, MAX_BID, Suit } from "../utils/constants";
+import { TRUMP_SUIT, MAX_BID, type Suit } from "../utils/constants";
 import { getCardValue, getValidCards } from "../utils/cards";
-import { CardData, TrickEntry, DifficultyLevel, BotContext } from "../type";
+import type {
+  CardData,
+  TrickEntry,
+  DifficultyLevel,
+  BotContext,
+} from "../type";
 
 export default class BotAI {
   private difficulty: DifficultyLevel;

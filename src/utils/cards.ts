@@ -1,5 +1,5 @@
-import { CardData, TrickEntry } from "../type";
-import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT, Suit } from "./constants";
+import type { CardData, TrickEntry } from "../type";
+import { SUITS, RANKS, RANK_VALUES, TRUMP_SUIT, type Suit } from "./constants";
 
 /**
  * Create a standard 52-card deck

@@ -4,7 +4,7 @@ import {
   getResponsiveConfig,
   SETTINGS_ICON_CONFIG,
 } from "../../utils/uiConfig";
-import { Position } from "../../type";
+import type { Position } from "../../type";
 import Button from "../../components/Button";
 import AudioManager from "../../managers/AudioManager";
 import CanvasInput from "phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput";

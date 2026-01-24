@@ -8,7 +8,7 @@ import {
   ANIMATION,
   TRUMP_SUIT,
   MAX_BID,
-  Suit,
+  type Suit,
 } from "../utils/constants";
 import {
   createDeck,
@@ -20,7 +20,7 @@ import {
 } from "../utils/cards";
 import Player from "../objects/Player";
 import TrickArea from "../objects/TrickArea";
-import { CardData, TrickEntry } from "../type";
+import type { CardData, TrickEntry } from "../type";
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   scene: Scene;

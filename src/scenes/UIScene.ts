@@ -1,7 +1,5 @@
 import Phaser from "phaser";
 import { EVENTS, PHASE } from "../utils/constants";
-import { SETTINGS_ICON_CONFIG, getResponsiveConfig } from "../utils/uiConfig";
-import Button from "../components/Button";
 import ScoreBoard from "../objects/game/ScoreBoard";
 import BiddingUI from "../objects/game/BiddingUI";
 import RoundModal from "../objects/game/RoundModal";
@@ -39,8 +37,6 @@ export default class UIScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.cameras.main;
-
     // Get reference to game scene
     this.gameScene = this.scene.get("GameScene") as GameScene;
 
