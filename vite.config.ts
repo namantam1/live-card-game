@@ -22,6 +22,7 @@ export default defineConfig({
       includeAssets: ["icons/*", "cards/**/*", "audio/**/*"],
 
       manifest: {
+        id: "patte-khelo",
         name: "Call Break",
         short_name: "Call Break",
         description: "Call Break card game - Best played in landscape mode",
@@ -45,10 +46,49 @@ export default defineConfig({
             purpose: "maskable",
           },
           {
-            src: "icons/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
+            src: "icons/web-app-manifest-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
             purpose: "any",
+          },
+          {
+            src: "icons/web-app-manifest-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          // {
+          //   src: "icons/icon.svg",
+          //   sizes: "any",
+          //   type: "image/svg+xml",
+          // },
+        ],
+        screenshots: [
+          {
+            src: "screenshots/screenshot1.webp",
+            sizes: "1920x1080",
+            type: "image/webp",
+            label: "Main Menu",
+          },
+          {
+            src: "screenshots/screenshot2.webp",
+            sizes: "1920x1080",
+            type: "image/webp",
+            label: "In-Game",
+          },
+          {
+            src: "screenshots/screenshot1.webp",
+            sizes: "1920x1080",
+            type: "image/webp",
+            label: "Main Menu",
+            form_factor: "wide",
+          },
+          {
+            src: "screenshots/screenshot2.webp",
+            sizes: "1920x1080",
+            type: "image/webp",
+            label: "In-Game",
+            form_factor: "wide",
           },
         ],
       },
@@ -119,7 +159,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: false, // Enable PWA in dev mode for testing
+        enabled: true, // Enable PWA in dev mode for testing
         type: "module",
       },
     }),
