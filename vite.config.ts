@@ -50,7 +50,7 @@ export default defineConfig({
           {
             src: "icons/icon.svg",
             sizes: "any",
-            type: "image/png",
+            type: "image/svg+xml",
           },
         ],
       },
@@ -121,7 +121,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: false,
+        enabled: false, // Enable PWA in dev mode for testing
         type: "module",
       },
     }),
