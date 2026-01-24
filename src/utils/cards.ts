@@ -104,7 +104,7 @@ export function getValidCards(
   hand: CardData[],
   leadSuit: Suit | null,
   currentTrick: TrickEntry[] = [],
-  mandatoryTrumping: boolean = true,
+  mandatoryTrumping: boolean = false,
 ): CardData[] {
   if (!leadSuit || currentTrick.length === 0) {
     // Leading - can play anything
