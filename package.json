@@ -11,6 +11,8 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@sentry/browser": "^10.36.0",
+    "@sentry/vite-plugin": "^4.7.0",
     "colyseus.js": "^0.15.0",
     "phaser": "^3.80.1",
     "phaser3-rex-plugins": "^1.80.17"

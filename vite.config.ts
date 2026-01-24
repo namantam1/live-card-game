@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -118,9 +119,13 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: true, // Enable PWA in dev mode for testing
+        enabled: false, // Enable PWA in dev mode for testing
         type: "module",
       },
+    }),
+    sentryVitePlugin({
+      org: "naman-ip",
+      project: "patte-khelo",
     }),
   ],
 });

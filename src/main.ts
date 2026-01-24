@@ -7,6 +7,10 @@ import GameScene from "./scenes/GameScene";
 import UIScene from "./scenes/UIScene";
 import { registerServiceWorker, enforceLandscapeOnMobile } from "./pwaUtils";
 import DebugScene from "./scenes/DebugScene";
+import { initSentry } from "./sentry.config";
+
+// Initialize Sentry before anything else
+initSentry();
 
 const config = {
   type: Phaser.AUTO,
