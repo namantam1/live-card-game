@@ -114,7 +114,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     }
 
     // Play sound
-    this.playCardSound();
+    // this.playCardSound();
 
     this.playedCards.push({
       playerIndex,
@@ -126,33 +126,6 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     // this.scene.children.bringToTop(card as any);
 
     return card;
-  }
-
-  private playCardSound(): void {
-    // Simple beep sound using Web Audio
-    const AudioContextClass =
-      window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    const audioContext = new AudioContextClass();
-
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.value = 800;
-    oscillator.type = "sine";
-
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.1,
-    );
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
   }
 
   async collectTrick(

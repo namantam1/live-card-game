@@ -5,7 +5,6 @@ import { COLORS } from "../../utils/constants";
 
 const HEIGHT = 300;
 const WIDTH = 300;
-const TITLE_FONT_SIZE = "24px";
 const SETTINGS_LABEL_FONT_SIZE = "22px";
 const ITEM_SPACING = 50;
 

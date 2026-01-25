@@ -10,9 +10,15 @@ export default class AudioManager {
   initialized: boolean;
   constructor(scene: Scene) {
     this.scene = scene;
+    // Load preferences from localStorage
+    const savedMusicEnabled = localStorage.getItem("audioMusicEnabled");
+    const savedSoundEnabled = localStorage.getItem("audioSoundEnabled");
+
     this.enabled = true;
-    this.musicEnabled = true;
-    this.soundEnabled = true;
+    this.musicEnabled =
+      savedMusicEnabled !== null ? savedMusicEnabled === "true" : true;
+    this.soundEnabled =
+      savedSoundEnabled !== null ? savedSoundEnabled === "true" : true;
     this.bgMusic = null;
     this.audioContext = null;
     this.initialized = false;
@@ -82,6 +88,7 @@ export default class AudioManager {
 
   toggleMusic() {
     this.musicEnabled = !this.musicEnabled;
+    localStorage.setItem("audioMusicEnabled", String(this.musicEnabled));
 
     if (this.musicEnabled) {
       this.startBackgroundMusic();
@@ -94,6 +101,7 @@ export default class AudioManager {
 
   toggleButtonSound() {
     this.soundEnabled = !this.soundEnabled;
+    localStorage.setItem("audioSoundEnabled", String(this.soundEnabled));
     return this.soundEnabled;
   }
 

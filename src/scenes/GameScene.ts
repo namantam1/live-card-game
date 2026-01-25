@@ -4,8 +4,7 @@ import TrickArea from "../objects/TrickArea";
 import GameManager from "../managers/GameManager";
 import AudioManager from "../managers/AudioManager";
 import NetworkIndicator from "../components/NetworkIndicator";
-import { PHASE, EVENTS, type Suit } from "../utils/constants";
-import { RoundIndicator } from "../objects/game/RoundIndicator";
+import { EVENTS, type Suit } from "../utils/constants";
 import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
 import NetworkManager from "../managers/NetworkManager";
 import type { CardData } from "../type";
@@ -15,7 +14,6 @@ export default class GameScene extends Phaser.Scene {
   isMultiplayer: boolean;
   networkManager!: NetworkManager;
   audioManager!: AudioManager;
-  roundText!: RoundIndicator;
   gameManager!: GameManager;
   trickArea!: TrickArea;
   players!: Player[];
@@ -48,15 +46,6 @@ export default class GameScene extends Phaser.Scene {
     // Create table
     Common.createTable(this);
 
-    // Create trump indicator
-    Common.createTrumpIndicator(this);
-    this.roundText = new RoundIndicator(
-      this,
-      this.isMultiplayer,
-      this.networkManager!!,
-      this.gameManager,
-    );
-
     // Create trick area
     this.trickArea = new TrickArea(this);
 
@@ -81,15 +70,18 @@ export default class GameScene extends Phaser.Scene {
         playerInfo[i].name,
         playerInfo[i].emoji,
         playerInfo[i].isHuman,
+        playerInfo[i].isHuman
+          ? (cardData: CardData) => this.onHumanCardPlayed(cardData)
+          : undefined,
       );
       this.players.push(player);
 
       // Listen for card play events from human player
-      if (player.isHuman) {
-        player.hand.on("cardPlayed", (cardData: CardData) => {
-          this.onHumanCardPlayed(cardData);
-        });
-      }
+      // if (player.isHuman) {
+      //   player.hand.on("cardPlayed", (cardData: CardData) => {
+      //     this.onHumanCardPlayed(cardData);
+      //   });
+      // }
     }
 
     this.gameManager.setPlayers(this.players);
@@ -142,6 +134,9 @@ export default class GameScene extends Phaser.Scene {
         netPlayer.name,
         netPlayer.emoji,
         isLocal, // isHuman = isLocal in multiplayer
+        isLocal
+          ? (cardData: CardData) => this.onMultiplayerCardPlayed(cardData)
+          : undefined,
       );
       this.players.push(player);
 
@@ -150,11 +145,11 @@ export default class GameScene extends Phaser.Scene {
       player.absoluteSeatIndex = netPlayer.seatIndex;
 
       // Listen for card play events from local player
-      if (isLocal) {
-        player.hand.on("cardPlayed", (cardData: CardData) => {
-          this.onMultiplayerCardPlayed(cardData);
-        });
-      }
+      // if (isLocal) {
+      //   player.hand.on("cardPlayed", (cardData: CardData) => {
+      //     this.onMultiplayerCardPlayed(cardData);
+      //   });
+      // }
     });
 
     // Sort players by relative position for consistent array indexing
@@ -254,10 +249,6 @@ export default class GameScene extends Phaser.Scene {
     // Phase change
     this.networkManager.on("phaseChange", ({ phase }: any) => {
       this.events.emit("phaseChanged", phase);
-
-      if (phase === "playing") {
-        this.roundText.updateRoundText();
-      }
 
       if (phase === "roundEnd") {
         const players = this.networkManager.getPlayers();
@@ -406,7 +397,6 @@ export default class GameScene extends Phaser.Scene {
       this.players.forEach((player) => {
         player.reset();
       });
-      this.roundText.updateRoundText();
     });
 
     // Lead suit changed - update playable cards if it's our turn
@@ -549,10 +539,6 @@ export default class GameScene extends Phaser.Scene {
     // Phase changed
     this.gameManager.on(EVENTS.PHASE_CHANGED, (phase: any) => {
       this.events.emit("phaseChanged", phase);
-
-      if (phase === PHASE.PLAYING) {
-        this.roundText.updateRoundText();
-      }
     });
 
     // Card played

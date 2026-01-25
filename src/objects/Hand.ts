@@ -11,23 +11,41 @@ import { sortHand, getValidCards } from "../utils/cards";
 import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
 import type { CardData } from "../type";
 
-export default class Hand extends Phaser.GameObjects.Container {
+export default class Hand {
   isHuman: boolean;
   cards: Card[];
   cardScale: number;
   handOverlap: number;
   playerPosition: string;
+  container: Phaser.GameObjects.Container;
+  rotation: number;
+  scene: Phaser.Scene;
+  x: number;
+  y: number;
+  onCardPlay?: (data: CardData) => void;
 
-  constructor(scene: Scene, position: Position, isHuman = false) {
+  constructor(
+    scene: Scene,
+    config: {
+      position: Position;
+      isHuman: boolean;
+      onCardPlay?: (data: CardData) => void;
+    },
+  ) {
+    const { position, isHuman, onCardPlay } = config;
     const { width, height } = scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[position];
 
-    super(scene, width * posConfig.x, height * posConfig.y);
+    this.x = width * posConfig.x;
+    this.y = height * posConfig.y;
 
+    this.onCardPlay = onCardPlay;
+    this.scene = scene;
     this.playerPosition = position;
     this.isHuman = isHuman;
     this.cards = [];
-    this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
+    // this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
+    // console.log(position, "rot", posConfig, this.rotation);
 
     // Calculate responsive card scale based on screen size using centralized config
     const mobile = isMobile(width, height);
@@ -38,7 +56,11 @@ export default class Hand extends Phaser.GameObjects.Container {
       ? CARD_CONFIG.HAND_OVERLAP * CARD_CONFIG.MOBILE_OVERLAP_MULTIPLIER
       : CARD_CONFIG.HAND_OVERLAP;
 
-    scene.add.existing(this);
+    // const rotation = Phaser.Math.DegToRad(posConfig.rotation);
+    this.container = scene.add
+      .container(this.x, this.y)
+      .setRotation(Phaser.Math.DegToRad(posConfig.rotation));
+    this.rotation = this.container.rotation;
   }
 
   setCards(cardDataArray: CardData[], animate = true) {
@@ -73,7 +95,9 @@ export default class Hand extends Phaser.GameObjects.Container {
         cardData,
         faceDown,
         onClick: this.isHuman
-          ? (data) => this.emit("cardPlayed", data, card)
+          ? // ? (data) => this.container.emit("cardPlayed", data, card)
+            // : undefined,
+            (data) => this.onCardPlay?.(data)
           : undefined,
       });
 
@@ -109,7 +133,8 @@ export default class Hand extends Phaser.GameObjects.Container {
         cardData,
         faceDown,
         onClick: this.isHuman
-          ? (data) => this.emit("cardPlayed", data, card)
+          ? // ? (data) => this.container.emit("cardPlayed", data, card)
+            (data) => this.onCardPlay?.(data)
           : undefined,
       });
       this.cards.push(card);
@@ -200,7 +225,8 @@ export default class Hand extends Phaser.GameObjects.Container {
       cardData,
       faceDown,
       onClick: this.isHuman
-        ? (data) => this.emit("cardPlayed", data, card)
+        ? // ? (data) => this.container.emit("cardPlayed", data, card)
+          (data) => this.onCardPlay?.(data)
         : undefined,
     });
 

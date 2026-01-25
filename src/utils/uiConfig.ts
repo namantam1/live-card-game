@@ -50,12 +50,12 @@ export const CARD_CONFIG = {
 // Bidding buttons
 export const BIDDING_CONFIG = {
   DESKTOP: {
-    buttonWidth: 80,
-    buttonHeight: 80,
-    buttonSpacing: 10,
-    borderRadius: 20,
-    fontSize: "30px",
-    titleFontSize: "20px",
+    buttonWidth: 150,
+    buttonHeight: 150,
+    buttonSpacing: 20,
+    borderRadius: 30,
+    fontSize: "50px",
+    titleFontSize: "50px",
   },
   MOBILE: {
     buttonWidth: 60, // Larger for easier tapping

@@ -14,6 +14,8 @@ import ScoreBoard from "../objects/game/ScoreBoard";
 import Common from "../objects/game/Common";
 import GameOverModal from "../objects/game/GameOverModal";
 import RoundModal from "../objects/game/RoundModal";
+import Player from "../objects/Player";
+import BiddingUI from "../objects/game/BiddingUI";
 
 const CARD: CardData = createDeck()[0];
 
@@ -25,6 +27,9 @@ export default class DebugScene extends Phaser.Scene {
   }
 
   preload() {
+    // Load table background
+    this.load.image("table-bg", "assets/table-bg.webp");
+
     // this.load.svg(CARD.id, path, { width: CARD_CONFIG.WIDTH, height: CARD_CONFIG.HEIGHT });
     for (const suit of SUITS) {
       for (const rank of RANKS) {
@@ -43,8 +48,30 @@ export default class DebugScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#2d2d2d");
     const { width, height } = this.cameras.main;
 
+    // set bg image if available
+    // const tableBg = this.add.image(width / 2, height / 2, "table-bg");
+    // const scaleFactor = Math.min(
+    //   (width * 0.9) / tableBg.width,
+    //   (height * 0.9) / tableBg.height,
+    // );
+    // tableBg.setScale(scaleFactor);
+
     // const card = new Card(this, 0, 0, CARD, false);
     // card.setPlayable(true);
+
+    Common.createTable(this);
+
+    new BiddingUI(
+      this,
+      (bid: number) => {
+        console.log("Player bid:", bid);
+      },
+      this.audioManager,
+    ).show();
+
+    // new Player(this, 0, "Alice", "😀", true, (data: CardData) =>
+    //   console.log(data),
+    // );
 
     const players = [
       { id: "player1", name: "Alice", emoji: "😀", score: 10 },

@@ -19,7 +19,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["icons/*", "cards/**/*", "audio/**/*"],
+      includeAssets: ["icons/*", "cards/**/*", "audio/**/*", "assets/**/*"],
 
       manifest: {
         id: "patte-khelo",
@@ -159,7 +159,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: true, // Enable PWA in dev mode for testing
+        enabled: false, // Enable PWA in dev mode for testing
         type: "module",
       },
     }),

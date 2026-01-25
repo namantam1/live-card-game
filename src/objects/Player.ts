@@ -37,6 +37,7 @@ export default class Player {
     name: string,
     emoji: string,
     isHuman = false,
+    onCardPlay?: (data: CardData) => void,
   ) {
     this.scene = scene;
     this.index = index;
@@ -55,7 +56,12 @@ export default class Player {
     this.position = positions[index];
 
     // Create hand
-    this.hand = new Hand(scene, this.position, isHuman);
+    // this.hand = new Hand(scene, this.position, isHuman);
+    this.hand = new Hand(scene, {
+      position: this.position,
+      isHuman,
+      onCardPlay,
+    });
 
     // Create player label
     this.createLabel();

@@ -1,11 +1,8 @@
-import { Scene } from 'phaser';
-import { COLORS, MAX_BID } from '../../utils/constants';
-import {
-  BIDDING_CONFIG,
-  getResponsiveConfig,
-} from '../../utils/uiConfig';
-import Button from '../../components/Button';
-import AudioManager from '../../managers/AudioManager';
+import { Scene } from "phaser";
+import { COLORS, MAX_BID } from "../../utils/constants";
+import { BIDDING_CONFIG, getResponsiveConfig } from "../../utils/uiConfig";
+import Button from "../../components/Button";
+import AudioManager from "../../managers/AudioManager";
 
 export default class BiddingUI {
   private scene: Scene;
@@ -29,10 +26,11 @@ export default class BiddingUI {
     this.container.setDepth(50);
 
     // Calculate dimensions based on button config
-    const totalButtonWidth = MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
+    const totalButtonWidth =
+      MAX_BID * config.buttonWidth + (MAX_BID - 1) * config.buttonSpacing;
     const padding = 20; // Horizontal padding
-    const bgWidth = totalButtonWidth + (padding * 2);
-    const bgHeight = 140;
+    const bgWidth = totalButtonWidth + padding * 2;
+    const bgHeight = 220;
 
     // Background - centered
     const bg = scene.add.graphics();
@@ -42,12 +40,14 @@ export default class BiddingUI {
     bg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 15);
 
     // Title - centered horizontally
-    const title = scene.add.text(0, -50, 'Place Your Bid', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: config.titleFontSize,
-      fontStyle: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5);
+    const title = scene.add
+      .text(0, -100, "Place Your Bid", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: config.titleFontSize,
+        fontStyle: "bold",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
 
     this.container.add([bg, title]);
 
@@ -69,7 +69,7 @@ export default class BiddingUI {
         bgColor: COLORS.PRIMARY,
         borderRadius: config.borderRadius,
         fontSize: config.fontSize,
-        audioManager: audioManager
+        audioManager: audioManager,
       });
 
       this.container.add(button);
@@ -84,13 +84,13 @@ export default class BiddingUI {
     this.container.setVisible(true);
     this.container.alpha = 0;
     this.container.y = this.scene.cameras.main.height * 0.4;
-    
+
     this.scene.tweens.add({
       targets: this.container,
       alpha: 1,
       y: this.scene.cameras.main.height * 0.5,
       duration: 300,
-      ease: 'Back.easeOut',
+      ease: "Back.easeOut",
     });
   }
 

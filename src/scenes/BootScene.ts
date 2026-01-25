@@ -72,6 +72,8 @@ export default class BootScene extends Phaser.Scene {
       height: CARD_CONFIG.HEIGHT,
     });
 
+    this.load.image("table-bg", "assets/table-bg.webp");
+
     // Audio (optional - check if exists)
     this.load.audio("bgm", "audio/bgm.mp3").on("loaderror", () => {
       console.log("BGM not found, continuing without music");
