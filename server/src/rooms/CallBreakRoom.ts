@@ -6,10 +6,9 @@ import {
   TrickEntry,
   CardData,
   createDeck,
-  shuffleDeck,
-  sortHand,
   getValidCards,
   calculateScore,
+  getDealtCards,
 } from "./GameState";
 
 const EMOJIS = ["😎", "🤖", "🦊", "🐱"];
@@ -259,21 +258,13 @@ export class CallBreakRoom extends Room<GameState> {
   }
 
   dealCards(): void {
-    const deck = shuffleDeck(createDeck());
     const playerIds = Array.from(this.state.playerOrder);
-
-    playerIds.forEach((playerId, index) => {
+    getDealtCards(createDeck(), playerIds.length).forEach((cards, index) => {
+      const playerId = playerIds[index];
       if (!playerId) return;
       const player = this.state.players.get(playerId);
       if (!player) return;
-
-      const cards = deck.slice(
-        index * CARDS_PER_PLAYER,
-        (index + 1) * CARDS_PER_PLAYER,
-      );
-      const sortedCards = sortHand(cards);
-
-      sortedCards.forEach((cardData) => {
+      cards.forEach((cardData) => {
         const card = new Card();
         card.id = cardData.id;
         card.suit = cardData.suit;
