@@ -20,16 +20,19 @@ interface Position {
   y: number;
 }
 
-export default class TrickArea extends Phaser.GameObjects.Container {
+export default class TrickArea {
   playedCards: PlayedCard[];
   private trickCardScale: number;
   private cardOffsets: CardOffset[];
+  scene: Phaser.Scene;
+  container: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene) {
     const { width, height } = scene.cameras.main;
-    super(scene, width / 2, height / 2);
+    // super(scene, width / 2, height / 2);
 
     this.playedCards = [];
+    this.scene = scene;
 
     // Calculate responsive card scale for trick area using centralized config
     const mobile = isMobile(width, height);
@@ -46,7 +49,7 @@ export default class TrickArea extends Phaser.GameObjects.Container {
       { x: 70, y: 0, rotation: 5 }, // Player 3 (right)
     ];
 
-    scene.add.existing(this);
+    this.container = scene.add.container(width / 2, height / 2);
   }
 
   async playCard(
@@ -68,8 +71,8 @@ export default class TrickArea extends Phaser.GameObjects.Container {
     }
 
     const offset = this.cardOffsets[playerIndex];
-    const targetX = this.x + offset.x;
-    const targetY = this.y + offset.y;
+    const targetX = this.container.x + offset.x;
+    const targetY = this.container.y + offset.y;
 
     let card: Card;
 
