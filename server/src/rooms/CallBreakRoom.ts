@@ -339,6 +339,7 @@ export class CallBreakRoom extends Room<GameState> {
         value: c.value,
       })),
       this.state.leadSuit,
+      Array.from(this.state.currentTrick) as TrickEntry[],
     );
     if (!validCards.find((c) => c.id === cardId)) return;
 
@@ -602,7 +603,11 @@ export class CallBreakRoom extends Room<GameState> {
       value: c.value,
     }));
 
-    const validCards = getValidCards(hand, this.state.leadSuit);
+    const validCards = getValidCards(
+      hand,
+      this.state.leadSuit,
+      Array.from(this.state.currentTrick) as TrickEntry[],
+    );
     if (validCards.length === 0) return;
 
     // Bot strategy for playing cards
