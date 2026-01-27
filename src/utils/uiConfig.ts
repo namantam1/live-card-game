@@ -32,19 +32,19 @@ export const CARD_CONFIG = {
   WIDTH: CARD_WIDTH,
 
   // Desktop scale
-  DESKTOP_SCALE: 0.9,
+  DESKTOP_SCALE: 1.2,
 
   // Mobile scale (adjust this to make cards bigger/smaller on mobile)
   MOBILE_SCALE: 0.9,
 
   // Card overlap in hand (desktop)
-  HAND_OVERLAP: 50,
+  HAND_OVERLAP: 100,
 
   // Mobile hand overlap multiplier
   MOBILE_OVERLAP_MULTIPLIER: 0.7,
 
   // Hover lift when card is playable
-  HOVER_LIFT: 25,
+  HOVER_LIFT: 10,
 };
 
 // Bidding buttons

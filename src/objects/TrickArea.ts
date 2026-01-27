@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import Card from "./Card";
 import { ANIMATION } from "../utils/constants";
 import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
+import type { CardData } from "../type";
 
 interface CardOffset {
   x: number;
@@ -36,9 +37,7 @@ export default class TrickArea {
 
     // Calculate responsive card scale for trick area using centralized config
     const mobile = isMobile(width, height);
-    this.trickCardScale = mobile
-      ? CARD_CONFIG.MOBILE_SCALE
-      : CARD_CONFIG.DESKTOP_SCALE;
+    this.trickCardScale = 0.5;
 
     // Card positions for each player (relative to center)
     // Diamond pattern: each player's card faces toward center
@@ -53,7 +52,7 @@ export default class TrickArea {
   }
 
   async playCard(
-    cardData: any,
+    cardData: CardData,
     playerIndex: number,
     fromCard: Card | null = null,
   ): Promise<Card> {
@@ -89,16 +88,16 @@ export default class TrickArea {
         await card.flip(cardData);
       }
 
-      // Normalize scale to match trick area scale (in case hand scale differs)
-      await card.moveTo({ scale: this.trickCardScale });
-
-      // Animate to center
-      await card.animateToWithBounce(
-        targetX,
-        targetY,
-        ANIMATION.CARD_TO_CENTER as any,
-      );
-      await card.moveTo({ rotation: Phaser.Math.DegToRad(offset.rotation) });
+      // Animate to center with bounce effect in a single move
+      await card.moveTo({
+        x: targetX,
+        y: targetY,
+        rotation: Phaser.Math.DegToRad(offset.rotation),
+        scale: this.trickCardScale,
+        animate: true,
+        duration: ANIMATION.CARD_TO_CENTER as any,
+        ease: "Back.easeOut",
+      });
     } else {
       console.warn(
         `TrickArea: fromCard is null, creating new card for player ${playerIndex}`,
@@ -153,7 +152,7 @@ export default class TrickArea {
         x: target.x,
         y: target.y,
         alpha: 0,
-        scale: 0.5,
+        scale: this.trickCardScale,
         animate: true,
         duration,
         delay: index * 50,
@@ -169,12 +168,5 @@ export default class TrickArea {
   clear(): void {
     this.playedCards.forEach(({ card }) => card.destroy());
     this.playedCards = [];
-  }
-
-  getPlayedCards(): Array<{ playerIndex: number; card: any }> {
-    return this.playedCards.map(({ playerIndex, cardData }) => ({
-      playerIndex,
-      card: cardData,
-    }));
   }
 }

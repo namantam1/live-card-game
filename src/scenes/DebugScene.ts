@@ -8,7 +8,7 @@ import AudioManager from "../managers/AudioManager";
 import SettingsModal from "../objects/game/SettingsModal";
 import type { CardData } from "../type";
 import Button from "../components/Button";
-import { createDeck } from "../utils/cards";
+import { createDeck, shuffleDeck } from "../utils/cards";
 import { COLORS, RANKS, SUITS } from "../utils/constants";
 import ScoreBoard from "../objects/game/ScoreBoard";
 import Common from "../objects/game/Common";
@@ -16,6 +16,9 @@ import GameOverModal from "../objects/game/GameOverModal";
 import RoundModal from "../objects/game/RoundModal";
 import Player from "../objects/Player";
 import BiddingUI from "../objects/game/BiddingUI";
+import TrickArea from "../objects/TrickArea";
+import BootScene from "./BootScene";
+import Card from "../objects/Card";
 
 const CARD: CardData = createDeck()[0];
 
@@ -27,20 +30,7 @@ export default class DebugScene extends Phaser.Scene {
   }
 
   preload() {
-    // Load table background
-    this.load.image("table-bg", "assets/table-bg.webp");
-
-    // this.load.svg(CARD.id, path, { width: CARD_CONFIG.WIDTH, height: CARD_CONFIG.HEIGHT });
-    for (const suit of SUITS) {
-      for (const rank of RANKS) {
-        const key = `card-${rank}-${suit}`;
-        const path = `cards/${rank}-${suit}.svg`;
-        this.load.svg(key, path, {
-          width: CARD_CONFIG.WIDTH,
-          height: CARD_CONFIG.HEIGHT,
-        });
-      }
-    }
+    BootScene.loadAssets(this);
   }
 
   create() {
@@ -59,15 +49,15 @@ export default class DebugScene extends Phaser.Scene {
     // const card = new Card(this, 0, 0, CARD, false);
     // card.setPlayable(true);
 
-    Common.createTable(this);
+    // Common.createTable(this);
 
-    new BiddingUI(
-      this,
-      (bid: number) => {
-        console.log("Player bid:", bid);
-      },
-      this.audioManager,
-    ).show();
+    // new BiddingUI(
+    //   this,
+    //   (bid: number) => {
+    //     console.log("Player bid:", bid);
+    //   },
+    //   this.audioManager,
+    // ).show();
 
     // new Player(this, 0, "Alice", "😀", true, (data: CardData) =>
     //   console.log(data),
@@ -137,9 +127,42 @@ export default class DebugScene extends Phaser.Scene {
     Common.createSettingIcon(this, {
       audioManager: this.audioManager,
       onClick: () => {
-        setting.showSettings();
+        // setting.showSettings();
+        this.scene.start("GameScene");
         return console.log("Settings clicked");
       },
     });
+
+    // card
+    // new Card(this, {
+    //   x: width / 2,
+    //   y: height / 2,
+    //   cardData: CARD,
+    //   faceDown: true,
+    // });
+    // new Card(this, {
+    //   x: width / 2 + 150,
+    //   y: height / 2,
+    //   cardData: CARD,
+    //   faceDown: false,
+    // });
+
+    new TrickArea(this);
+    const player = new Player(this, 0, "Alice", "😀", true, (data: CardData) =>
+      console.log(data),
+    );
+    const cards = shuffleDeck(createDeck());
+    player.setCards(cards.slice(0, 13), false).then(() => {
+      const currentTrick = cards.slice(13, 16).map((card, i) => ({
+        playerIndex: i,
+        card,
+      }));
+      player.updatePlayableCards(SUITS[2], currentTrick);
+    });
+    // create other players
+    for (let i = 1; i < 4; i++) {
+      const otherPlayer = new Player(this, i, `Player ${i + 1}`, "🤖", false);
+      otherPlayer.setCards(cards.slice(0, 13), false);
+    }
   }
 }

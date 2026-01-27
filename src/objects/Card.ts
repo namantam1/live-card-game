@@ -1,5 +1,5 @@
 import Phaser, { Scene } from "phaser";
-import { CARD, ANIMATION, COLORS } from "../utils/constants";
+import { CARD, COLORS } from "../utils/constants";
 import { getCardAssetKey } from "../utils/cards";
 import type { CardData } from "../type";
 
@@ -22,25 +22,26 @@ export default class Card {
   isFaceDown: boolean;
   isPlayable: boolean;
   originalY: number;
+  initialScale: number;
 
   constructor(scene: Scene, config: CardConfig) {
     this.scene = scene;
     this.cardData = config.cardData;
     this.isFaceDown = config.faceDown || false;
     this.isPlayable = false;
-    this.originalY = config.y;
+    this.originalY = config.y; // config.faceDown ? config.y : config.y + 100;
     this.onClickCallback = config.onClick;
 
     // Create container
-    this.container = scene.add.container(config.x, config.y);
+    this.container = scene.add.container(config.x, this.originalY);
 
     // Create card sprite
     const textureKey = this.isFaceDown
       ? "card-back"
       : getCardAssetKey(config.cardData);
-    const scale = this.isFaceDown ? CARD.SCALE * 0.9 : CARD.SCALE;
+    this.initialScale = this.isFaceDown ? CARD.SCALE * 0.5 : CARD.SCALE;
     this.sprite = scene.add.image(0, 0, textureKey);
-    this.sprite.setScale(scale);
+    this.container.setScale(this.initialScale);
     this.container.add(this.sprite);
 
     // Add glow effect (hidden by default)
@@ -50,7 +51,10 @@ export default class Card {
     this.container.sendToBack(this.glow);
 
     // Set size for hit area
-    this.container.setSize(CARD.WIDTH * scale, CARD.HEIGHT * scale);
+    this.container.setSize(
+      CARD.WIDTH * this.initialScale,
+      CARD.HEIGHT * this.initialScale,
+    );
   }
 
   setPlayable(playable: boolean, skipAnimation = false) {
@@ -132,8 +136,8 @@ export default class Card {
     this.scene.tweens.add({
       targets: this.container,
       y: this.originalY - CARD.HOVER_LIFT - 10,
-      scaleX: 1.05,
-      scaleY: 1.05,
+      scaleX: 1.05 * CARD.SCALE,
+      scaleY: 1.05 * CARD.SCALE,
       duration: 100,
       ease: "Back.easeOut",
     });
@@ -146,8 +150,8 @@ export default class Card {
     this.scene.tweens.add({
       targets: this.container,
       y: this.originalY - CARD.HOVER_LIFT,
-      scaleX: 1,
-      scaleY: 1,
+      scaleX: 1 * CARD.SCALE,
+      scaleY: 1 * CARD.SCALE,
       duration: 100,
       ease: "Quad.easeOut",
     });
@@ -162,7 +166,7 @@ export default class Card {
     }
   }
 
-  showGlow() {
+  private showGlow() {
     this.glow.clear();
     this.glow.lineStyle(3, COLORS.PRIMARY, 0.8);
 
@@ -180,7 +184,7 @@ export default class Card {
     this.glow.setVisible(true);
   }
 
-  hideGlow() {
+  private hideGlow() {
     this.glow.setVisible(false);
   }
 
@@ -190,7 +194,7 @@ export default class Card {
       // Flip animation - scale X to 0, change texture, scale back
       this.scene.tweens.add({
         targets: this.sprite,
-        scaleX: 0,
+        // scaleX: 0,
         duration: 100,
         ease: "Quad.easeIn",
         onComplete: () => {
@@ -202,7 +206,7 @@ export default class Card {
 
           this.scene.tweens.add({
             targets: this.sprite,
-            scaleX: CARD.SCALE,
+            //scaleX: CARD.SCALE,
             duration: 100,
             ease: "Quad.easeOut",
             onComplete: resolve,
@@ -222,8 +226,6 @@ export default class Card {
     y?: number;
     rotation?: number;
     scale?: number;
-    scaleX?: number;
-    scaleY?: number;
     alpha?: number;
     animate?: boolean;
     duration?: number;
@@ -235,9 +237,7 @@ export default class Card {
       x,
       y,
       rotation,
-      scale,
-      scaleX,
-      scaleY,
+      scale = this.initialScale,
       alpha,
       animate = false,
       duration = 200,
@@ -257,12 +257,7 @@ export default class Card {
       if (y !== undefined) this.container.y = y;
       if (rotation !== undefined) this.container.rotation = rotation;
       if (alpha !== undefined) this.container.alpha = alpha;
-      if (scale !== undefined) {
-        this.container.setScale(scale);
-      } else {
-        if (scaleX !== undefined) this.container.scaleX = scaleX;
-        if (scaleY !== undefined) this.container.scaleY = scaleY;
-      }
+      if (scale !== undefined) this.container.setScale(scale);
       if (onComplete) onComplete();
       return Promise.resolve();
     }
@@ -284,42 +279,9 @@ export default class Card {
       if (y !== undefined) tweenConfig.y = y;
       if (rotation !== undefined) tweenConfig.rotation = rotation;
       if (alpha !== undefined) tweenConfig.alpha = alpha;
-      if (scale !== undefined) {
-        tweenConfig.scaleX = scale;
-        tweenConfig.scaleY = scale;
-      } else {
-        if (scaleX !== undefined) tweenConfig.scaleX = scaleX;
-        if (scaleY !== undefined) tweenConfig.scaleY = scaleY;
-      }
+      if (scale !== undefined) tweenConfig.scale = scale;
 
       this.scene.tweens.add(tweenConfig);
-    });
-  }
-
-  // Legacy methods - kept for backward compatibility with TrickArea
-  animateTo(
-    x: number,
-    y: number,
-    duration = ANIMATION.CARD_PLAY,
-    rotation = 0,
-  ) {
-    return this.moveTo({
-      x,
-      y,
-      rotation: Phaser.Math.DegToRad(rotation),
-      animate: true,
-      duration,
-      ease: "Cubic.easeOut",
-    });
-  }
-
-  animateToWithBounce(x: number, y: number, duration = ANIMATION.CARD_PLAY) {
-    return this.moveTo({
-      x,
-      y,
-      animate: true,
-      duration,
-      ease: "Back.easeOut",
     });
   }
 

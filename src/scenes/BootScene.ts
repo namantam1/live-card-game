@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import Phaser, { Scene } from "phaser";
 import { SUITS, RANKS, COLORS } from "../utils/constants";
 import { CARD_CONFIG } from "../utils/uiConfig";
 
@@ -9,7 +9,7 @@ export default class BootScene extends Phaser.Scene {
 
   preload() {
     this.createLoadingBar();
-    this.loadAssets();
+    BootScene.loadAssets(this);
   }
 
   createLoadingBar() {
@@ -53,13 +53,13 @@ export default class BootScene extends Phaser.Scene {
     });
   }
 
-  loadAssets() {
+  static loadAssets(scene: Scene) {
     // Load all card images using centralized card dimensions from uiConfig
     for (const suit of SUITS) {
       for (const rank of RANKS) {
         const key = `card-${rank}-${suit}`;
         const path = `cards/${rank}-${suit}.svg`;
-        this.load.svg(key, path, {
+        scene.load.svg(key, path, {
           width: CARD_CONFIG.WIDTH,
           height: CARD_CONFIG.HEIGHT,
         });
@@ -67,15 +67,15 @@ export default class BootScene extends Phaser.Scene {
     }
 
     // Card back using centralized card dimensions
-    this.load.svg("card-back", "cards/back.svg", {
+    scene.load.svg("card-back", "cards/back.svg", {
       width: CARD_CONFIG.WIDTH,
       height: CARD_CONFIG.HEIGHT,
     });
 
-    this.load.image("table-bg", "assets/table-bg.webp");
+    scene.load.image("table-bg", "assets/table-bg.webp");
 
     // Audio (optional - check if exists)
-    this.load.audio("bgm", "audio/bgm.mp3").on("loaderror", () => {
+    scene.load.audio("bgm", "audio/bgm.mp3").on("loaderror", () => {
       console.log("BGM not found, continuing without music");
     });
   }

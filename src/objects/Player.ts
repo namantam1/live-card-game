@@ -11,7 +11,7 @@ import {
   getResponsiveConfig,
 } from "../utils/uiConfig";
 import { Scene } from "phaser";
-import type { CardData } from "../type";
+import type { CardData, TrickEntry } from "../type";
 
 export default class Player {
   scene: Scene;
@@ -67,7 +67,7 @@ export default class Player {
     this.createLabel();
   }
 
-  createLabel() {
+  private createLabel() {
     const { width, height } = this.scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[this.position];
 
@@ -76,7 +76,7 @@ export default class Player {
     switch (this.position) {
       case "bottom":
         labelX = width * 0.5;
-        labelY = height * posConfig.labelY! + 30;
+        labelY = height * posConfig.labelY!;
         break;
       case "top":
         labelX = width * 0.5;
@@ -102,7 +102,8 @@ export default class Player {
         backgroundColor: "rgba(30, 41, 59, 0.8)",
         padding: { x: 8, y: 4 },
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(100); // Set high depth to appear above cards
 
     // Bid/tricks indicator (shown during gameplay) with responsive font size
     // For top and bottom players, show stats to the right of name
@@ -127,18 +128,20 @@ export default class Player {
         fontSize: getFontSize("playerStats", width, height),
         color: "#94a3b8",
       })
-      .setOrigin(statsOrigin.x, statsOrigin.y);
+      .setOrigin(statsOrigin.x, statsOrigin.y)
+      .setDepth(100);
 
     // Turn indicator
     this.turnIndicator = this.scene.add.graphics();
     this.turnIndicator.setVisible(false);
+    this.turnIndicator.setDepth(99); // Slightly below labels but above cards
   }
 
   setCards(cardDataArray: CardData[], animate = true) {
     return this.hand.setCards(cardDataArray, animate);
   }
 
-  updatePlayableCards(leadSuit: Suit, currentTrick: any[] = []) {
+  updatePlayableCards(leadSuit: Suit, currentTrick: TrickEntry[] = []) {
     this.hand.updatePlayableCards(leadSuit, currentTrick);
   }
 

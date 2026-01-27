@@ -1,7 +1,6 @@
 import Phaser, { Scene } from "phaser";
 import Card from "./Card";
 import {
-  CARD,
   ANIMATION,
   PLAYER_POSITIONS,
   type Position,
@@ -9,7 +8,7 @@ import {
 } from "../utils/constants";
 import { sortHand, getValidCards } from "../utils/cards";
 import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
-import type { CardData } from "../type";
+import type { CardData, TrickEntry } from "../type";
 
 export default class Hand {
   isHuman: boolean;
@@ -101,9 +100,6 @@ export default class Hand {
           : undefined,
       });
 
-      // Set initial small scale
-      await card.moveTo({ scale: (0.3 * this.cardScale) / CARD.SCALE });
-
       // Calculate target position in hand
       const targetPos = this.getCardPosition(i, cardDataArray.length);
 
@@ -112,7 +108,6 @@ export default class Hand {
         x: this.x + targetPos.x,
         y: this.y + targetPos.y,
         rotation: this.rotation + targetPos.rotation,
-        scale: this.cardScale,
         animate: true,
         duration: ANIMATION.CARD_DEAL,
         ease: "Quad.easeOut",
@@ -142,12 +137,12 @@ export default class Hand {
   }
 
   getCardPosition(index: number, total: number) {
-    const overlap = this.isHuman ? this.handOverlap : this.handOverlap * 0.4;
+    const overlap = this.isHuman ? this.handOverlap : this.handOverlap * 0.1;
     const totalSpan = (total - 1) * overlap;
     const startOffset = -totalSpan / 2;
 
     // Fan effect - slight rotation for each card (only for human player)
-    const fanAngle = this.isHuman ? 5 : 0;
+    const fanAngle = this.isHuman ? 0 : 0;
     const middleIndex = (total - 1) / 2;
     const angleOffset = (index - middleIndex) * fanAngle;
 
@@ -183,7 +178,7 @@ export default class Hand {
         x: targetX,
         y: targetY,
         rotation: targetRotation,
-        scale: this.cardScale,
+        // scale: this.cardScale,
         animate,
         duration: 200,
         ease: "Quad.easeOut",
@@ -191,7 +186,7 @@ export default class Hand {
     });
   }
 
-  updatePlayableCards(leadSuit: Suit, currentTrick: any[] = []) {
+  updatePlayableCards(leadSuit: Suit, currentTrick: TrickEntry[] = []) {
     if (!this.isHuman) return;
 
     const cardDataArray = this.cards.map((c) => c.cardData);
@@ -230,9 +225,9 @@ export default class Hand {
         : undefined,
     });
 
-    if (animate) {
-      card.moveTo({ scale: 0.3 });
-    }
+    // if (animate) {
+    //   card.moveTo({ scale: 0.3 });
+    // }
 
     this.cards.push(card);
 

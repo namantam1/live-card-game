@@ -36,7 +36,7 @@ const config = {
   },
   scene: [
     // comment debug in prod
-    // DebugScene,
+    DebugScene,
     BootScene,
     MenuScene,
     LobbyScene,
