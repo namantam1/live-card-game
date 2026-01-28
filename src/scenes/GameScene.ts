@@ -185,11 +185,6 @@ export default class GameScene extends Phaser.Scene {
   setupEventListeners() {
     // Unified event listeners - no mode conditionals!
 
-    // Phase changed
-    this.gameMode.on("phaseChanged", (phase) => {
-      this.events.emit("phaseChanged", phase);
-    });
-
     // Turn changed
     this.gameMode.on("turnChanged", ({ playerIndex, isMyTurn }: any) => {
       this.players.forEach((p, i) => {
@@ -223,20 +218,9 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    // Round complete
-    this.gameMode.on("roundComplete", (data: any) => {
-      this.events.emit("roundComplete", data);
-    });
-
-    // Game complete
-    this.gameMode.on("gameComplete", (data: any) => {
+    // Game complete - play win sound
+    this.gameMode.on("gameComplete", () => {
       this.audioManager.playWinSound();
-      this.events.emit("gameComplete", data);
-    });
-
-    // Bid placed
-    this.gameMode.on("bidPlaced", ({ playerIndex, bid }: any) => {
-      this.events.emit("bidPlaced", { playerIndex, bid });
     });
   }
 

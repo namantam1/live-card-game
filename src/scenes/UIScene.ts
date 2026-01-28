@@ -63,7 +63,9 @@ export default class UIScene extends Phaser.Scene {
     this.settingsModal = new SettingsModal(this, {
       audioManager: this.audioManager,
       onQuit: () => this.gameScene.returnToMenu(),
-      onNewGame: this.isMultiplayer() ? null : () => this.gameScene.restartGame(),
+      onNewGame: this.isMultiplayer()
+        ? null
+        : () => this.gameScene.restartGame(),
     });
 
     // Create bidding UI
@@ -134,7 +136,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     // Round complete
-    this.gameScene.events.on("roundComplete", (data: any) => {
+    this.gameMode.on("roundComplete", (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
         this.gameMode.getCurrentRound(),
@@ -143,7 +145,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Game complete
-    this.gameScene.events.on("gameComplete", (data: any) => {
+    this.gameMode.on("gameComplete", (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
         this.gameMode.getCurrentRound(),
