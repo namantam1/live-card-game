@@ -1,5 +1,9 @@
 import type { Scene } from "phaser";
-import type { IGameMode, PlayerData, EventCallback } from "./IGameMode";
+import {
+  GameModeBase,
+  type PlayerData,
+  type EventCallback,
+} from "./GameModeBase";
 import GameManager from "../managers/GameManager";
 import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
@@ -10,13 +14,13 @@ import { EVENTS } from "../utils/constants";
  * Solo game mode implementation (vs AI bots)
  * Delegates to GameManager for game logic
  */
-export default class SoloGameMode implements IGameMode {
+export default class SoloGameMode extends GameModeBase {
   private gameManager!: GameManager;
   private players: Player[] = [];
   private trickArea!: TrickArea;
   private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
-  async initialize(scene: Scene, data: any): Promise<void> {
+  override async initialize(scene: Scene, data: any): Promise<void> {
     this.trickArea = data.trickArea;
 
     // Create game manager
@@ -31,7 +35,7 @@ export default class SoloGameMode implements IGameMode {
     this.setupEventForwarding();
   }
 
-  createPlayers(scene: Scene): Player[] {
+  override createPlayers(scene: Scene): Player[] {
     const players: Player[] = [];
     const playerInfo = this.gameManager.playerInfo;
 
@@ -52,17 +56,17 @@ export default class SoloGameMode implements IGameMode {
     return players;
   }
 
-  async startGame(): Promise<void> {
+  override async startGame(): Promise<void> {
     await this.gameManager.startGame();
   }
 
-  cleanup(): void {
+  override cleanup(): void {
     // Clean up event listeners
     this.gameManager.removeAllListeners();
     this.eventListeners.clear();
   }
 
-  getPlayers(): PlayerData[] {
+  override getPlayers(): PlayerData[] {
     return this.gameManager.getPlayers().map((player) => ({
       name: player.name,
       emoji: player.emoji,
@@ -75,46 +79,46 @@ export default class SoloGameMode implements IGameMode {
     }));
   }
 
-  getCurrentRound(): number {
+  override getCurrentRound(): number {
     return this.gameManager.getCurrentRound();
   }
 
-  getPhase(): string {
+  override getPhase(): string {
     return this.gameManager.getPhase();
   }
 
-  onBidSelected(bid: number): void {
+  override onBidSelected(bid: number): void {
     this.gameManager.placeHumanBid(bid);
   }
 
-  onCardPlayed(cardData: CardData): void {
+  override onCardPlayed(cardData: CardData): void {
     this.gameManager.playCard(cardData, 0);
   }
 
-  continueToNextRound(): void {
+  override continueToNextRound(): void {
     this.gameManager.continueToNextRound();
   }
 
-  async restartGame(): Promise<void> {
+  override async restartGame(): Promise<void> {
     this.trickArea?.clear();
     await this.gameManager.restartGame();
   }
 
-  returnToMenu(): void {
+  override returnToMenu(): void {
     // Will be handled by GameScene
     this.cleanup();
   }
 
   // ===== Event System =====
 
-  on(event: string, callback: EventCallback): void {
+  override on(event: string, callback: EventCallback): void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
     this.eventListeners.get(event)!.add(callback);
   }
 
-  off(event: string, callback: EventCallback): void {
+  override off(event: string, callback: EventCallback): void {
     if (this.eventListeners.has(event)) {
       this.eventListeners.get(event)!.delete(callback);
     }

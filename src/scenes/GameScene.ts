@@ -7,10 +7,10 @@ import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
 import NetworkManager from "../managers/NetworkManager";
 import Common from "../objects/game/Common";
 import GameModeFactory from "../modes/GameModeFactory";
-import type { IGameMode } from "../modes/IGameMode";
+import type { GameModeBase } from "../modes/GameModeBase";
 
 export default class GameScene extends Phaser.Scene {
-  private gameMode!: IGameMode;
+  private gameMode!: GameModeBase;
   audioManager!: AudioManager;
   trickArea!: TrickArea;
   players!: Player[];

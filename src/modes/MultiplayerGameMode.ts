@@ -1,23 +1,27 @@
 import type { Scene } from "phaser";
-import type { IGameMode, PlayerData, EventCallback } from "./IGameMode";
+import {
+  GameModeBase,
+  type PlayerData,
+  type EventCallback,
+} from "./GameModeBase";
 import NetworkManager from "../managers/NetworkManager";
 import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
-import type { CardData, PlayerSchema, TrickEntrySchema, CardSchema } from "../type";
+import type { CardData } from "../type";
 import type { Suit } from "../utils/constants";
 
 /**
  * Multiplayer game mode implementation (via Colyseus)
  * Delegates to NetworkManager for server communication
  */
-export default class MultiplayerGameMode implements IGameMode {
+export default class MultiplayerGameMode extends GameModeBase {
   private networkManager!: NetworkManager;
   private scene!: Scene;
   private players: Player[] = [];
   private trickArea!: TrickArea;
   private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
-  async initialize(scene: Scene, data: any): Promise<void> {
+  override async initialize(scene: Scene, data: any): Promise<void> {
     this.scene = scene;
     this.trickArea = data.trickArea;
     this.networkManager = data.networkManager;
@@ -36,7 +40,7 @@ export default class MultiplayerGameMode implements IGameMode {
     this.syncHandFromServer();
   }
 
-  createPlayers(scene: Scene): Player[] {
+  override createPlayers(scene: Scene): Player[] {
     const players: Player[] = [];
     const networkPlayers = this.networkManager.getPlayers();
     const localId = this.networkManager.playerId;
@@ -77,13 +81,13 @@ export default class MultiplayerGameMode implements IGameMode {
     return players;
   }
 
-  async startGame(): Promise<void> {
+  override async startGame(): Promise<void> {
     // In multiplayer, game is started by server
     // Just sync state
     this.syncHandFromServer();
   }
 
-  async cleanup(): Promise<void> {
+  override async cleanup(): Promise<void> {
     // Leave room first to properly disconnect
     if (this.networkManager.isInRoom()) {
       await this.networkManager.leaveRoom();
@@ -94,7 +98,7 @@ export default class MultiplayerGameMode implements IGameMode {
     this.eventListeners.clear();
   }
 
-  getPlayers(): PlayerData[] {
+  override getPlayers(): PlayerData[] {
     return this.networkManager.getPlayers().map((player) => ({
       name: player.name,
       emoji: player.emoji,
@@ -108,47 +112,47 @@ export default class MultiplayerGameMode implements IGameMode {
     }));
   }
 
-  getCurrentRound(): number {
+  override getCurrentRound(): number {
     const state = this.networkManager.getState();
     return state?.currentRound || 1;
   }
 
-  getPhase(): string {
+  override getPhase(): string {
     return this.networkManager.getPhase();
   }
 
-  onBidSelected(bid: number): void {
+  override onBidSelected(bid: number): void {
     this.networkManager.sendBid(bid);
   }
 
-  onCardPlayed(cardData: CardData): void {
+  override onCardPlayed(cardData: CardData): void {
     this.networkManager.sendPlayCard(cardData.id);
   }
 
-  continueToNextRound(): void {
+  override continueToNextRound(): void {
     this.networkManager.sendNextRound();
   }
 
-  async restartGame(): Promise<void> {
+  override async restartGame(): Promise<void> {
     this.trickArea?.clear();
     this.networkManager.sendRestart();
   }
 
-  async returnToMenu(): Promise<void> {
+  override async returnToMenu(): Promise<void> {
     // Cleanup will handle leaving the room
     await this.cleanup();
   }
 
   // ===== Event System =====
 
-  on(event: string, callback: EventCallback): void {
+  override on(event: string, callback: EventCallback): void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
     this.eventListeners.get(event)!.add(callback);
   }
 
-  off(event: string, callback: EventCallback): void {
+  override off(event: string, callback: EventCallback): void {
     if (this.eventListeners.has(event)) {
       this.eventListeners.get(event)!.delete(callback);
     }
@@ -160,7 +164,10 @@ export default class MultiplayerGameMode implements IGameMode {
         try {
           callback(data);
         } catch (error) {
-          console.error(`MultiplayerGameMode: Error in ${event} listener`, error);
+          console.error(
+            `MultiplayerGameMode: Error in ${event} listener`,
+            error,
+          );
         }
       });
     }
@@ -362,7 +369,10 @@ export default class MultiplayerGameMode implements IGameMode {
     );
 
     if (localPlayer) {
-      console.log("MultiplayerGameMode: Syncing hand from server. Cards:", hand.length);
+      console.log(
+        "MultiplayerGameMode: Syncing hand from server. Cards:",
+        hand.length,
+      );
       localPlayer.hand.setCards(hand, false);
     }
 

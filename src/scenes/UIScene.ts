@@ -7,10 +7,10 @@ import SettingsModal from "../objects/game/SettingsModal";
 import AudioManager from "../managers/AudioManager";
 import GameScene from "./GameScene";
 import Common from "../objects/game/Common";
-import type { IGameMode } from "../modes/IGameMode";
+import type { GameModeBase } from "../modes/GameModeBase";
 
 export default class UIScene extends Phaser.Scene {
-  private gameMode!: IGameMode;
+  private gameMode!: GameModeBase;
   private audioManager!: AudioManager;
   private gameScene!: GameScene;
   scoreBoard!: ScoreBoard;

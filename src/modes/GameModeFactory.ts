@@ -1,4 +1,4 @@
-import type { IGameMode } from "./IGameMode";
+import type { GameModeBase } from "./GameModeBase";
 import SoloGameMode from "./SoloGameMode";
 import MultiplayerGameMode from "./MultiplayerGameMode";
 
@@ -24,7 +24,7 @@ export default class GameModeFactory {
    * @returns IGameMode instance
    * @throws Error if invalid type or missing required data
    */
-  static createGameMode(type: GameModeTypeValue, data?: any): IGameMode {
+  static createGameMode(type: GameModeTypeValue, data?: any): GameModeBase {
     switch (type) {
       case GameModeType.SOLO:
         return new SoloGameMode();
