@@ -10,7 +10,8 @@ export const GameModeType = {
   MULTIPLAYER: "multiplayer" as const,
 };
 
-export type GameModeTypeValue = typeof GameModeType[keyof typeof GameModeType];
+export type GameModeTypeValue =
+  (typeof GameModeType)[keyof typeof GameModeType];
 
 /**
  * Factory for creating game mode instances
@@ -20,19 +21,15 @@ export default class GameModeFactory {
   /**
    * Create a game mode instance
    * @param type - The type of game mode to create
-   * @param data - Optional initialization data (networkManager for multiplayer)
-   * @returns IGameMode instance
-   * @throws Error if invalid type or missing required data
+   * @returns GameModeBase instance
+   * @throws Error if invalid type
    */
-  static createGameMode(type: GameModeTypeValue, data?: any): GameModeBase {
+  static createGameMode(type: GameModeTypeValue): GameModeBase {
     switch (type) {
       case GameModeType.SOLO:
         return new SoloGameMode();
 
       case GameModeType.MULTIPLAYER:
-        if (!data?.networkManager) {
-          throw new Error("NetworkManager required for multiplayer mode");
-        }
         return new MultiplayerGameMode();
 
       default:

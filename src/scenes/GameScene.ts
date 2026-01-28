@@ -29,7 +29,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Create game mode using factory
     const modeType = GameModeFactory.getTypeFromInitData(data);
-    this.gameMode = GameModeFactory.createGameMode(modeType, data);
+    this.gameMode = GameModeFactory.createGameMode(modeType);
   }
 
   create() {
