@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import Card from "./Card";
 import { ANIMATION } from "../utils/constants";
-import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
 import type { CardData } from "../type";
 
 interface CardOffset {
@@ -30,14 +29,11 @@ export default class TrickArea {
 
   constructor(scene: Phaser.Scene) {
     const { width, height } = scene.cameras.main;
-    // super(scene, width / 2, height / 2);
 
     this.playedCards = [];
     this.scene = scene;
 
-    // Calculate responsive card scale for trick area using centralized config
-    const mobile = isMobile(width, height);
-    this.trickCardScale = 0.5;
+    this.trickCardScale = 0.7;
 
     // Card positions for each player (relative to center)
     // Diamond pattern: each player's card faces toward center
@@ -97,6 +93,7 @@ export default class TrickArea {
         animate: true,
         duration: ANIMATION.CARD_TO_CENTER as any,
         ease: "Back.easeOut",
+        moveToTop: true,
       });
     } else {
       console.warn(
@@ -115,17 +112,11 @@ export default class TrickArea {
       });
     }
 
-    // Play sound
-    // this.playCardSound();
-
     this.playedCards.push({
       playerIndex,
       card,
       cardData,
     });
-
-    // TODO: Fix it as currenlty we don;t have access to card card container.
-    // this.scene.children.bringToTop(card as any);
 
     return card;
   }

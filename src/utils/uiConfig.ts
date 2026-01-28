@@ -38,7 +38,7 @@ export const CARD_CONFIG = {
   MOBILE_SCALE: 0.9,
 
   // Card overlap in hand (desktop)
-  HAND_OVERLAP: 100,
+  HAND_OVERLAP: 120,
 
   // Mobile hand overlap multiplier
   MOBILE_OVERLAP_MULTIPLIER: 0.7,

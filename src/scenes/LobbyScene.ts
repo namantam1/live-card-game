@@ -5,7 +5,6 @@ import NetworkIndicator from "../components/NetworkIndicator";
 import Button from "../components/Button";
 import { getFontSize } from "../utils/uiConfig";
 import Common from "../objects/game/Common";
-import CanvasInput from "phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput";
 
 export default class LobbyScene extends Phaser.Scene {
   networkManager!: NetworkManager;

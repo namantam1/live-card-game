@@ -39,7 +39,7 @@ export default class Card {
     const textureKey = this.isFaceDown
       ? "card-back"
       : getCardAssetKey(config.cardData);
-    this.initialScale = this.isFaceDown ? CARD.SCALE * 0.5 : CARD.SCALE;
+    this.initialScale = this.isFaceDown ? CARD.SCALE * 0.6 : CARD.SCALE;
     this.sprite = scene.add.image(0, 0, textureKey);
     this.container.setScale(this.initialScale);
     this.container.add(this.sprite);
@@ -232,6 +232,7 @@ export default class Card {
     ease?: string;
     delay?: number;
     onComplete?: () => void;
+    moveToTop?: boolean;
   }): Promise<void> {
     const {
       x,
@@ -244,6 +245,7 @@ export default class Card {
       ease = "Quad.easeOut",
       delay = 0,
       onComplete,
+      moveToTop = false,
     } = config;
 
     // Update originalY if y is provided
@@ -263,6 +265,7 @@ export default class Card {
     }
 
     // Animated positioning
+    if (moveToTop) this.scene.children.bringToTop(this.container);
     return new Promise((resolve) => {
       const tweenConfig: any = {
         targets: this.container,

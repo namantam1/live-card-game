@@ -43,8 +43,6 @@ export default class Hand {
     this.playerPosition = position;
     this.isHuman = isHuman;
     this.cards = [];
-    // this.rotation = Phaser.Math.DegToRad(posConfig.rotation);
-    // console.log(position, "rot", posConfig, this.rotation);
 
     // Calculate responsive card scale based on screen size using centralized config
     const mobile = isMobile(width, height);
@@ -93,11 +91,7 @@ export default class Hand {
         y: centerY,
         cardData,
         faceDown,
-        onClick: this.isHuman
-          ? // ? (data) => this.container.emit("cardPlayed", data, card)
-            // : undefined,
-            (data) => this.onCardPlay?.(data)
-          : undefined,
+        onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
       });
 
       // Calculate target position in hand
@@ -127,10 +121,7 @@ export default class Hand {
         y: 0,
         cardData,
         faceDown,
-        onClick: this.isHuman
-          ? // ? (data) => this.container.emit("cardPlayed", data, card)
-            (data) => this.onCardPlay?.(data)
-          : undefined,
+        onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
       });
       this.cards.push(card);
     });
@@ -142,7 +133,7 @@ export default class Hand {
     const startOffset = -totalSpan / 2;
 
     // Fan effect - slight rotation for each card (only for human player)
-    const fanAngle = this.isHuman ? 0 : 0;
+    const fanAngle = this.isHuman ? 1 : 0;
     const middleIndex = (total - 1) / 2;
     const angleOffset = (index - middleIndex) * fanAngle;
 
@@ -219,10 +210,7 @@ export default class Hand {
       y: animate ? centerY : this.y,
       cardData,
       faceDown,
-      onClick: this.isHuman
-        ? // ? (data) => this.container.emit("cardPlayed", data, card)
-          (data) => this.onCardPlay?.(data)
-        : undefined,
+      onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
     });
 
     // if (animate) {

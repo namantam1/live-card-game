@@ -56,7 +56,6 @@ export default class Player {
     this.position = positions[index];
 
     // Create hand
-    // this.hand = new Hand(scene, this.position, isHuman);
     this.hand = new Hand(scene, {
       position: this.position,
       isHuman,
