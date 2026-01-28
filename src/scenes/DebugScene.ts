@@ -1,24 +1,14 @@
 import NetworkIndicator from "../components/NetworkIndicator";
-import {
-  CARD_CONFIG,
-  getResponsiveConfig,
-  SETTINGS_ICON_CONFIG,
-} from "../utils/uiConfig";
 import AudioManager from "../managers/AudioManager";
 import SettingsModal from "../objects/game/SettingsModal";
 import type { CardData } from "../type";
-import Button from "../components/Button";
 import { createDeck, shuffleDeck } from "../utils/cards";
-import { COLORS, RANKS, SUITS } from "../utils/constants";
+import { SUITS } from "../utils/constants";
 import ScoreBoard from "../objects/game/ScoreBoard";
 import Common from "../objects/game/Common";
-import GameOverModal from "../objects/game/GameOverModal";
-import RoundModal from "../objects/game/RoundModal";
 import Player from "../objects/Player";
-import BiddingUI from "../objects/game/BiddingUI";
 import TrickArea from "../objects/TrickArea";
 import BootScene from "./BootScene";
-import Card from "../objects/Card";
 
 const CARD: CardData = createDeck()[0];
 
