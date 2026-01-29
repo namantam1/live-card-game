@@ -4,7 +4,6 @@ import TrickArea from "../objects/TrickArea";
 import AudioManager from "../managers/AudioManager";
 import NetworkIndicator from "../components/NetworkIndicator";
 import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
-import NetworkManager from "../managers/NetworkManager";
 import Common from "../objects/game/Common";
 import GameModeFactory from "../modes/GameModeFactory";
 import type { GameModeBase } from "../modes/GameModeBase";
@@ -17,16 +16,15 @@ export default class GameScene extends Phaser.Scene {
   players!: Player[];
   networkIndicator?: NetworkIndicator;
   reconnectionOverlay?: ReconnectionOverlay;
-  private isMultiplayer: boolean = false;
-  private networkManager?: NetworkManager;
+  private initData: any;
 
   constructor() {
     super({ key: "GameScene" });
   }
 
   init(data: any) {
-    this.isMultiplayer = data?.isMultiplayer || false;
-    this.networkManager = data?.networkManager;
+    // Store init data for later use
+    this.initData = data;
 
     // Create game mode using factory
     const modeType = GameModeFactory.getTypeFromInitData(data);
@@ -57,23 +55,20 @@ export default class GameScene extends Phaser.Scene {
   }
 
   async initializeGameMode() {
-    // Initialize the game mode
+    // Initialize the game mode with all dependencies
     await this.gameMode.initialize(this, {
       trickArea: this.trickArea,
       audioManager: this.audioManager,
-      networkManager: this.networkManager,
+      networkManager: this.initData?.networkManager,
     });
 
     // Get players from mode
     this.players = this.gameMode.createPlayers(this);
 
-    // Setup multiplayer-specific UI if needed
-    if (this.isMultiplayer) {
-      this.createNetworkIndicator();
-      this.setupMultiplayerListeners();
-    }
+    // Always create network UI (will only be shown if mode emits connection events)
+    this.createNetworkIndicator();
 
-    // Setup unified event listeners
+    // Setup unified event listeners (no mode branching)
     this.setupEventListeners();
 
     // Launch UI scene
@@ -90,33 +85,37 @@ export default class GameScene extends Phaser.Scene {
     const { width } = this.cameras.main;
 
     // Create network indicator in top-right corner, to the left of settings icon
+    // Hidden by default, will be shown when connection events are received
     this.networkIndicator = new NetworkIndicator(this, width - 150, 50);
+    this.networkIndicator.container.setVisible(false);
 
     // Create reconnection overlay (hidden by default)
     this.reconnectionOverlay = new ReconnectionOverlay(this);
   }
 
-  setupMultiplayerListeners() {
-    if (!this.networkManager) return;
+  setupConnectionListeners() {
+    // Listen to connection events from game mode (only multiplayer emits these)
 
     // Connection quality changes
-    this.networkManager.on("connectionQualityChange", ({ quality }: any) => {
+    this.gameMode.on(EVENTS.CONNECTION_QUALITY_CHANGED, ({ quality }: any) => {
       if (this.networkIndicator) {
+        this.networkIndicator.container.setVisible(true);
         this.networkIndicator.updateQuality(quality);
       }
     });
 
     // Reconnecting
-    this.networkManager.on("reconnecting", ({ attempt }: any) => {
+    this.gameMode.on(EVENTS.RECONNECTING, ({ attempt }: any) => {
       console.log("GameScene: Reconnecting...", attempt);
       if (this.networkIndicator) {
+        this.networkIndicator.container.setVisible(true);
         this.networkIndicator.showReconnecting(attempt);
       }
       this.reconnectionOverlay?.show(attempt);
     });
 
     // Reconnected
-    this.networkManager.on("reconnected", ({ message }: any) => {
+    this.gameMode.on(EVENTS.RECONNECTED, ({ message }: any) => {
       console.log("GameScene: Reconnected!", message);
       if (this.networkIndicator) {
         this.networkIndicator.showReconnected();
@@ -144,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Reconnection failed
-    this.networkManager.on("reconnectionFailed", ({ message }: any) => {
+    this.gameMode.on(EVENTS.RECONNECTION_FAILED, ({ message }: any) => {
       console.log("GameScene: Reconnection failed", message);
       this.reconnectionOverlay?.hide();
 
@@ -158,19 +157,19 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Error handling
-    this.networkManager.on("error", (data: any) => {
-      console.error("Network error:", data);
+    this.gameMode.on(EVENTS.CONNECTION_ERROR, ({ message }: any) => {
+      console.error("Network error:", message);
       this.events.emit("networkError", {
-        message: `Connection error: ${data.message || "Unknown error"}`,
+        message: `Connection error: ${message || "Unknown error"}`,
       });
     });
 
     // Room left
-    this.networkManager.on("roomLeft", (data: any) => {
-      console.log("Room left event received:", data);
+    this.gameMode.on(EVENTS.ROOM_LEFT, ({ code }: any) => {
+      console.log("Room left event received:", code);
 
       const message =
-        data?.code === 1000
+        code === 1000
           ? "Disconnected from game"
           : "Connection lost - returning to menu";
 
@@ -186,13 +185,10 @@ export default class GameScene extends Phaser.Scene {
   setupEventListeners() {
     // Unified event listeners - no mode conditionals!
 
-    // Turn changed
+    // Turn changed - now both modes emit playerIndex consistently
     this.gameMode.on(EVENTS.TURN_CHANGED, ({ playerIndex, isMyTurn }: any) => {
       this.players.forEach((p, i) => {
-        if (
-          i === playerIndex ||
-          (this.isMultiplayer && p.networkId === playerIndex)
-        ) {
+        if (i === playerIndex) {
           p.showTurnIndicator();
         } else {
           p.hideTurnIndicator();
@@ -223,6 +219,9 @@ export default class GameScene extends Phaser.Scene {
     this.gameMode.on(EVENTS.GAME_COMPLETE, () => {
       this.audioManager.playWinSound();
     });
+
+    // Setup connection listeners (only fired by multiplayer mode)
+    this.setupConnectionListeners();
   }
 
   // Called from UIScene to continue to next round

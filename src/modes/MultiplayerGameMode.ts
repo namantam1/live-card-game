@@ -80,6 +80,14 @@ export default class MultiplayerGameMode extends GameModeBase {
     // In multiplayer, game is started by server
     // Just sync state
     this.syncHandFromServer();
+
+    // Emit initial connection quality to show network indicator
+    // (Done here after all listeners are registered in GameScene)
+    const initialQuality = this.networkManager.getConnectionQuality();
+    this.emit(EVENTS.CONNECTION_QUALITY_CHANGED, {
+      quality: initialQuality,
+      connected: this.networkManager.isConnected(),
+    });
   }
 
   override async cleanup(): Promise<void> {
@@ -182,8 +190,18 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     // Turn change
     this.networkManager.on("turnChange", ({ playerId, isMyTurn }: any) => {
-      this.players.forEach((p) => {
-        if (p.networkId === playerId) {
+      // Convert network playerId to local player index
+      const playerIndex = this.players.findIndex(
+        (p) => p.networkId === playerId,
+      );
+
+      if (playerIndex === -1) {
+        console.warn(`Player ${playerId} not found in local players array`);
+        return;
+      }
+
+      this.players.forEach((p, i) => {
+        if (i === playerIndex) {
           p.showTurnIndicator();
           if (isMyTurn) {
             // Enable card selection for local player with proper validation
@@ -200,7 +218,8 @@ export default class MultiplayerGameMode extends GameModeBase {
         }
       });
 
-      this.emit(EVENTS.TURN_CHANGED, { playerId, isMyTurn });
+      // Emit with playerIndex (array index) for consistency with SoloGameMode
+      this.emit(EVENTS.TURN_CHANGED, { playerIndex, isMyTurn });
     });
 
     // Card added to hand
@@ -294,6 +313,42 @@ export default class MultiplayerGameMode extends GameModeBase {
       this.players.forEach((player) => {
         player.reset();
       });
+    });
+
+    // Connection quality changes
+    this.networkManager.on(
+      "connectionQualityChange",
+      ({ quality, connected }: any) => {
+        this.emit(EVENTS.CONNECTION_QUALITY_CHANGED, { quality, connected });
+      },
+    );
+
+    // Reconnecting
+    this.networkManager.on("reconnecting", ({ attempt }: any) => {
+      this.emit(EVENTS.RECONNECTING, { attempt });
+    });
+
+    // Reconnected
+    this.networkManager.on("reconnected", ({ message }: any) => {
+      this.emit(EVENTS.RECONNECTED, { message });
+    });
+
+    // Reconnection failed
+    this.networkManager.on("reconnectionFailed", ({ message }: any) => {
+      this.emit(EVENTS.RECONNECTION_FAILED, { message });
+    });
+
+    // Connection error
+    this.networkManager.on("error", (data: any) => {
+      this.emit(EVENTS.CONNECTION_ERROR, {
+        message: data.message || "Unknown error",
+        code: data.code,
+      });
+    });
+
+    // Room left
+    this.networkManager.on("roomLeft", (data: any) => {
+      this.emit(EVENTS.ROOM_LEFT, { code: data.code });
     });
 
     // Lead suit changed - update playable cards if it's our turn

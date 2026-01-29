@@ -116,6 +116,13 @@ export const EVENTS = {
   BID_PLACED: "bidPlaced",
   TURN_CHANGED: "turnChanged",
   PHASE_CHANGED: "phaseChanged",
+  // Connection events (multiplayer only, ignored by solo mode)
+  CONNECTION_QUALITY_CHANGED: "connectionQualityChanged",
+  RECONNECTING: "reconnecting",
+  RECONNECTED: "reconnected",
+  RECONNECTION_FAILED: "reconnectionFailed",
+  CONNECTION_ERROR: "connectionError",
+  ROOM_LEFT: "roomLeft",
 } as const;
 
 export type GameEvent = (typeof EVENTS)[keyof typeof EVENTS];
