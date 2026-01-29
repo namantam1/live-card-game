@@ -74,6 +74,12 @@ export default class SoloGameMode extends GameModeBase {
     }));
   }
 
+  override getLocalPlayer(): PlayerData | null {
+    // In solo mode, local player is always at index 0
+    const players = this.getPlayers();
+    return players[0] || null;
+  }
+
   override getCurrentRound(): number {
     return this.gameManager.getCurrentRound();
   }
@@ -119,7 +125,7 @@ export default class SoloGameMode extends GameModeBase {
     this.gameManager.on(EVENTS.TURN_CHANGED, (playerIndex: number) => {
       this.emit(EVENTS.TURN_CHANGED, {
         playerIndex,
-        isMyTurn: playerIndex === 0,
+        isMyTurn: this.isLocalPlayer(playerIndex),
       });
     });
 

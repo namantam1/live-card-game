@@ -115,6 +115,12 @@ export default class MultiplayerGameMode extends GameModeBase {
     }));
   }
 
+  override getLocalPlayer(): PlayerData | null {
+    // In multiplayer mode, local player is identified by networkId
+    const players = this.getPlayers();
+    return players.find((p) => p.isLocal) || null;
+  }
+
   override getCurrentRound(): number {
     const state = this.networkManager.getState();
     return state?.currentRound || 1;

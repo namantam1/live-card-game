@@ -43,18 +43,6 @@ export type GameModeEvent = GameEvent;
  * @fires roundComplete - When a round ends
  * @fires gameComplete - When the game ends
  * @fires bidPlaced - When a player places a bid
- *
- * @example
- * // Listen to events with autocomplete
- * gameMode.on('phaseChanged', (phase) => console.log('Phase:', phase));
- * gameMode.once('gameComplete', (data) => console.log('Winner:', data.winner));
- *
- * // Remove listeners
- * gameMode.off('turnChanged', callback);
- * gameMode.removeAllListeners('cardPlayed');
- * gameMode.removeAllListeners(); // Remove all listeners
- *
- * Subclasses override methods using 'override' keyword.
  */
 export abstract class GameModeBase extends Phaser.Events.EventEmitter {
   constructor() {
@@ -146,6 +134,28 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
   getPhase(): string {
     console.error(`${this.constructor.name}: getPhase() not implemented`);
     throw new Error("getPhase() must be implemented");
+  }
+
+  /**
+   * Get the local player (the player controlled by this client)
+   * @returns The player data for the local player, or null if not found
+   */
+  getLocalPlayer(): PlayerData | null {
+    console.error(`${this.constructor.name}: getLocalPlayer() not implemented`);
+    throw new Error("getLocalPlayer() must be implemented");
+  }
+
+  /**
+   * Check if a given player index is the local player
+   * @param playerIndex - The index to check
+   * @returns true if the player at this index is the local player
+   */
+  isLocalPlayer(playerIndex: number): boolean {
+    const players = this.getPlayers();
+    if (playerIndex < 0 || playerIndex >= players.length) {
+      return false;
+    }
+    return players[playerIndex].isLocal === true;
   }
 
   // Game Actions

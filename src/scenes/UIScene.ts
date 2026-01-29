@@ -112,9 +112,7 @@ export default class UIScene extends Phaser.Scene {
       );
 
       // Hide bidding UI if it was the local player
-      const players = this.gameMode.getPlayers();
-      const localPlayer = players.find((p) => p.isLocal);
-      if (localPlayer && (playerIndex === 0 || players[playerIndex]?.isLocal)) {
+      if (this.gameMode.isLocalPlayer(playerIndex)) {
         this.biddingUI.hide();
       }
     });
