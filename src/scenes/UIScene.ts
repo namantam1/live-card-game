@@ -8,6 +8,7 @@ import AudioManager from "../managers/AudioManager";
 import GameScene from "./GameScene";
 import Common from "../objects/game/Common";
 import type { GameModeBase } from "../modes/GameModeBase";
+import { EVENTS } from "../utils/constants";
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -83,7 +84,7 @@ export default class UIScene extends Phaser.Scene {
     // Unified event listeners - no mode conditionals!
 
     // Phase changed
-    this.gameMode.on("phaseChanged", (phase: string) => {
+    this.gameMode.on(EVENTS.PHASE_CHANGED, (phase: string) => {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
@@ -95,7 +96,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Turn changed
-    this.gameMode.on("turnChanged", ({ isMyTurn }: any) => {
+    this.gameMode.on(EVENTS.TURN_CHANGED, ({ isMyTurn }: any) => {
       const phase = this.gameMode.getPhase();
       if (phase === "bidding" && isMyTurn) {
         this.time.delayedCall(300, () => this.biddingUI.show());
@@ -103,7 +104,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Bid placed
-    this.gameMode.on("bidPlaced", ({ playerIndex }: any) => {
+    this.gameMode.on(EVENTS.BID_PLACED, ({ playerIndex }: any) => {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
@@ -118,25 +119,8 @@ export default class UIScene extends Phaser.Scene {
       }
     });
 
-    // Score updates (from multiplayer events)
-    if (this.isMultiplayer()) {
-      this.gameMode.on("playerScoreChange", () => {
-        this.scoreBoard.updateScoreboard(
-          this.gameMode.getPlayers(),
-          this.gameMode.getCurrentRound(),
-        );
-      });
-
-      this.gameMode.on("playerTricksWon", () => {
-        this.scoreBoard.updateScoreboard(
-          this.gameMode.getPlayers(),
-          this.gameMode.getCurrentRound(),
-        );
-      });
-    }
-
     // Round complete
-    this.gameMode.on("roundComplete", (data: any) => {
+    this.gameMode.on(EVENTS.ROUND_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
         this.gameMode.getCurrentRound(),
@@ -145,7 +129,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Game complete
-    this.gameMode.on("gameComplete", (data: any) => {
+    this.gameMode.on(EVENTS.GAME_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
         this.gameMode.getCurrentRound(),

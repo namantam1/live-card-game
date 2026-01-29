@@ -1,9 +1,5 @@
 import type { Scene } from "phaser";
-import {
-  GameModeBase,
-  type PlayerData,
-  type EventCallback,
-} from "./GameModeBase";
+import { GameModeBase, type PlayerData } from "./GameModeBase";
 import GameManager from "../managers/GameManager";
 import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
@@ -18,7 +14,6 @@ export default class SoloGameMode extends GameModeBase {
   private gameManager!: GameManager;
   private players: Player[] = [];
   private trickArea!: TrickArea;
-  private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
   override async initialize(scene: Scene, data: any): Promise<void> {
     this.trickArea = data.trickArea;
@@ -63,7 +58,7 @@ export default class SoloGameMode extends GameModeBase {
   override cleanup(): void {
     // Clean up event listeners
     this.gameManager.removeAllListeners();
-    this.eventListeners.clear();
+    this.removeAllListeners();
   }
 
   override getPlayers(): PlayerData[] {
@@ -109,71 +104,48 @@ export default class SoloGameMode extends GameModeBase {
     this.cleanup();
   }
 
-  // ===== Event System =====
-
-  override on(event: string, callback: EventCallback): void {
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, new Set());
-    }
-    this.eventListeners.get(event)!.add(callback);
-  }
-
-  override off(event: string, callback: EventCallback): void {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event)!.delete(callback);
-    }
-  }
-
-  private emit(event: string, data?: any): void {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event)!.forEach((callback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`SoloGameMode: Error in ${event} listener`, error);
-        }
-      });
-    }
-  }
-
   /**
    * Forward events from GameManager to IGameMode event system
    * This translates GameManager events to the unified IGameMode event API
+   * Uses Phaser's EventEmitter for robust event handling
    */
   private setupEventForwarding(): void {
     // Phase changed
     this.gameManager.on(EVENTS.PHASE_CHANGED, (phase: string) => {
-      this.emit("phaseChanged", phase);
+      this.emit(EVENTS.PHASE_CHANGED, phase);
     });
 
     // Turn changed
     this.gameManager.on(EVENTS.TURN_CHANGED, (playerIndex: number) => {
-      this.emit("turnChanged", { playerIndex, isMyTurn: playerIndex === 0 });
+      this.emit(EVENTS.TURN_CHANGED, {
+        playerIndex,
+        isMyTurn: playerIndex === 0,
+      });
     });
 
     // Card played
     this.gameManager.on(EVENTS.CARD_PLAYED, (data: any) => {
-      this.emit("cardPlayed", data);
+      this.emit(EVENTS.CARD_PLAYED, data);
     });
 
     // Trick complete
     this.gameManager.on(EVENTS.TRICK_COMPLETE, (data: any) => {
-      this.emit("trickComplete", data);
+      this.emit(EVENTS.TRICK_COMPLETE, data);
     });
 
     // Round complete
     this.gameManager.on(EVENTS.ROUND_COMPLETE, (data: any) => {
-      this.emit("roundComplete", data);
+      this.emit(EVENTS.ROUND_COMPLETE, data);
     });
 
     // Game complete
     this.gameManager.on(EVENTS.GAME_COMPLETE, (data: any) => {
-      this.emit("gameComplete", data);
+      this.emit(EVENTS.GAME_COMPLETE, data);
     });
 
     // Bid placed
     this.gameManager.on(EVENTS.BID_PLACED, (data: any) => {
-      this.emit("bidPlaced", data);
+      this.emit(EVENTS.BID_PLACED, data);
     });
   }
 }

@@ -8,6 +8,7 @@ import NetworkManager from "../managers/NetworkManager";
 import Common from "../objects/game/Common";
 import GameModeFactory from "../modes/GameModeFactory";
 import type { GameModeBase } from "../modes/GameModeBase";
+import { EVENTS } from "../utils/constants";
 
 export default class GameScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -186,7 +187,7 @@ export default class GameScene extends Phaser.Scene {
     // Unified event listeners - no mode conditionals!
 
     // Turn changed
-    this.gameMode.on("turnChanged", ({ playerIndex, isMyTurn }: any) => {
+    this.gameMode.on(EVENTS.TURN_CHANGED, ({ playerIndex, isMyTurn }: any) => {
       this.players.forEach((p, i) => {
         if (
           i === playerIndex ||
@@ -200,12 +201,12 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Card played
-    this.gameMode.on("cardPlayed", () => {
+    this.gameMode.on(EVENTS.CARD_PLAYED, () => {
       this.audioManager.playCardSound();
     });
 
     // Trick complete
-    this.gameMode.on("trickComplete", ({ winnerIndex }: any) => {
+    this.gameMode.on(EVENTS.TRICK_COMPLETE, ({ winnerIndex }: any) => {
       const winner = this.players[winnerIndex];
       if (winner && winner.nameLabel) {
         this.tweens.add({
@@ -219,7 +220,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Game complete - play win sound
-    this.gameMode.on("gameComplete", () => {
+    this.gameMode.on(EVENTS.GAME_COMPLETE, () => {
       this.audioManager.playWinSound();
     });
   }

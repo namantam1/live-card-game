@@ -1,14 +1,10 @@
 import type { Scene } from "phaser";
-import {
-  GameModeBase,
-  type PlayerData,
-  type EventCallback,
-} from "./GameModeBase";
+import { GameModeBase, type PlayerData } from "./GameModeBase";
 import NetworkManager from "../managers/NetworkManager";
 import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
 import type { CardData } from "../type";
-import type { Suit } from "../utils/constants";
+import { EVENTS, type Suit } from "../utils/constants";
 
 /**
  * Multiplayer game mode implementation (via Colyseus)
@@ -19,7 +15,6 @@ export default class MultiplayerGameMode extends GameModeBase {
   private scene!: Scene;
   private players: Player[] = [];
   private trickArea!: TrickArea;
-  private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
   override async initialize(scene: Scene, data: any): Promise<void> {
     this.scene = scene;
@@ -95,7 +90,7 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     // Clean up network listeners
     this.networkManager.removeAllListeners();
-    this.eventListeners.clear();
+    this.removeAllListeners();
   }
 
   override getPlayers(): PlayerData[] {
@@ -143,47 +138,18 @@ export default class MultiplayerGameMode extends GameModeBase {
     await this.cleanup();
   }
 
-  // ===== Event System =====
-
-  override on(event: string, callback: EventCallback): void {
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, new Set());
-    }
-    this.eventListeners.get(event)!.add(callback);
-  }
-
-  override off(event: string, callback: EventCallback): void {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event)!.delete(callback);
-    }
-  }
-
-  private emit(event: string, data?: any): void {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event)!.forEach((callback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(
-            `MultiplayerGameMode: Error in ${event} listener`,
-            error,
-          );
-        }
-      });
-    }
-  }
-
   /**
    * Setup network event listeners and forward to IGameMode event system
+   * Uses Phaser's EventEmitter for robust event handling
    */
   private setupNetworkListeners(): void {
     // Phase change
     this.networkManager.on("phaseChange", ({ phase }: any) => {
-      this.emit("phaseChanged", phase);
+      this.emit(EVENTS.PHASE_CHANGED, phase);
 
       if (phase === "roundEnd") {
         const players = this.networkManager.getPlayers();
-        this.emit("roundComplete", {
+        this.emit(EVENTS.ROUND_COMPLETE, {
           players: players.map((p) => ({
             name: p.name,
             emoji: p.emoji,
@@ -199,7 +165,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         const players = this.networkManager.getPlayers();
         const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
         const winner = sortedPlayers[0];
-        this.emit("gameComplete", {
+        this.emit(EVENTS.GAME_COMPLETE, {
           winner: {
             name: winner.name,
             emoji: winner.emoji,
@@ -234,7 +200,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         }
       });
 
-      this.emit("turnChanged", { playerId, isMyTurn });
+      this.emit(EVENTS.TURN_CHANGED, { playerId, isMyTurn });
     });
 
     // Card added to hand
@@ -274,7 +240,7 @@ export default class MultiplayerGameMode extends GameModeBase {
       // Add card to trick area using relative position for visual placement
       this.trickArea.playCard(card, relativePosition, removedCard);
 
-      this.emit("cardPlayed", { playerId, card });
+      this.emit(EVENTS.CARD_PLAYED, { playerId, card });
     });
 
     // Trick cleared
@@ -305,7 +271,7 @@ export default class MultiplayerGameMode extends GameModeBase {
           this.trickArea.collectTrick(winnerIndex, 400 as any);
         });
 
-        this.emit("trickComplete", { winnerIndex });
+        this.emit(EVENTS.TRICK_COMPLETE, { winnerIndex });
       }
     });
 
@@ -316,7 +282,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         // Update the local player's bid and stats display
         player.setBid(bid);
         const playerIndex = this.players.indexOf(player);
-        this.emit("bidPlaced", { playerIndex, bid });
+        this.emit(EVENTS.BID_PLACED, { playerIndex, bid });
       } else {
         console.warn(`Player ${playerId} not found for bid event`);
       }
@@ -412,7 +378,7 @@ export default class MultiplayerGameMode extends GameModeBase {
       if (phase === "bidding" && isMyTurn) {
         // Emit phase changed event to trigger bidding UI
         this.scene.time.delayedCall(500, () => {
-          this.emit("phaseChanged", phase);
+          this.emit(EVENTS.PHASE_CHANGED, phase);
         });
       } else if (phase === "playing" && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards

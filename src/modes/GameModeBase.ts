@@ -1,7 +1,9 @@
+import Phaser from "phaser";
 import type { Scene } from "phaser";
 import type Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
 import type { CardData } from "../type";
+import { type GameEvent } from "../utils/constants";
 
 export interface PlayerData {
   name: string;
@@ -25,11 +27,88 @@ export interface GameModeConfig {
 }
 
 /**
+ * Type-safe event names for GameMode events.
+ * Uses GameEvent from constants for consistency across the codebase.
+ */
+export type GameModeEvent = GameEvent;
+
+/**
  * Abstract base class for game modes.
+ * Extends Phaser's EventEmitter for event handling with type-safe event names.
+ *
+ * @fires phaseChanged - When game phase changes (bidding, playing, roundEnd, gameOver)
+ * @fires turnChanged - When active player changes
+ * @fires cardPlayed - When any player plays a card
+ * @fires trickComplete - When a trick is completed
+ * @fires roundComplete - When a round ends
+ * @fires gameComplete - When the game ends
+ * @fires bidPlaced - When a player places a bid
+ *
+ * @example
+ * // Listen to events with autocomplete
+ * gameMode.on('phaseChanged', (phase) => console.log('Phase:', phase));
+ * gameMode.once('gameComplete', (data) => console.log('Winner:', data.winner));
+ *
+ * // Remove listeners
+ * gameMode.off('turnChanged', callback);
+ * gameMode.removeAllListeners('cardPlayed');
+ * gameMode.removeAllListeners(); // Remove all listeners
+ *
  * Subclasses override methods using 'override' keyword.
  */
-export abstract class GameModeBase {
-  // Lifecycle
+export abstract class GameModeBase extends Phaser.Events.EventEmitter {
+  constructor() {
+    super();
+  }
+
+  // ===== Type-Safe Event Methods =====
+
+  /**
+   * Add a listener for a given event.
+   * @param event - The event name (type-safe)
+   * @param fn - The listener function
+   * @param context - The context to invoke the listener with
+   */
+  override on(event: GameModeEvent, fn: Function, context?: any): this {
+    return super.on(event, fn, context);
+  }
+
+  /**
+   * Add a one-time listener for a given event.
+   * @param event - The event name (type-safe)
+   * @param fn - The listener function
+   * @param context - The context to invoke the listener with
+   */
+  override once(event: GameModeEvent, fn: Function, context?: any): this {
+    return super.once(event, fn, context);
+  }
+
+  /**
+   * Remove a listener for a given event.
+   * @param event - The event name (type-safe)
+   * @param fn - The listener function to remove
+   * @param context - The context of the listener
+   * @param once - Only remove one-time listeners
+   */
+  override off(
+    event: GameModeEvent,
+    fn?: Function,
+    context?: any,
+    once?: boolean,
+  ): this {
+    return super.off(event, fn, context, once);
+  }
+
+  /**
+   * Emit an event.
+   * @param event - The event name (type-safe)
+   * @param args - Arguments to pass to listeners
+   */
+  override emit(event: GameModeEvent, ...args: any[]): boolean {
+    return super.emit(event, ...args);
+  }
+
+  // ===== Lifecycle =====
 
   async initialize(_scene: Scene, _data: any): Promise<void> {
     console.error(`${this.constructor.name}: initialize() not implemented`);
@@ -58,7 +137,9 @@ export abstract class GameModeBase {
   }
 
   getCurrentRound(): number {
-    console.error(`${this.constructor.name}: getCurrentRound() not implemented`);
+    console.error(
+      `${this.constructor.name}: getCurrentRound() not implemented`,
+    );
     throw new Error("getCurrentRound() must be implemented");
   }
 
@@ -80,7 +161,9 @@ export abstract class GameModeBase {
   }
 
   continueToNextRound(): void {
-    console.error(`${this.constructor.name}: continueToNextRound() not implemented`);
+    console.error(
+      `${this.constructor.name}: continueToNextRound() not implemented`,
+    );
     throw new Error("continueToNextRound() must be implemented");
   }
 
@@ -93,15 +176,6 @@ export abstract class GameModeBase {
     console.warn(`${this.constructor.name}: returnToMenu() not overridden`);
   }
 
-  // Event System
-
-  on(_event: string, _callback: EventCallback): void {
-    console.error(`${this.constructor.name}: on() not implemented`);
-    throw new Error("on() must be implemented");
-  }
-
-  off(_event: string, _callback: EventCallback): void {
-    console.error(`${this.constructor.name}: off() not implemented`);
-    throw new Error("off() must be implemented");
-  }
+  // Event System inherited from Phaser.Events.EventEmitter
+  // Available methods: on, off, once, emit, removeAllListeners, etc.
 }
