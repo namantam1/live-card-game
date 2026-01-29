@@ -79,7 +79,7 @@ export default class MultiplayerGameMode extends GameModeBase {
   override async startGame(): Promise<void> {
     // In multiplayer, game is started by server
     // Just sync state
-    this.syncHandFromServer();
+    await this.syncHandFromServer();
 
     // Emit initial connection quality to show network indicator
     // (Done here after all listeners are registered in GameScene)
@@ -387,8 +387,9 @@ export default class MultiplayerGameMode extends GameModeBase {
 
   /**
    * Sync hand state from server
+   * Returns a Promise that resolves when all sync operations are complete
    */
-  private syncHandFromServer(): void {
+  private async syncHandFromServer(): Promise<void> {
     // Get current hand from server and display
     const hand = this.networkManager.getMyHand();
     const localPlayer = this.players.find(
@@ -436,11 +437,10 @@ export default class MultiplayerGameMode extends GameModeBase {
         }
       });
 
+      // Emit phase changed event immediately after state sync completes
+      // This ensures consistent behavior between normal phase changes and reconnection
       if (phase === "bidding" && isMyTurn) {
-        // Emit phase changed event to trigger bidding UI
-        this.scene.time.delayedCall(500, () => {
-          this.emit(EVENTS.PHASE_CHANGED, phase);
-        });
+        this.emit(EVENTS.PHASE_CHANGED, phase);
       } else if (phase === "playing" && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards
         const leadSuit = state.leadSuit || "";

@@ -8,7 +8,7 @@ import AudioManager from "../managers/AudioManager";
 import GameScene from "./GameScene";
 import Common from "../objects/game/Common";
 import type { GameModeBase } from "../modes/GameModeBase";
-import { EVENTS } from "../utils/constants";
+import { EVENTS, UI_TIMING } from "../utils/constants";
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -99,7 +99,8 @@ export default class UIScene extends Phaser.Scene {
     this.gameMode.on(EVENTS.TURN_CHANGED, ({ isMyTurn }: any) => {
       const phase = this.gameMode.getPhase();
       if (phase === "bidding" && isMyTurn) {
-        this.time.delayedCall(300, () => this.biddingUI.show());
+        // Small delay to allow card animations to settle before showing UI
+        this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => this.biddingUI.show());
       }
     });
 
