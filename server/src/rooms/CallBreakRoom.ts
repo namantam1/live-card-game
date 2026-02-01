@@ -1,4 +1,6 @@
-import { Room, Client } from "colyseus";
+import pkg from "colyseus";
+import type { Client } from "colyseus";
+const { Room } = pkg;
 import {
   GameState,
   Player,
@@ -9,7 +11,7 @@ import {
   getValidCards,
   calculateScore,
   getDealtCards,
-} from "./GameState";
+} from "./GameState.js";
 
 const EMOJIS = ["😎", "🤖", "🦊", "🐱"];
 const BOT_NAMES = ["Bot Alice", "Bot Bob", "Bot Charlie"];
@@ -334,12 +336,20 @@ export class CallBreakRoom extends Room<GameState> {
     const validCards = getValidCards(
       player.hand.map((c) => ({
         id: c.id,
-        suit: c.suit,
-        rank: c.rank,
+        suit: c.suit as any,
+        rank: c.rank as any,
         value: c.value,
       })),
-      this.state.leadSuit,
-      Array.from(this.state.currentTrick) as TrickEntry[],
+      this.state.leadSuit as any,
+      Array.from(this.state.currentTrick).map((e, index) => ({
+        playerIndex: index,
+        card: {
+          id: e!.card.id,
+          suit: e!.card.suit as any,
+          rank: e!.card.rank as any,
+          value: e!.card.value,
+        },
+      })),
     );
     if (!validCards.find((c) => c.id === cardId)) return;
 
@@ -598,15 +608,23 @@ export class CallBreakRoom extends Room<GameState> {
 
     const hand = bot.hand.map((c) => ({
       id: c.id,
-      suit: c.suit,
-      rank: c.rank,
+      suit: c.suit as any,
+      rank: c.rank as any,
       value: c.value,
     }));
 
     const validCards = getValidCards(
       hand,
-      this.state.leadSuit,
-      Array.from(this.state.currentTrick) as TrickEntry[],
+      this.state.leadSuit as any,
+      Array.from(this.state.currentTrick).map((e, index) => ({
+        playerIndex: index,
+        card: {
+          id: e!.card.id,
+          suit: e!.card.suit as any,
+          rank: e!.card.rank as any,
+          value: e!.card.value,
+        },
+      })),
     );
     if (validCards.length === 0) return;
 
@@ -631,8 +649,8 @@ export class CallBreakRoom extends Room<GameState> {
       for (const entry of this.state.currentTrick) {
         const card = {
           id: entry.card.id,
-          suit: entry.card.suit,
-          rank: entry.card.rank,
+          suit: entry.card.suit as any,
+          rank: entry.card.rank as any,
           value: entry.card.value,
         };
         if (

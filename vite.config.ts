@@ -11,6 +11,9 @@ export default defineConfig({
   },
   resolve: {
     extensions: [".ts", ".tsx", ".mts", ".js"],
+    alias: {
+      // "@call-break/shared": "shared",
+    },
   },
   server: {
     port: 3000,

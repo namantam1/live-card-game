@@ -1,9 +1,11 @@
-import { Server } from 'colyseus';
-import { WebSocketTransport } from '@colyseus/ws-transport';
+import colyseuspkg from 'colyseus';
+import wspkg from '@colyseus/ws-transport';
+const { Server } = colyseuspkg;
+const { WebSocketTransport } = wspkg;
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { CallBreakRoom } from './rooms/CallBreakRoom';
+import { CallBreakRoom } from './rooms/CallBreakRoom.js';
 
 const app = express();
 app.use(cors());
