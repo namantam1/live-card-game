@@ -1,12 +1,10 @@
-import pkg from "colyseus";
-import type { Client } from "colyseus";
-const { Room } = pkg;
+import { Room, type Client } from "@colyseus/core";
 import {
   GameState,
   Player,
   Card,
   TrickEntry,
-  CardData,
+  type CardData,
   createDeck,
   getValidCards,
   calculateScore,

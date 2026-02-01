@@ -2,8 +2,8 @@
  * Card comparison and value functions
  */
 
-import type { CardData, Suit } from "../types/index.js";
-import { RANK_VALUES, TRUMP_SUIT } from "../constants/game.js";
+import type { CardData, Suit } from "../types/";
+import { RANK_VALUES, TRUMP_SUIT } from "../constants/game";
 
 /**
  * Get the numeric value of a card

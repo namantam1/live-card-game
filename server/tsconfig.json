@@ -15,7 +15,8 @@
     "declarationMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "verbatimModuleSyntax": true,
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

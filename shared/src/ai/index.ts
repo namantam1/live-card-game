@@ -1,1 +1,1 @@
-export { default as BotAI } from "./BotAI.js";
+export { default as BotAI } from "./BotAI";

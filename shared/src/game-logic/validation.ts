@@ -2,9 +2,9 @@
  * Card validation logic - determines which cards are legal to play
  */
 
-import type { CardData, Suit, TrickEntry } from "../types/index.js";
-import { TRUMP_SUIT } from "../constants/game.js";
-import { compareCards } from "./comparison.js";
+import type { CardData, Suit, TrickEntry } from "../types/";
+import { TRUMP_SUIT } from "../constants/game";
+import { compareCards } from "./comparison";
 
 /**
  * Get valid cards a player can play based on game rules

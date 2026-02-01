@@ -2,7 +2,7 @@
  * Game state and gameplay type definitions
  */
 
-import type { CardData } from "./card.js";
+import type { CardData } from "./card";
 
 /**
  * Represents a card played in a trick

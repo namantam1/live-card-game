@@ -2,7 +2,7 @@
  * Core game constants for Call Break
  */
 
-import type { Suit, Rank } from "../types/card.js";
+import type { Suit, Rank } from "../types/card";
 
 /**
  * All valid card suits in the game

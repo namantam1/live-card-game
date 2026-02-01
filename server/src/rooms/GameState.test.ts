@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as GameStateModule from "./GameState.js";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   getDealtCards,
   createDeck,

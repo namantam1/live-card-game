@@ -2,8 +2,8 @@
  * Trick winner determination logic
  */
 
-import type { TrickEntry, Suit } from "../types/index.js";
-import { compareCards } from "./comparison.js";
+import type { TrickEntry, Suit } from "../types/";
+import { compareCards } from "./comparison";
 
 /**
  * Find the winner of a completed trick

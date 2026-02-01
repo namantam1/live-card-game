@@ -1,13 +1,13 @@
-import { TRUMP_SUIT, MAX_BID } from "../constants/index.js";
-import { getCardValue } from "../game-logic/comparison.js";
-import { getValidCards } from "../game-logic/validation.js";
+import { TRUMP_SUIT, MAX_BID } from "../constants/";
+import { getCardValue } from "../game-logic/comparison";
+import { getValidCards } from "../game-logic/validation";
 import type {
   CardData,
   TrickEntry,
   DifficultyLevel,
   BotContext,
   Suit,
-} from "../types/index.js";
+} from "../types/";
 
 export default class BotAI {
   private difficulty: DifficultyLevel;

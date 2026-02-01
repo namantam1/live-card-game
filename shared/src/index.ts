@@ -6,17 +6,17 @@
  */
 
 // Export all types
-export * from "./types/index.js";
+export * from "./types";
 
 // Export all constants
-export * from "./constants/index.js";
+export * from "./constants";
 
 // Export game logic functions
-export * from "./game-logic/cards.js";
-export * from "./game-logic/comparison.js";
-export * from "./game-logic/validation.js";
-export * from "./game-logic/tricks.js";
-export * from "./game-logic/scoring.js";
+export * from "./game-logic/cards";
+export * from "./game-logic/comparison";
+export * from "./game-logic/validation";
+export * from "./game-logic/tricks";
+export * from "./game-logic/scoring";
 
 // Export AI
-export * from "./ai/index.js";
+export * from "./ai/";
