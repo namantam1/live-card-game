@@ -4,9 +4,9 @@
 This document tracks the progress of restructuring the Call Break Phaser project to reduce redundancy and improve consistency between frontend and backend.
 
 **Start Date:** 2026-01-30
-**Current Phase:** Phases 1-4 COMPLETED
-**Last Updated:** 2026-01-30 21:00
-**Status:** Core restructuring complete. ~740 lines of duplication eliminated.
+**Current Phase:** All Phases COMPLETED (1-5)
+**Last Updated:** 2026-02-01 21:30
+**Status:** ✅ Monorepo migration complete. ~740 lines of duplication eliminated. npm workspaces configured.
 
 ---
 
@@ -16,7 +16,7 @@ This document tracks the progress of restructuring the Call Break Phaser project
 - [x] Phase 2: Unify Bot AI ✅ COMPLETED
 - [x] Phase 3: Restructure Frontend ✅ COMPLETED
 - [x] Phase 4: Restructure Backend ✅ COMPLETED
-- [ ] Phase 5: Monorepo Structure (Optional)
+- [x] Phase 5: Monorepo Structure ✅ COMPLETED
 
 ---
 
@@ -292,9 +292,9 @@ shared/
 
 ---
 
-## Phase 5: Monorepo Structure (Optional)
+## Phase 5: Monorepo Structure
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ COMPLETED (2026-02-01)
 
 ### Objectives
 - Unified workspace management
@@ -304,36 +304,117 @@ shared/
 ### Tasks
 
 #### 5.1 Setup Monorepo
-- [ ] Initialize workspace
-- [ ] Configure package manager
-- [ ] Setup shared dependencies
+- [x] Initialize npm workspaces
+- [x] Configure package manager (npm)
+- [x] Setup shared dependencies
 
 #### 5.2 Migrate Packages
-- [ ] Move shared to packages/shared
-- [ ] Move client to packages/client
-- [ ] Move server to packages/server
+- [x] Move shared to packages/shared
+- [x] Move client to packages/client
+- [x] Move server to packages/server
 
 #### 5.3 Configure Build
-- [ ] Setup build orchestration
-- [ ] Configure watch mode
-- [ ] Setup development scripts
+- [x] Setup build orchestration
+- [x] Configure watch mode
+- [x] Setup development scripts
 
 ### New Structure
 ```
 call-break-phaser/
 ├── packages/
-│   ├── shared/
-│   ├── client/
-│   └── server/
-├── package.json
-└── tsconfig.base.json
+│   ├── shared/        (@call-break/shared)
+│   ├── client/        (@call-break/client)
+│   └── server/        (@call-break/server)
+├── node_modules/
+│   └── @call-break/   (workspace symlinks)
+├── package.json       (root workspace config)
+└── tsconfig.json      (project references)
 ```
 
+### Files Modified
+- `package.json` - Root workspace configuration
+- `packages/client/package.json` - Updated to `@call-break/client`, workspace dependency
+- `packages/server/package.json` - Updated to `@call-break/server`, workspace dependency
+- `tsconfig.json` - Updated with project references
+
+### Monorepo Manager Choice
+**Selected: npm workspaces**
+
+**Why npm workspaces:**
+- Zero additional dependencies
+- Native npm support (v7+)
+- Perfect for small monorepos (3 packages)
+- Simple linear dependency graph
+- Minimal migration effort
+- No new tools to learn
+
+**Alternatives considered:**
+- pnpm workspaces - Better performance, but requires new tool
+- Turborepo - Overkill for 3 packages
+- Nx - Too heavyweight for this project
+- Lerna - Maintenance mode, superseded by npm/pnpm workspaces
+
+### Available Scripts
+
+**Root-level commands:**
+```bash
+# Development
+npm run dev              # Start client dev server
+npm run dev:server       # Start server in watch mode
+npm run dev:all          # Start both client & server
+
+# Building
+npm run build            # Build all packages
+npm run build:client     # Build client only
+npm run build:server     # Build server only
+npm run build:shared     # Build shared only
+
+# Testing
+npm run test             # Run all tests
+npm run test:client      # Test client only
+npm run test:server      # Test server only
+npm run test:shared      # Test shared only
+
+# Cleanup
+npm run clean            # Remove all node_modules and dist
+npm run clean:build      # Remove all dist directories
+```
+
+**Package-specific commands:**
+```bash
+# Install dependencies in specific package
+npm install <package> --workspace=packages/client
+
+# Run script in specific package
+npm run <script> --workspace=packages/server
+```
+
+### Workspace Features
+
+**Dependency Hoisting:**
+- Common dependencies installed at root
+- Reduces disk space
+- Faster installations
+
+**Symlinks:**
+- `@call-break/shared` linked via symlinks
+- No need to rebuild shared for changes
+- Instant updates across packages
+
+**TypeScript Project References:**
+- Root tsconfig.json references all packages
+- Enables IDE cross-package navigation
+- Better build performance
+
 ### Completion Criteria
-- [ ] Monorepo setup complete
-- [ ] All packages building
-- [ ] Development workflow improved
-- [ ] All features working
+- [x] Monorepo setup complete
+- [x] All packages building
+- [x] Development workflow improved
+- [x] All features working
+- [x] Workspace symlinks verified
+- [x] Client build: ✅ 5.50s
+- [x] Server build: ✅ Working
+- [x] Shared build: ✅ Working
 
 ---
 
@@ -371,14 +452,17 @@ call-break-phaser/
 - Shared Logic: 0%
 - Test Coverage: ~5%
 
-### After Phases 1-4 (Current)
+### After All Phases (Current)
 - Total Lines of Code: ~7,920 (-740 lines eliminated)
 - Code Duplication Client: 0 lines (eliminated ~210 lines in Phase 3)
 - Code Duplication Server: 0 lines (eliminated ~180 lines in Phase 4)
 - Shared Logic: 100% (game rules centralized)
 - Test Coverage: 13 tests in shared package
-- Client Build: ✅ Working (7.66s)
+- Monorepo Manager: npm workspaces
+- Client Build: ✅ Working (5.50s)
 - Server Build: ✅ Working (tested)
+- Shared Build: ✅ Working (tested)
+- Workspace Structure: ✅ packages/client, packages/server, packages/shared
 
 ### Files Cleaned Up
 - ❌ Removed: `src/ai/BotAI.ts` (279 lines - now in shared)
@@ -418,13 +502,14 @@ call-break-phaser/
 
 ## References
 
-### Source Files
-- Client game logic: `src/utils/cards.ts`
-- Server game logic: `server/src/rooms/GameState.ts`
-- Client constants: `src/utils/constants.ts`
-- Server constants: `server/src/rooms/GameState.ts` (lines 55-86)
-- Bot AI: `src/ai/BotAI.ts`
-- Server bot logic: `server/src/rooms/CallBreakRoom.ts` (lines 526-709)
+### Source Files (Monorepo Structure)
+- Client game logic: `packages/client/src/utils/cards.ts`
+- Server game logic: `packages/server/src/rooms/GameState.ts`
+- Shared game logic: `packages/shared/src/game-logic/`
+- Client constants: `packages/client/src/utils/constants.ts`
+- Shared constants: `packages/shared/src/constants/`
+- Bot AI: `packages/shared/src/ai/BotAI.ts`
+- Server bot logic: `packages/server/src/rooms/CallBreakRoom.ts`
 
 ### Key Dependencies
 - Phaser: 3.80.1
@@ -434,5 +519,5 @@ call-break-phaser/
 
 ---
 
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-02-01
 **Updated By:** Claude Code

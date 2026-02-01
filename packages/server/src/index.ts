@@ -5,7 +5,7 @@ const { WebSocketTransport } = wspkg;
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import { createServer } from "http";
-import { CallBreakRoom } from "./rooms/CallBreakRoom";
+import { CallBreakRoom } from "./rooms/CallBreakRoom.js";
 
 const app = express();
 app.use(cors());

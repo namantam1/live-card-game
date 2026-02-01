@@ -1,5 +1,5 @@
 {
-  "name": "call-break-server",
+  "name": "@call-break/server",
   "version": "1.0.0",
   "description": "Colyseus multiplayer server for Call Break",
   "type": "module",
@@ -13,7 +13,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@call-break/shared": "file:../shared",
+    "@call-break/shared": "*",
     "@colyseus/core": "^0.15.0",
     "@colyseus/schema": "^2.0.0",
     "@colyseus/ws-transport": "^0.15.0",

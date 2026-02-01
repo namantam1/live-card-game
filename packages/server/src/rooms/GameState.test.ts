@@ -5,7 +5,7 @@ import {
   sortHand,
   TRUMP_SUIT,
   type CardData,
-} from "./GameState";
+} from "./GameState.js";
 
 describe("getDealtCards", () => {
   let deck: CardData[];

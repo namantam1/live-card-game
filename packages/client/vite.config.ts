@@ -1,6 +1,7 @@
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import path from "path";
 
 export default defineConfig({
   base: "./",
@@ -12,7 +13,7 @@ export default defineConfig({
   resolve: {
     extensions: [".ts", ".tsx", ".mts", ".js"],
     alias: {
-      // "@call-break/shared": "shared",
+      "@call-break/shared": path.resolve(__dirname, "../shared/src/index.ts"),
     },
   },
   server: {

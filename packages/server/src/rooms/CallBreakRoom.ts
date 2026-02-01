@@ -9,7 +9,7 @@ import {
   getValidCards,
   calculateScore,
   getDealtCards,
-} from "./GameState";
+} from "./GameState.js";
 
 const EMOJIS = ["😎", "🤖", "🦊", "🐱"];
 const BOT_NAMES = ["Bot Alice", "Bot Bob", "Bot Charlie"];
