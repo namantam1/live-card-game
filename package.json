@@ -24,6 +24,7 @@
     "clean:build": "rm -rf packages/*/dist"
   },
   "devDependencies": {
+    "esbuild": "^0.27.2",
     "typescript": "^5.9.3"
   },
   "engines": {
