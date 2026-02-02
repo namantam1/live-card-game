@@ -39,6 +39,7 @@ export function initSentry() {
         maskAllText: false,
         blockAllMedia: false,
       }),
+      Sentry.replayCanvasIntegration(),
     ],
 
     // Release tracking
