@@ -81,6 +81,9 @@ export default class BiddingUI {
    * Shows the bidding UI with animation
    */
   show(): void {
+    // Cancel any ongoing tweens to prevent race conditions
+    this.scene.tweens.killTweensOf(this.container);
+
     this.container.setVisible(true);
     this.container.alpha = 0;
     this.container.y = this.scene.cameras.main.height * 0.4;
@@ -98,6 +101,9 @@ export default class BiddingUI {
    * Hides the bidding UI with animation
    */
   hide(): void {
+    // Cancel any ongoing tweens to prevent race conditions
+    this.scene.tweens.killTweensOf(this.container);
+
     this.scene.tweens.add({
       targets: this.container,
       alpha: 0,
