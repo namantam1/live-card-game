@@ -16,6 +16,7 @@
     "build:client": "npm run build --workspace=packages/client",
     "build:server": "npm run build:shared && npm run build --workspace=packages/server",
     "build:shared": "npm run build --workspace=packages/shared",
+    "start:server": "npm run start --workspace=packages/server",
     "test": "npm run test --workspaces --if-present",
     "test:client": "npm run test --workspace=packages/client",
     "test:server": "npm run test --workspace=packages/server",
