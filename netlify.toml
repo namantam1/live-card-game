@@ -1,5 +1,5 @@
 [build]
-base = "packages/client"
+base = "."
 command = "npm run build:client"
 publish = "packages/client/dist"
 
