@@ -1,29 +1,35 @@
 {
-  "name": "call-break-phaser",
+  "name": "call-break-monorepo",
   "version": "1.0.0",
-  "description": "Call Break card game built with Phaser 3",
+  "private": true,
+  "description": "Call Break card game monorepo - client, server, and shared packages",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui"
-  },
-  "dependencies": {
-    "@sentry/browser": "^10.36.0",
-    "@sentry/vite-plugin": "^4.7.0",
-    "colyseus.js": "^0.15.0",
-    "phaser": "^3.80.1",
-    "phaser3-rex-plugins": "^1.80.17"
+    "dev": "npm run dev --workspace=packages/client",
+    "dev:shared": "npm run dev --workspace=packages/shared",
+    "dev:server": "npm run dev:shared & npm run dev --workspace=packages/server",
+    "dev:all": "npm run dev:shared & npm run dev:server & npm run dev",
+    "build": "npm run build --workspaces --if-present",
+    "build:client": "npm run build --workspace=packages/client",
+    "build:server": "npm run build:shared && npm run build --workspace=packages/server",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "start:server": "npm run start --workspace=packages/server",
+    "test": "npm run test --workspaces --if-present",
+    "test:client": "npm run test --workspace=packages/client",
+    "test:server": "npm run test --workspace=packages/server",
+    "test:shared": "npm run test --workspace=packages/shared",
+    "clean": "rm -rf packages/*/node_modules packages/*/dist node_modules",
+    "clean:build": "rm -rf packages/*/dist"
   },
   "devDependencies": {
-    "@types/node": "^25.0.9",
-    "@vitest/ui": "^4.0.18",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.2",
-    "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.18",
-    "workbox-window": "^7.4.0"
+    "esbuild": "^0.27.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
