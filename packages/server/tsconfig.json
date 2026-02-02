@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "module": "ESNext",
     "lib": ["ES2020"],
     "moduleResolution": "bundler",
@@ -15,6 +15,7 @@
     "declarationMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
     "strictPropertyInitialization": false,
     "verbatimModuleSyntax": true,
   },

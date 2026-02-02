@@ -1,4 +1,4 @@
-import { Room, type Client } from "@colyseus/core";
+import { Room, type Client, CloseCode } from "colyseus";
 import {
   GameState,
   Player,
@@ -30,12 +30,11 @@ interface PlayCardData {
   cardId: string;
 }
 
-export class CallBreakRoom extends Room<GameState> {
+export class CallBreakRoom extends Room {
   maxClients = 4;
+  state = new GameState();
 
   onCreate(options: JoinOptions): void {
-    this.setState(new GameState());
-
     // Generate room code
     this.state.roomCode = this.generateRoomCode();
 
@@ -94,11 +93,14 @@ export class CallBreakRoom extends Room<GameState> {
     client.send("seated", { seatIndex, roomCode: this.state.roomCode });
   }
 
-  async onLeave(client: Client, consented: boolean): Promise<void> {
+  async onLeave(client: Client, code: number): Promise<void> {
+    const consented = code === CloseCode.CONSENTED;
     const player = this.state.players.get(client.sessionId);
     if (player) {
       player.isConnected = false;
-      console.log(`${player.name} disconnected (consented: ${consented})`);
+      console.log(
+        `${player.name} disconnected (code: ${code}, consented: ${consented})`,
+      );
 
       // If player intentionally left (consented), remove them immediately
       if (consented) {
@@ -359,10 +361,15 @@ export class CallBreakRoom extends Room<GameState> {
     // Add to current trick
     const trickEntry = new TrickEntry();
     trickEntry.playerId = playerId;
-    trickEntry.card.id = card.id;
-    trickEntry.card.suit = card.suit;
-    trickEntry.card.rank = card.rank;
-    trickEntry.card.value = card.value;
+
+    // Create a new Card instance for proper schema serialization in Colyseus 0.17.x
+    const cardInstance = new Card();
+    cardInstance.id = card.id;
+    cardInstance.suit = card.suit;
+    cardInstance.rank = card.rank;
+    cardInstance.value = card.value;
+    trickEntry.card = cardInstance;
+
     this.state.currentTrick.push(trickEntry);
 
     // Remove card from hand

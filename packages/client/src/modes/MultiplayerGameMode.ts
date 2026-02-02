@@ -441,6 +441,7 @@ export default class MultiplayerGameMode extends GameModeBase {
       // This ensures consistent behavior between normal phase changes and reconnection
       if (phase === "bidding" && isMyTurn) {
         this.emit(EVENTS.PHASE_CHANGED, phase);
+        this.emit(EVENTS.TURN_CHANGED, { isMyTurn });
       } else if (phase === "playing" && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards
         const leadSuit = state.leadSuit || "";

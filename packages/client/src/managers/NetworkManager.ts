@@ -1,11 +1,10 @@
-import { Client, Room } from "colyseus.js";
+import { Client, Room, getStateCallbacks } from "@colyseus/sdk";
 import type {
   CardData,
   CardSchema,
   ConnectionQuality,
   PlayerData,
   PlayerSchema,
-  RoomAvailability,
   TrickEntrySchema,
 } from "../type";
 import type { Suit } from "../utils/constants";
@@ -28,12 +27,12 @@ export default class NetworkManager {
   private maxReconnectAttempts: number;
   private reconnectAttempts: number;
   private reconnectDelay: number;
-  private reconnectTimer: number | null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null;
 
   // Connection monitoring
   private connectionQuality: ConnectionQuality;
   private lastPingTime: number;
-  private pingInterval: number | null;
+  private pingInterval: ReturnType<typeof setInterval> | null;
   private pingTimeout: number;
 
   // Saved state for reconnection (using new Colyseus reconnectionToken API)
@@ -110,19 +109,11 @@ export default class NetworkManager {
     }
 
     try {
-      // Find rooms with matching code
-      const rooms = await this.client.getAvailableRooms("call_break");
-      const targetRoom = rooms.find(
-        (r: RoomAvailability) => r.metadata?.roomCode === roomCode,
-      );
-
-      if (!targetRoom) {
-        console.error("NetworkManager: Room not found with code:", roomCode);
-        throw new Error("Room not found. Please check the room code.");
-      }
-
-      this.room = await this.client.joinById(targetRoom.roomId, {
+      // Join room by roomCode using filterBy matching
+      // This will only join rooms with matching roomCode (won't create new ones)
+      this.room = await this.client.join("call_break", {
         name: playerName,
+        roomCode: roomCode,
       });
       this.playerId = this.room.sessionId;
       this.setupRoomListeners();
@@ -143,6 +134,9 @@ export default class NetworkManager {
 
     // Start connection monitoring
     this.startConnectionMonitoring();
+
+    // Get state callbacks proxy (Colyseus 0.17.x recommended pattern)
+    const $ = getStateCallbacks(this.room);
 
     // Handle seat assignment
     this.room.onMessage(
@@ -169,8 +163,8 @@ export default class NetworkManager {
       this.emit("playerLeft", data);
     });
 
-    // State change listeners
-    this.room.state.listen("phase", (value: string, previousValue: string) => {
+    // State change listeners using $() proxy
+    $(this.room.state).listen("phase", (value: string, previousValue: string) => {
       console.log(
         `NetworkManager: Phase changed from ${previousValue} to ${value}`,
       );
@@ -191,7 +185,7 @@ export default class NetworkManager {
       this.emit("phaseChange", { phase: value, previousPhase: previousValue });
     });
 
-    this.room.state.listen("currentTurn", (value: string) => {
+    $(this.room.state).listen("currentTurn", (value: string) => {
       console.log(`NetworkManager: Turn changed to ${value}`);
       this.emit("turnChange", {
         playerId: value,
@@ -199,62 +193,62 @@ export default class NetworkManager {
       });
     });
 
-    this.room.state.listen("leadSuit", (value: string) => {
+    $(this.room.state).listen("leadSuit", (value: string) => {
       this.emit("leadSuitChange", value);
     });
 
-    this.room.state.listen("trickWinner", (value: string) => {
+    $(this.room.state).listen("trickWinner", (value: string) => {
       if (value) {
         this.emit("trickWinner", value);
       }
     });
 
-    this.room.state.listen("currentRound", (value: number) => {
+    $(this.room.state).listen("currentRound", (value: number) => {
       this.emit("roundChange", value);
     });
 
-    this.room.state.listen("trickNumber", (value: number) => {
+    $(this.room.state).listen("trickNumber", (value: number) => {
       this.emit("trickNumberChange", value);
     });
 
-    // Player state changes
-    this.room.state.players.onAdd((player: PlayerSchema, sessionId: string) => {
+    // Player state changes using $() proxy
+    $(this.room.state).players.onAdd((player: PlayerSchema, sessionId: string) => {
       console.log(`NetworkManager: Player ${player.name} joined`);
       this.emit("playerJoined", { player, sessionId });
 
-      // Listen to player changes
-      player.listen("bid", (value: number) => {
+      // Listen to player changes using $() proxy for the player instance
+      $(player).listen("bid", (value: number) => {
         this.emit("playerBid", { playerId: sessionId, bid: value });
       });
 
-      player.listen("tricksWon", (value: number) => {
+      $(player).listen("tricksWon", (value: number) => {
         this.emit("playerTricksWon", { playerId: sessionId, tricksWon: value });
       });
 
-      player.listen("score", (value: number) => {
+      $(player).listen("score", (value: number) => {
         this.emit("playerScoreChange", { playerId: sessionId, score: value });
       });
 
-      player.listen("roundScore", (value: number) => {
+      $(player).listen("roundScore", (value: number) => {
         this.emit("playerRoundScore", {
           playerId: sessionId,
           roundScore: value,
         });
       });
 
-      player.listen("isReady", (value: boolean) => {
+      $(player).listen("isReady", (value: boolean) => {
         this.emit("playerReady", { playerId: sessionId, isReady: value });
       });
 
-      player.listen("isConnected", (value: boolean) => {
+      $(player).listen("isConnected", (value: boolean) => {
         this.emit("playerConnection", {
           playerId: sessionId,
           isConnected: value,
         });
       });
 
-      // Hand changes
-      player.hand.onAdd((card: CardSchema, index: number) => {
+      // Hand changes using $() proxy
+      $(player).hand.onAdd((card: CardSchema, index: number) => {
         if (sessionId === this.playerId) {
           // For local player, emit the actual card
           this.emit("cardAdded", { card: this.cardToObject(card), index });
@@ -267,7 +261,7 @@ export default class NetworkManager {
         }
       });
 
-      player.hand.onRemove((card: CardSchema, index: number) => {
+      $(player).hand.onRemove((card: CardSchema, index: number) => {
         if (sessionId === this.playerId) {
           this.emit("cardRemoved", { cardId: card.id, index });
         } else {
@@ -280,15 +274,15 @@ export default class NetworkManager {
       });
     });
 
-    this.room.state.players.onRemove(
+    $(this.room.state).players.onRemove(
       (player: PlayerSchema, sessionId: string) => {
         console.log(`NetworkManager: Player ${player.name} removed`);
         this.emit("playerRemoved", { player, sessionId });
       },
     );
 
-    // Current trick changes
-    this.room.state.currentTrick.onAdd((entry: TrickEntrySchema) => {
+    // Current trick changes using $() proxy
+    $(this.room.state).currentTrick.onAdd((entry: TrickEntrySchema) => {
       console.log(`NetworkManager: Card played by ${entry.playerId}`);
       this.emit("cardPlayed", {
         playerId: entry.playerId,
@@ -296,7 +290,7 @@ export default class NetworkManager {
       });
     });
 
-    this.room.state.currentTrick.onRemove(() => {
+    $(this.room.state).currentTrick.onRemove(() => {
       this.emit("trickCleared");
     });
 
@@ -387,7 +381,7 @@ export default class NetworkManager {
   }
 
   getPlayers(): PlayerData[] {
-    if (!this.room) return [];
+    if (!this.room || !this.room.state || !this.room.state.players) return [];
     const players: PlayerData[] = [];
     this.room.state.players.forEach(
       (player: PlayerSchema, sessionId: string) => {
@@ -439,7 +433,7 @@ export default class NetworkManager {
 
   async leaveRoom(): Promise<void> {
     if (this.room) {
-      await this.room.leave(true); // Pass true to indicate consented leave
+      await this.room.leave(); // Consented leave (default in 0.17.x)
       this.room = null;
       this.roomCode = null;
       this.seatIndex = -1;

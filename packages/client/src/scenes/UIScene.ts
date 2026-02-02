@@ -100,7 +100,9 @@ export default class UIScene extends Phaser.Scene {
       const phase = this.gameMode.getPhase();
       if (phase === "bidding" && isMyTurn) {
         // Small delay to allow card animations to settle before showing UI
-        this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => this.biddingUI.show());
+        this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () =>
+          this.biddingUI.show(),
+        );
       }
     });
 
