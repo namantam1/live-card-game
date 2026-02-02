@@ -28,6 +28,7 @@ export default class BotAI {
   }
 
   private easyBid(hand: CardData[]): number {
+    // Simple: count high cards
     const highCards = hand.filter(
       (c: CardData) => getCardValue(c) >= 11,
     ).length;
@@ -35,6 +36,7 @@ export default class BotAI {
   }
 
   private mediumBid(hand: CardData[]): number {
+    // Medium: consider high cards and trump count
     const highCards = hand.filter(
       (c: CardData) => getCardValue(c) >= 11,
     ).length;
@@ -49,8 +51,10 @@ export default class BotAI {
   }
 
   private hardBid(hand: CardData[]): number {
+    // Hard: more sophisticated analysis
     let expectedTricks = 0;
 
+    // Group by suit
     const suits: Record<Suit, CardData[]> = {
       spades: [],
       hearts: [],
@@ -59,6 +63,7 @@ export default class BotAI {
     };
     hand.forEach((c: CardData) => suits[c.suit].push(c));
 
+    // Analyze each suit
     Object.entries(suits).forEach(([suit, cards]) => {
       cards.sort((a, b) => getCardValue(b) - getCardValue(a));
 
@@ -66,16 +71,21 @@ export default class BotAI {
         const value = getCardValue(card);
 
         if (suit === TRUMP_SUIT) {
+          // High trumps are very likely to win
           if (value >= 12) expectedTricks += 0.9;
           else if (value >= 10) expectedTricks += 0.6;
           else expectedTricks += 0.2;
         } else {
-          if (value === 14) expectedTricks += 0.8;
-          else if (value === 13) expectedTricks += 0.5;
-          else if (value === 12 && index === 0) expectedTricks += 0.3;
+          // Non-trump high cards
+          if (value === 14)
+            expectedTricks += 0.8; // Ace
+          else if (value === 13)
+            expectedTricks += 0.5; // King
+          else if (value === 12 && index === 0) expectedTricks += 0.3; // Queen if highest
         }
       });
 
+      // Void suits can be trumped
       if (cards.length === 0 && suits[TRUMP_SUIT].length > 0) {
         expectedTricks += 0.3;
       }
@@ -113,6 +123,7 @@ export default class BotAI {
     leadSuit: Suit | null,
     currentTrick: TrickEntry[],
   ): CardData {
+    // Easy: play lowest valid card
     return validCards.sort(
       (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
     )[0];
@@ -123,25 +134,32 @@ export default class BotAI {
     leadSuit: Suit | null,
     currentTrick: TrickEntry[],
   ): CardData {
+    // Medium: try to win when possible, otherwise play low
+
     if (currentTrick.length === 0) {
+      // Leading: play medium card
       const sorted = validCards.sort(
         (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
       );
       return sorted[Math.floor(sorted.length / 2)];
     }
 
+    // Find current winning card
     const winningCard = this.findWinningCard(currentTrick, leadSuit);
 
+    // Check if we can beat it
     const canWin = validCards.filter((c: CardData) =>
       this.beats(c, winningCard, leadSuit),
     );
 
     if (canWin.length > 0) {
+      // Play lowest winning card
       return canWin.sort(
         (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
       )[0];
     }
 
+    // Can't win: play lowest card
     return validCards.sort(
       (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
     )[0];
@@ -156,30 +174,36 @@ export default class BotAI {
     const { tricksNeeded = 1, tricksWon = 0 } = context;
 
     if (currentTrick.length === 0) {
+      // Leading
       return this.chooseLead(validCards, tricksNeeded - tricksWon);
     }
 
     const winningCard = this.findWinningCard(currentTrick, leadSuit);
     const isLastPlayer = currentTrick.length === 3;
 
+    // Find cards that can win
     const winningCards = validCards.filter((c: CardData) =>
       this.beats(c, winningCard, leadSuit),
     );
 
     if (winningCards.length > 0) {
       if (isLastPlayer) {
+        // Last player: win with lowest possible
         return winningCards.sort(
           (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
         )[0];
       }
 
+      // Not last: consider if we need the trick
       if (tricksWon < tricksNeeded) {
+        // Play to win
         return winningCards.sort(
           (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
         )[0];
       }
     }
 
+    // Dump low card
     return validCards.sort(
       (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
     )[0];
@@ -190,17 +214,20 @@ export default class BotAI {
     tricksStillNeeded: number,
   ): CardData {
     if (tricksStillNeeded > 0) {
+      // Need tricks: lead with strong cards
       const aces = validCards.filter(
         (c: CardData) => c.rank === "A" && c.suit !== TRUMP_SUIT,
       );
       if (aces.length > 0) return aces[0];
 
+      // Lead with high trumps
       const highTrumps = validCards
         .filter((c: CardData) => c.suit === TRUMP_SUIT && getCardValue(c) >= 12)
         .sort((a: CardData, b: CardData) => getCardValue(b) - getCardValue(a));
       if (highTrumps.length > 0) return highTrumps[0];
     }
 
+    // Lead with medium card
     const nonTrumps = validCards.filter((c: CardData) => c.suit !== TRUMP_SUIT);
     if (nonTrumps.length > 0) {
       const sorted = nonTrumps.sort(
@@ -209,6 +236,7 @@ export default class BotAI {
       return sorted[Math.floor(sorted.length / 2)];
     }
 
+    // Only trumps: lead lowest
     return validCards.sort(
       (a: CardData, b: CardData) => getCardValue(a) - getCardValue(b),
     )[0];
@@ -234,13 +262,16 @@ export default class BotAI {
     card2: CardData,
     leadSuit: Suit | null,
   ): boolean {
+    // Trump beats non-trump
     if (card1.suit === TRUMP_SUIT && card2.suit !== TRUMP_SUIT) return true;
     if (card2.suit === TRUMP_SUIT && card1.suit !== TRUMP_SUIT) return false;
 
+    // Same suit: higher value wins
     if (card1.suit === card2.suit) {
       return getCardValue(card1) > getCardValue(card2);
     }
 
+    // Lead suit beats non-lead non-trump
     if (card1.suit === leadSuit) return true;
     if (card2.suit === leadSuit) return false;
 

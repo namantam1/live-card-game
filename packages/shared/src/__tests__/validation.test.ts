@@ -82,6 +82,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick);
 
+      // Player is void in hearts, has higher spade than J
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("Q", "spades"));
       expect(validCards).not.toContainEqual(createCard("5", "spades"));
@@ -137,6 +138,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick, true);
 
+      // Must waste the lower spade
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("5", "spades"));
     });
@@ -156,6 +158,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick, false);
 
+      // Overtake exception: can play any card
       expect(validCards).toHaveLength(3);
       expect(validCards).toEqual(hand);
     });
@@ -174,6 +177,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick, false);
 
+      // Must play higher spade
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("A", "spades"));
     });
@@ -191,6 +195,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "spades", currentTrick);
 
+      // Void in spades (trump), no spades in hand, can play anything
       expect(validCards).toHaveLength(3);
       expect(validCards).toEqual(hand);
     });
@@ -207,11 +212,12 @@ describe("getValidCards - Card Play Rules", () => {
       const currentTrick: TrickEntry[] = [
         { playerIndex: 0, card: createCard("5", "hearts") },
         { playerIndex: 1, card: createCard("J", "hearts") },
-        { playerIndex: 2, card: createCard("A", "diamonds") },
+        { playerIndex: 2, card: createCard("A", "diamonds") }, // Different suit, doesn't matter
       ];
 
       const validCards = getValidCards(hand, "hearts", currentTrick);
 
+      // Must play higher than J of hearts
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("Q", "hearts"));
     });
@@ -229,6 +235,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick);
 
+      // Void in hearts, must play spade
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("2", "spades"));
     });
@@ -247,6 +254,7 @@ describe("getValidCards - Card Play Rules", () => {
 
       const validCards = getValidCards(hand, "hearts", currentTrick);
 
+      // Must play higher spade than 5
       expect(validCards).toHaveLength(1);
       expect(validCards).toContainEqual(createCard("Q", "spades"));
     });
