@@ -1,6 +1,6 @@
 {
   "name": "@call-break/client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Call Break card game built with Phaser 3",
   "type": "module",
   "scripts": {
