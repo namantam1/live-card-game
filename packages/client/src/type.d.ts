@@ -7,6 +7,24 @@ export type Position = {
 
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
+export type ReactionType =
+  | '👍'
+  | '👎'
+  | '😂'
+  | '😮'
+  | '😍'
+  | '😡'
+  | '🔥'
+  | '💯';
+
+export interface ReactionData {
+  playerId: string;
+  playerName: string;
+  seatIndex: number;
+  type: ReactionType;
+  timestamp: number;
+}
+
 export interface BotContext {
   tricksNeeded?: number;
   tricksWon?: number;

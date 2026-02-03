@@ -10,7 +10,7 @@ import {
   calculateScore,
   getDealtCards,
 } from './GameState.js';
-import { calculateBid } from '@call-break/shared';
+import { calculateBid, type ReactionType } from '@call-break/shared';
 
 const EMOJIS = ['😎', '🤖', '🦊', '🐱'];
 const BOT_NAMES = ['Bot Alice', 'Bot Bob', 'Bot Charlie'];
@@ -29,6 +29,10 @@ interface BidData {
 
 interface PlayCardData {
   cardId: string;
+}
+
+interface ReactionData {
+  type: ReactionType;
 }
 
 export class CallBreakRoom extends Room {
@@ -55,6 +59,9 @@ export class CallBreakRoom extends Room {
     this.onMessage('nextRound', (client) => this.handleNextRound(client));
     // TODO: This restart doesn;t make any sense in multiplayer, Do cleanup
     this.onMessage('restart', (client) => this.handleRestart(client));
+    this.onMessage('reaction', (client, data: ReactionData) =>
+      this.handleReaction(client, data)
+    );
   }
 
   generateRoomCode(): string {
@@ -722,5 +729,30 @@ export class CallBreakRoom extends Room {
     if (card2.suit === leadSuit) return false;
 
     return false;
+  }
+
+  private handleReaction(client: Client, data: ReactionData): void {
+    const player = this.state.players.get(client.sessionId);
+    if (!player) {
+      console.warn('Reaction from unknown player:', client.sessionId);
+      return;
+    }
+
+    // Broadcast reaction to all other players
+    this.broadcast(
+      'playerReaction',
+      {
+        playerId: client.sessionId,
+        playerName: player.name,
+        seatIndex: player.seatIndex,
+        type: data.type,
+        timestamp: Date.now(),
+      },
+      { except: client }
+    );
+
+    console.log(
+      `${player.name} sent reaction: ${data.type} in room ${this.state.roomCode}`
+    );
   }
 }

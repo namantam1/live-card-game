@@ -57,7 +57,11 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    * @param fn - The listener function
    * @param context - The context to invoke the listener with
    */
-  override on(event: GameModeEvent, fn: () => void, context?: any): this {
+  override on(
+    event: GameModeEvent,
+    fn: (data?: any) => void,
+    context?: any
+  ): this {
     return super.on(event, fn, context);
   }
 
@@ -195,6 +199,11 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
 
   returnToMenu(): void | Promise<void> {
     console.warn(`${this.constructor.name}: returnToMenu() not overridden`);
+  }
+
+  sendReaction(reactionType: string): void {
+    console.error(`${this.constructor.name}: sendReaction() not implemented`);
+    throw new Error('sendReaction() must be implemented');
   }
 
   // Event System inherited from Phaser.Events.EventEmitter

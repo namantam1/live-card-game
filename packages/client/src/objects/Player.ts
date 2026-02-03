@@ -12,6 +12,7 @@ import {
 } from '../utils/uiConfig';
 import { Scene } from 'phaser';
 import type { CardData, TrickEntry } from '../type';
+import ReactionAnimation from '../components/ReactionAnimation';
 
 export default class Player {
   scene: Scene;
@@ -260,6 +261,15 @@ export default class Player {
   fullReset() {
     this.reset();
     this.score = 0;
+  }
+
+  showReaction(emoji: string): void {
+    // Get actual x,y coordinates from the position
+    const { width, height } = this.scene.cameras.main;
+    const posConfig = PLAYER_POSITIONS[this.position];
+    const x = width * posConfig.x;
+    const y = height * posConfig.y;
+    ReactionAnimation.show(this.scene, x, y - 50, emoji, this.name);
   }
 
   destroy() {

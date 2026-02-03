@@ -9,6 +9,8 @@ import GameScene from './GameScene';
 import Common from '../objects/game/Common';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS, UI_TIMING } from '../utils/constants';
+import ReactionPanel from '../components/ReactionPanel';
+import Button from '../components/Button';
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -75,6 +77,9 @@ export default class UIScene extends Phaser.Scene {
       (bid) => this.gameMode.onBidSelected(bid),
       this.audioManager
     );
+
+    // Setup reaction UI for multiplayer mode
+    this.setupReactionUI();
 
     // Setup unified event listeners
     this.setupEventListeners();
@@ -146,5 +151,31 @@ export default class UIScene extends Phaser.Scene {
     // Check if any player has an id (multiplayer players have network IDs)
     const players = this.gameMode.getPlayers();
     return players.some((p) => p.id !== undefined);
+  }
+
+  private setupReactionUI(): void {
+    // Only show reactions in multiplayer mode
+    if (!this.isMultiplayer()) {
+      return;
+    }
+
+    // Create reaction panel (bottom center of screen)
+    const reactionPanel = new ReactionPanel(
+      this,
+      (type: string) => this.gameMode.sendReaction(type),
+      {
+        position: {
+          x: this.cameras.main.centerX,
+          y: this.cameras.main.centerY - 160,
+        },
+      }
+    );
+    Button.createReactionbutton(
+      this,
+      this.cameras.main.width - 50,
+      150,
+      '😊',
+      () => reactionPanel.toggle()
+    );
   }
 }

@@ -9,6 +9,8 @@ import Common from '../objects/game/Common';
 import Player from '../objects/Player';
 import TrickArea from '../objects/TrickArea';
 import BootScene from './BootScene';
+import ReactionPanel from '../components/ReactionPanel';
+import Button from '../components/Button';
 
 const CARD: CardData = createDeck()[0];
 
@@ -154,5 +156,27 @@ export default class DebugScene extends Phaser.Scene {
       const otherPlayer = new Player(this, i, `Player ${i + 1}`, '🤖', false);
       otherPlayer.setCards(cards.slice(0, 13), false);
     }
+
+    // Create reaction panel (bottom center of screen)
+    const reactionPanel = new ReactionPanel(this, (type: string) => {}, {
+      position: {
+        x: this.cameras.main.centerX,
+        y: this.cameras.main.centerY - 180,
+      },
+    });
+
+    // Create reaction button to toggle panel (bottom right)
+    Button.createReactionbutton(this, width - 50, 150, '😊', () =>
+      reactionPanel.toggle()
+    );
+    // const reactionButton = this.add
+    //   .text(this.cameras.main.width - 100, 120, '😊', {
+    //     fontSize: '80px',
+    //     padding: { left: 10, right: 10, top: 10, bottom: 10 },
+    //   })
+    //   .setInteractive({ useHandCursor: true })
+    //   .on('pointerdown', () => reactionPanel?.toggle())
+    //   .on('pointerover', () => reactionButton?.setScale(1.1))
+    //   .on('pointerout', () => reactionButton?.setScale(1));
   }
 }

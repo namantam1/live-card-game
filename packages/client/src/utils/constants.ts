@@ -106,5 +106,5 @@ export type GameEvent = (typeof EVENTS)[keyof typeof EVENTS];
 // Server configuration
 export const SERVER = {
   // Use environment variable in production, fallback to localhost for development
-  URL: (import.meta as any).env.VITE_SERVER_URL || 'ws://localhost:2567',
+  URL: import.meta.env.VITE_SERVER_URL || 'ws://localhost:2567',
 } as const;

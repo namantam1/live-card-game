@@ -41,3 +41,32 @@ export interface BotContext {
   /** Number of tricks the bot has won */
   tricksWon?: number;
 }
+
+/**
+ * Available reaction emojis for player interactions
+ */
+export type ReactionType =
+  | '👍'
+  | '👎'
+  | '😂'
+  | '😮'
+  | '😍'
+  | '😡'
+  | '🔥'
+  | '💯';
+
+/**
+ * Reaction event data broadcast to players
+ */
+export interface ReactionData {
+  /** ID of the player who sent the reaction */
+  playerId: string;
+  /** Name of the player who sent the reaction */
+  playerName: string;
+  /** Seat index of the player */
+  seatIndex: number;
+  /** The reaction emoji type */
+  type: ReactionType;
+  /** Timestamp when reaction was sent */
+  timestamp: number;
+}

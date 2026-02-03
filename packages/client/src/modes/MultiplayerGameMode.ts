@@ -3,7 +3,7 @@ import { GameModeBase, type PlayerData } from './GameModeBase';
 import NetworkManager from '../managers/NetworkManager';
 import Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
-import type { CardData } from '../type';
+import type { CardData, ReactionData } from '../type';
 import { EVENTS, type Suit } from '../utils/constants';
 import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
 
@@ -157,6 +157,19 @@ export default class MultiplayerGameMode extends GameModeBase {
   override async returnToMenu(): Promise<void> {
     // Cleanup will handle leaving the room
     await this.cleanup();
+  }
+
+  override sendReaction(reactionType: string): void {
+    // Send to server (will broadcast to others)
+    this.networkManager.sendReaction(reactionType);
+
+    // Show reaction locally for immediate feedback
+    const localPlayer = this.players.find(
+      (p) => p.networkId === this.networkManager.playerId
+    );
+    if (localPlayer) {
+      localPlayer.showReaction(reactionType);
+    }
   }
 
   /**
@@ -390,6 +403,14 @@ export default class MultiplayerGameMode extends GameModeBase {
         }
       }
     );
+
+    // Player reactions
+    this.networkManager.on('playerReaction', (data: ReactionData) => {
+      const player = this.players.find((p) => p.networkId === data.playerId);
+      if (player) {
+        player.showReaction(data.type);
+      }
+    });
   }
 
   /**

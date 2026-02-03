@@ -5,6 +5,7 @@ import type {
   ConnectionQuality,
   PlayerData,
   PlayerSchema,
+  ReactionData,
   TrickEntrySchema,
 } from '../type';
 import type { Suit } from '../utils/constants';
@@ -161,6 +162,14 @@ export default class NetworkManager {
     this.room.onMessage('playerLeft', (data: { name: string }) => {
       console.log(`NetworkManager: ${data.name} left`);
       this.emit('playerLeft', data);
+    });
+
+    // Handle player reactions
+    this.room.onMessage('playerReaction', (data: ReactionData) => {
+      console.log(
+        `NetworkManager: Reaction from ${data.playerName}: ${data.type}`
+      );
+      this.emit('playerReaction', data);
     });
 
     // State change listeners using $() proxy
@@ -440,6 +449,15 @@ export default class NetworkManager {
 
   getRoomCode(): string | null {
     return this.roomCode;
+  }
+
+  sendReaction(reactionType: string): void {
+    if (!this.room) {
+      console.warn('NetworkManager: Cannot send reaction - not in a room');
+      return;
+    }
+    this.room.send('reaction', { type: reactionType });
+    console.log(`NetworkManager: Sent reaction ${reactionType}`);
   }
 
   async leaveRoom(): Promise<void> {

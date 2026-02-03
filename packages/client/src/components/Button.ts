@@ -274,4 +274,39 @@ export default class Button {
 
     return container;
   }
+
+  static createReactionbutton(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    reactionType: string,
+    onClick: () => void
+  ) {
+    const container = scene.add.container(x, y);
+
+    // Emoji text
+    const emoji = scene.add
+      .text(0, 0, reactionType, {
+        fontSize: '75px',
+        align: 'center',
+        padding: { top: 10 },
+      })
+      .setOrigin(0.5);
+    container.add(emoji);
+
+    // Make interactive
+    container.setSize(75, 75);
+    container.setInteractive({ useHandCursor: true });
+
+    // Event handlers
+    container.on('pointerdown', onClick);
+    container.on('pointerover', () => {
+      container.setScale(1.1);
+    });
+    container.on('pointerout', () => {
+      container.setScale(1);
+    });
+
+    return container;
+  }
 }
