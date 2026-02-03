@@ -29,6 +29,7 @@ export default class Player {
   absoluteSeatIndex: number | null = null;
   nameLabel!: Phaser.GameObjects.Text;
   statsLabel!: Phaser.GameObjects.Text;
+  labelBackground!: Phaser.GameObjects.Graphics;
   turnIndicator!: Phaser.GameObjects.Graphics;
 
   constructor(
@@ -91,6 +92,10 @@ export default class Player {
         break;
     }
 
+    // Create background graphics
+    this.labelBackground = this.scene.add.graphics();
+    this.labelBackground.setDepth(99);
+
     // Player name with emoji using responsive font size
     this.nameLabel = this.scene.add
       .text(labelX, labelY, `${this.emoji} ${this.name}`, {
@@ -98,11 +103,11 @@ export default class Player {
         fontSize: getFontSize("playerName", width, height),
         fontStyle: "bold",
         color: "#ffffff",
-        backgroundColor: "rgba(30, 41, 59, 0.8)",
-        padding: { x: 8, y: 4 },
+        stroke: "#000000",
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
-      .setDepth(100); // Set high depth to appear above cards
+      .setDepth(100);
 
     // Bid/tricks indicator (shown during gameplay) with responsive font size
     // For top and bottom players, show stats to the right of name
@@ -111,21 +116,24 @@ export default class Player {
 
     if (this.position === "bottom" || this.position === "top") {
       // Position to the right of the name label
-      statsX = labelX + this.nameLabel.width / 2 + 10; // 10px gap from name
+      statsX = labelX + this.nameLabel.width / 2 + 15;
       statsY = labelY;
-      statsOrigin = { x: 0, y: 0.5 }; // Left-aligned vertically centered
+      statsOrigin = { x: 0, y: 0.5 };
     } else {
       // Position below the name label (left/right players)
       statsX = labelX;
-      statsY = labelY + 30;
-      statsOrigin = { x: 0.5, y: 0.5 }; // Center-aligned
+      statsY = labelY + 25;
+      statsOrigin = { x: 0.5, y: 0.5 };
     }
 
     this.statsLabel = this.scene.add
       .text(statsX, statsY, "", {
         fontFamily: "Arial, sans-serif",
         fontSize: getFontSize("playerStats", width, height),
-        color: "#94a3b8",
+        fontStyle: "bold",
+        color: "#fbbf24",
+        stroke: "#000000",
+        strokeThickness: 2.5,
       })
       .setOrigin(statsOrigin.x, statsOrigin.y)
       .setDepth(100);
@@ -134,6 +142,34 @@ export default class Player {
     this.turnIndicator = this.scene.add.graphics();
     this.turnIndicator.setVisible(false);
     this.turnIndicator.setDepth(99); // Slightly below labels but above cards
+  }
+
+  private updateLabelBackground() {
+    this.labelBackground.clear();
+
+    const nameBounds = this.nameLabel.getBounds();
+    const statsBounds = this.statsLabel.getBounds();
+
+    let bgX, bgY, bgWidth, bgHeight;
+    const padding = 8;
+    const radius = 8;
+
+    const leftMost = Math.min(nameBounds.left, statsBounds.left);
+    const rightMost = Math.max(nameBounds.right, statsBounds.right);
+    const topMost = Math.min(nameBounds.top, statsBounds.top);
+    const bottomMost = Math.max(nameBounds.bottom, statsBounds.bottom);
+
+    bgX = leftMost - padding;
+    bgY = topMost - padding;
+    bgWidth = rightMost - leftMost + padding * 2;
+    bgHeight = bottomMost - topMost + padding * 2;
+
+    // Draw rounded rectangle with border
+    this.labelBackground.fillStyle(0x1e293b, 0.95);
+    this.labelBackground.fillRoundedRect(bgX, bgY, bgWidth, bgHeight, radius);
+
+    this.labelBackground.lineStyle(2, 0x475569, 1);
+    this.labelBackground.strokeRoundedRect(bgX, bgY, bgWidth, bgHeight, radius);
   }
 
   setCards(cardDataArray: CardData[], animate = true) {
@@ -169,8 +205,10 @@ export default class Player {
   updateStats() {
     if (this.bid !== null) {
       this.statsLabel.setText(`${this.tricksWon}/${this.bid}`);
+      this.updateLabelBackground();
     } else {
       this.statsLabel.setText("");
+      this.updateLabelBackground();
     }
   }
 
@@ -228,6 +266,7 @@ export default class Player {
     this.hand.clearCards();
     this.nameLabel.destroy();
     this.statsLabel.destroy();
+    this.labelBackground.destroy();
     this.turnIndicator.destroy();
   }
 }
