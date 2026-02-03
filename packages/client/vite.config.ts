@@ -2,6 +2,7 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import pkg from './package.json';
 
 export default defineConfig({
   base: './',
@@ -19,6 +20,9 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+  },
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
   },
   plugins: [
     VitePWA({

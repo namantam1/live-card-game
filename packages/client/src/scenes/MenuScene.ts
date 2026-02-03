@@ -43,14 +43,17 @@ export default class MenuScene extends Phaser.Scene {
       0x8b5cf6
     );
 
-    // Credit text at bottom right
-    this.createCreditText(width, height);
+    // Footer with credit and version
+    this.createFooter(width, height);
   }
 
-  createCreditText(width: number, height: number) {
+  createFooter(width: number, height: number) {
     const padding = 20;
+    const version = import.meta.env.VITE_APP_VERSION || '1.0.0';
+
+    // Credit text at bottom right
     const creditText = this.add
-      .text(width - padding, height - padding, 'Crafted by “Naman” with ❤️', {
+      .text(width - padding, height - padding, 'Crafted by "Naman" with ❤️', {
         fontFamily: 'Arial, sans-serif',
         fontSize: getFontSize('credit', width, height),
         color: '#b4b8da',
@@ -62,6 +65,16 @@ export default class MenuScene extends Phaser.Scene {
     creditText.on('pointerdown', () => {
       window.open('https://github.com/namantam1', '_blank');
     });
+
+    // Version text at bottom left (subtle)
+    this.add
+      .text(padding, height - padding, `v${version}`, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: getFontSize('credit', width, height),
+        color: '#475569',
+      })
+      .setOrigin(0, 1)
+      .setAlpha(0.6);
   }
 
   moveToScreen(screenKey: string) {
