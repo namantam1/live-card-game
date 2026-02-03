@@ -17,6 +17,7 @@ export * from "./game-logic/comparison";
 export * from "./game-logic/validation";
 export * from "./game-logic/tricks";
 export * from "./game-logic/scoring";
+export * from "./game-logic/bidding";
 
 // Export AI
 export * from "./ai/";

@@ -7,7 +7,6 @@ import {
   NUM_PLAYERS,
   ANIMATION,
   TRUMP_SUIT,
-  MAX_BID,
   type Suit,
 } from "../utils/constants";
 import {
@@ -21,6 +20,7 @@ import {
 import Player from "../objects/Player";
 import TrickArea from "../objects/TrickArea";
 import type { CardData, TrickEntry } from "../type";
+import { calculateBid } from "@call-break/shared";
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   scene: Scene;
@@ -163,12 +163,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
   calculateBotBid(player: Player): number {
     const hand = player.getCardData();
-    const highCards = hand.filter((c) => c.value >= 11).length;
-    const spades = hand.filter((c) => c.suit === TRUMP_SUIT).length;
-    return Math.max(
-      1,
-      Math.min(MAX_BID, Math.floor((highCards + spades) / 2) + 1),
-    );
+    return calculateBid(hand, TRUMP_SUIT);
   }
 
   updatePlayableCards() {

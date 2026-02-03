@@ -5,6 +5,7 @@ import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
 import type { CardData } from "../type";
 import { EVENTS, type Suit } from "../utils/constants";
+import { calculateBid, TRUMP_SUIT } from "@call-break/shared";
 
 /**
  * Multiplayer game mode implementation (via Colyseus)
@@ -119,6 +120,12 @@ export default class MultiplayerGameMode extends GameModeBase {
     // In multiplayer mode, local player is identified by networkId
     const players = this.getPlayers();
     return players.find((p) => p.isLocal) || null;
+  }
+
+  override getRecommendedBid(): number | undefined {
+    const hand = this.networkManager.getMyHand();
+    if (!hand || hand.length === 0) return undefined;
+    return calculateBid(hand, TRUMP_SUIT);
   }
 
   override getCurrentRound(): number {

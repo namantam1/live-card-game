@@ -158,6 +158,17 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
     return players[playerIndex].isLocal === true;
   }
 
+  /**
+   * Get the recommended bid for the local player's current hand
+   * @returns Recommended bid number (1-8), or undefined if unable to compute
+   */
+  getRecommendedBid(): number | undefined {
+    console.error(
+      `${this.constructor.name}: getRecommendedBid() not implemented`,
+    );
+    throw new Error("getRecommendedBid() must be implemented");
+  }
+
   // Game Actions
 
   onBidSelected(_bid: number): void {

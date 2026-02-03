@@ -8,6 +8,8 @@ export default class BiddingUI {
   private scene: Scene;
   private container: Phaser.GameObjects.Container;
   private bidButtons: Phaser.GameObjects.Container[];
+  private highlightBorders: Phaser.GameObjects.Graphics[] = [];
+  private buttonPositions: number[] = [];
 
   constructor(
     scene: Scene,
@@ -58,6 +60,9 @@ export default class BiddingUI {
     for (let i = 1; i <= MAX_BID; i++) {
       const x = startX + (i - 1) * (config.buttonWidth + config.buttonSpacing);
 
+      // Store button position for later use in highlighting
+      this.buttonPositions.push(x);
+
       const button = Button.create(scene, x, 10, {
         width: config.buttonWidth,
         height: config.buttonHeight,
@@ -74,15 +79,29 @@ export default class BiddingUI {
 
       this.container.add(button);
       this.bidButtons.push(button);
+
+      // Create a highlight border for each button (initially invisible)
+      const highlightBorder = scene.add.graphics();
+      highlightBorder.setVisible(false);
+      highlightBorder.setDepth(1); // Above the button
+      this.container.add(highlightBorder);
+      this.highlightBorders.push(highlightBorder);
     }
   }
 
   /**
-   * Shows the bidding UI with animation
+   * Shows the bidding UI with animation and optionally highlights a recommended bid
+   * @param recommendedBid - Optional bid number (1-8) to highlight
    */
-  show(): void {
+  show(recommendedBid?: number): void {
     // Cancel any ongoing tweens to prevent race conditions
     this.scene.tweens.killTweensOf(this.container);
+
+    // Clear any previous highlights
+    this.clearHighlights();
+
+    // If recommendedBid provided, highlight it
+    this.highlightBid(recommendedBid);
 
     this.container.setVisible(true);
     this.container.alpha = 0;
@@ -98,11 +117,64 @@ export default class BiddingUI {
   }
 
   /**
+   * Clears all highlight borders
+   */
+  private clearHighlights(): void {
+    this.highlightBorders.forEach((border) => {
+      border.clear();
+      border.setVisible(false);
+    });
+  }
+
+  /**
+   * Highlights a specific bid button
+   * @param bidNumber - Bid number (1-8) to highlight
+   */
+  private highlightBid(bidNumber: number = 0): void {
+    const buttonIndex = bidNumber - 1; // Convert bid (1-8) to index (0-7)
+
+    if (buttonIndex >= 0 && buttonIndex < this.highlightBorders.length) {
+      const { width, height } = this.scene.cameras.main;
+      const config = getResponsiveConfig(BIDDING_CONFIG, width, height);
+      const x = this.buttonPositions[buttonIndex];
+
+      // Draw animated highlight border
+      const border = this.highlightBorders[buttonIndex];
+      border.clear();
+      border.lineStyle(4, COLORS.SECONDARY, 1); // Green border, 4px thick
+      border.strokeRoundedRect(
+        x - config.buttonWidth / 2 - 4,
+        10 - config.buttonHeight / 2 - 4,
+        config.buttonWidth + 8,
+        config.buttonHeight + 8,
+        config.borderRadius + 2,
+      );
+      border.setVisible(true);
+
+      // Pulse animation for the highlight
+      this.scene.tweens.add({
+        targets: border,
+        alpha: { from: 1, to: 0.3 },
+        duration: 800,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
+  }
+
+  /**
    * Hides the bidding UI with animation
    */
   hide(): void {
     // Cancel any ongoing tweens to prevent race conditions
     this.scene.tweens.killTweensOf(this.container);
+
+    // Stop highlight animations
+    this.highlightBorders.forEach((border) => {
+      this.scene.tweens.killTweensOf(border);
+    });
+    this.clearHighlights();
 
     this.scene.tweens.add({
       targets: this.container,

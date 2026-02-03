@@ -1,6 +1,7 @@
 import type { Scene } from "phaser";
 import { GameModeBase, type PlayerData } from "./GameModeBase";
 import GameManager from "../managers/GameManager";
+import { calculateBid, TRUMP_SUIT } from "@call-break/shared";
 import Player from "../objects/Player";
 import type TrickArea from "../objects/TrickArea";
 import type { CardData } from "../type";
@@ -78,6 +79,14 @@ export default class SoloGameMode extends GameModeBase {
     // In solo mode, local player is always at index 0
     const players = this.getPlayers();
     return players[0] || null;
+  }
+
+  override getRecommendedBid(): number | undefined {
+    const playerObjects = this.gameManager.getPlayers();
+    const localPlayer = playerObjects[0]; // Player 0 is always local in solo mode
+    const hand = localPlayer?.hand?.getCardData() || [];
+    if (hand.length === 0) return undefined;
+    return calculateBid(hand, TRUMP_SUIT);
   }
 
   override getCurrentRound(): number {

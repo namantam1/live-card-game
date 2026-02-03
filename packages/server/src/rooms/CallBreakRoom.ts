@@ -10,6 +10,7 @@ import {
   calculateScore,
   getDealtCards,
 } from "./GameState.js";
+import { calculateBid } from "@call-break/shared";
 
 const EMOJIS = ["😎", "🤖", "🦊", "🐱"];
 const BOT_NAMES = ["Bot Alice", "Bot Bob", "Bot Charlie"];
@@ -560,27 +561,19 @@ export class CallBreakRoom extends Room {
     const bot = this.state.players.get(botId);
     if (!bot) return;
 
-    // Simple bidding strategy: count high cards and trump cards
-    const hand = Array.from(bot.hand);
-    let bid = 1; // Minimum bid
+    // Use shared bid recommendation logic
+    const hand = Array.from(bot.hand).map((c) => ({
+      id: c.id,
+      suit: c.suit as any,
+      rank: c.rank as any,
+      value: c.value,
+    }));
 
-    // Count strong cards
-    hand.forEach((card) => {
-      if (!card) return;
-      // Aces are likely to win
-      if (card.value === 14) bid++;
-      // Kings have good chances
-      else if (card.value === 13) bid += 0.5;
-      // Queens in trumps are strong
-      else if (card.value === 12 && card.suit === this.state.trumpSuit)
-        bid += 0.5;
-      // Trump cards are valuable
-      else if (card.suit === this.state.trumpSuit && card.value >= 10)
-        bid += 0.3;
-    });
-
-    // Round and clamp bid
-    bid = Math.max(1, Math.min(this.state.maxBid, Math.round(bid)));
+    const bid = calculateBid(
+      hand,
+      this.state.trumpSuit as any,
+      this.state.maxBid,
+    );
 
     // Set bid
     bot.bid = bid;
