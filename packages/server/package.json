@@ -13,7 +13,6 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@call-break/shared": "*",
     "@colyseus/schema": "^4.0.0",
     "@colyseus/tools": "^0.17.0",
     "colyseus": "^0.17.6",
