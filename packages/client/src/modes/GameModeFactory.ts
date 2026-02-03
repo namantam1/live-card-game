@@ -1,13 +1,13 @@
-import type { GameModeBase } from "./GameModeBase";
-import SoloGameMode from "./SoloGameMode";
-import MultiplayerGameMode from "./MultiplayerGameMode";
+import type { GameModeBase } from './GameModeBase';
+import SoloGameMode from './SoloGameMode';
+import MultiplayerGameMode from './MultiplayerGameMode';
 
 /**
  * Game mode type constants
  */
 export const GameModeType = {
-  SOLO: "solo" as const,
-  MULTIPLAYER: "multiplayer" as const,
+  SOLO: 'solo' as const,
+  MULTIPLAYER: 'multiplayer' as const,
 };
 
 export type GameModeTypeValue =

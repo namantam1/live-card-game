@@ -1,1 +1,1 @@
-export { default as BotAI } from "./BotAI";
+export { default as BotAI } from './BotAI';

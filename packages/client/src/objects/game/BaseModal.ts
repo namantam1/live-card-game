@@ -1,8 +1,8 @@
-import { Scene } from "phaser";
-import { COLORS } from "../../utils/constants";
-import { getFontSize } from "../../utils/uiConfig";
-import Button from "../../components/Button";
-import AudioManager from "../../managers/AudioManager";
+import { Scene } from 'phaser';
+import { COLORS } from '../../utils/constants';
+import { getFontSize } from '../../utils/uiConfig';
+import Button from '../../components/Button';
+import AudioManager from '../../managers/AudioManager';
 
 const HEIGHT = 300;
 const WIDTH = 300;
@@ -33,7 +33,7 @@ export default abstract class BaseModal {
     audioManager: AudioManager,
     closeOnOverlayClick: boolean = false,
     modalWidth: number = WIDTH,
-    modalHeight: number = HEIGHT,
+    modalHeight: number = HEIGHT
   ) {
     this.audioManager = audioManager;
     this.scene = scene;
@@ -53,12 +53,12 @@ export default abstract class BaseModal {
     this.overlay.fillRect(-width / 2, -height / 2, width, height);
     this.overlay.setInteractive(
       new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
-      Phaser.Geom.Rectangle.Contains,
+      Phaser.Geom.Rectangle.Contains
     );
 
     // Add overlay click handler if closeOnOverlayClick is enabled
     if (this.closeOnOverlayClick) {
-      this.overlay.on("pointerdown", () => {
+      this.overlay.on('pointerdown', () => {
         this.hide();
       });
     }
@@ -71,7 +71,7 @@ export default abstract class BaseModal {
       -halfHeight,
       modalWidth,
       modalHeight,
-      20,
+      20
     );
     this.bg.lineStyle(2, COLORS.PRIMARY, 0.5);
     this.bg.strokeRoundedRect(
@@ -79,32 +79,32 @@ export default abstract class BaseModal {
       -halfHeight,
       modalWidth,
       modalHeight,
-      20,
+      20
     );
     this.bg.setInteractive(
       new Phaser.Geom.Rectangle(
         -halfWidth,
         -halfHeight,
         modalWidth,
-        modalHeight,
+        modalHeight
       ),
-      Phaser.Geom.Rectangle.Contains,
+      Phaser.Geom.Rectangle.Contains
     );
     this.bg.on(
-      "pointerdown",
+      'pointerdown',
       (pointer: any, localX: number, localY: number, event: any) => {
         // Stop event propagation to prevent clicks from going through
         event.stopPropagation();
-      },
+      }
     );
 
     // Title with responsive font size
     this.titleText = scene.add
       .text(0, -halfHeight + 30, title, {
-        fontFamily: "Arial, sans-serif",
-        fontSize: getFontSize("modalTitle", width, height),
-        fontStyle: "bold",
-        color: "#ffffff",
+        fontFamily: 'Arial, sans-serif',
+        fontSize: getFontSize('modalTitle', width, height),
+        fontStyle: 'bold',
+        color: '#ffffff',
       })
       .setOrigin(0.5);
 
@@ -156,7 +156,7 @@ export default abstract class BaseModal {
       onClick: callback,
       borderRadius: 8,
       bgColor,
-      fontSize: "20px",
+      fontSize: '20px',
       hoverScale: 1.05,
       pressScale: 0.95,
       playSound: true,

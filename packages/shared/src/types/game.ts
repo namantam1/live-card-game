@@ -2,7 +2,7 @@
  * Game state and gameplay type definitions
  */
 
-import type { CardData } from "./card";
+import type { CardData } from './card';
 
 /**
  * Represents a card played in a trick
@@ -18,19 +18,19 @@ export interface TrickEntry {
  * Game phase states
  */
 export type GamePhase =
-  | "idle"
-  | "waiting"
-  | "dealing"
-  | "bidding"
-  | "playing"
-  | "trickEnd"
-  | "roundEnd"
-  | "gameOver";
+  | 'idle'
+  | 'waiting'
+  | 'dealing'
+  | 'bidding'
+  | 'playing'
+  | 'trickEnd'
+  | 'roundEnd'
+  | 'gameOver';
 
 /**
  * Difficulty levels for bot AI
  */
-export type DifficultyLevel = "easy" | "medium" | "hard";
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 /**
  * Context information for bot AI decision making

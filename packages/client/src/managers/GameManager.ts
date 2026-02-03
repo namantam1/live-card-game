@@ -1,4 +1,4 @@
-import Phaser, { Scene } from "phaser";
+import Phaser, { Scene } from 'phaser';
 import {
   PHASE,
   EVENTS,
@@ -8,7 +8,7 @@ import {
   ANIMATION,
   TRUMP_SUIT,
   type Suit,
-} from "../utils/constants";
+} from '../utils/constants';
 import {
   createDeck,
   shuffleDeck,
@@ -16,11 +16,11 @@ import {
   findTrickWinner,
   getValidCards,
   calculateScore,
-} from "../utils/cards";
-import Player from "../objects/Player";
-import TrickArea from "../objects/TrickArea";
-import type { CardData, TrickEntry } from "../type";
-import { calculateBid } from "@call-break/shared";
+} from '../utils/cards';
+import Player from '../objects/Player';
+import TrickArea from '../objects/TrickArea';
+import type { CardData, TrickEntry } from '../type';
+import { calculateBid } from '@call-break/shared';
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   scene: Scene;
@@ -52,10 +52,10 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Player info
     this.playerInfo = [
-      { name: "You", emoji: "\uD83D\uDE0E", isHuman: true },
-      { name: "Ace", emoji: "\uD83E\uDD16", isHuman: false },
-      { name: "Max", emoji: "\uD83E\uDD8A", isHuman: false },
-      { name: "Zara", emoji: "\uD83D\uDC31", isHuman: false },
+      { name: 'You', emoji: '\uD83D\uDE0E', isHuman: true },
+      { name: 'Ace', emoji: '\uD83E\uDD16', isHuman: false },
+      { name: 'Max', emoji: '\uD83E\uDD8A', isHuman: false },
+      { name: 'Zara', emoji: '\uD83D\uDC31', isHuman: false },
     ];
   }
 
@@ -108,7 +108,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     const dealPromises = this.players.map((player, index) => {
       const cards = deck.slice(
         index * CARDS_PER_PLAYER,
-        (index + 1) * CARDS_PER_PLAYER,
+        (index + 1) * CARDS_PER_PLAYER
       );
       return player.setCards(sortHand(cards), true);
     });
@@ -150,7 +150,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
   waitForHumanBid() {
     return new Promise((resolve) => {
-      this.once("humanBidPlaced", resolve);
+      this.once('humanBidPlaced', resolve);
     });
   }
 
@@ -158,7 +158,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     const player = this.players[0];
     player.setBid(bid);
     this.emit(EVENTS.BID_PLACED, { playerIndex: 0, bid });
-    this.emit("humanBidPlaced");
+    this.emit('humanBidPlaced');
   }
 
   calculateBotBid(player: Player): number {
@@ -167,7 +167,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   }
 
   updatePlayableCards() {
-    console.log("Updating playable cards for current turn:", this.currentTurn);
+    console.log('Updating playable cards for current turn:', this.currentTurn);
     this.players.forEach((player, index) => {
       if (index === this.currentTurn && player.isHuman) {
         player.updatePlayableCards(this.leadSuit!, this.currentTrick);

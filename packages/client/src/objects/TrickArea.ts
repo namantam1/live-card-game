@@ -1,7 +1,7 @@
-import Phaser from "phaser";
-import Card from "./Card";
-import { ANIMATION } from "../utils/constants";
-import type { CardData } from "../type";
+import Phaser from 'phaser';
+import Card from './Card';
+import { ANIMATION } from '../utils/constants';
+import type { CardData } from '../type';
 
 interface CardOffset {
   x: number;
@@ -50,7 +50,7 @@ export default class TrickArea {
   async playCard(
     cardData: CardData,
     playerIndex: number,
-    fromCard: Card | null = null,
+    fromCard: Card | null = null
   ): Promise<Card> {
     // Handle invalid or undefined playerIndex
     if (
@@ -60,7 +60,7 @@ export default class TrickArea {
       playerIndex >= this.cardOffsets.length
     ) {
       console.warn(
-        `TrickArea: Invalid playerIndex ${playerIndex}, defaulting to 0`,
+        `TrickArea: Invalid playerIndex ${playerIndex}, defaulting to 0`
       );
       playerIndex = 0;
     }
@@ -92,12 +92,12 @@ export default class TrickArea {
         scale: this.trickCardScale,
         animate: true,
         duration: ANIMATION.CARD_TO_CENTER as any,
-        ease: "Back.easeOut",
+        ease: 'Back.easeOut',
         moveToTop: true,
       });
     } else {
       console.warn(
-        `TrickArea: fromCard is null, creating new card for player ${playerIndex}`,
+        `TrickArea: fromCard is null, creating new card for player ${playerIndex}`
       );
       // Create new card at center position
       card = new Card(this.scene, {
@@ -123,7 +123,7 @@ export default class TrickArea {
 
   async collectTrick(
     winnerIndex: number,
-    duration: number = ANIMATION.TRICK_COLLECT,
+    duration: number = ANIMATION.TRICK_COLLECT
   ): Promise<void> {
     const { width, height } = this.scene.cameras.main;
 
@@ -147,7 +147,7 @@ export default class TrickArea {
         animate: true,
         duration,
         delay: index * 50,
-        ease: "Quad.easeIn",
+        ease: 'Quad.easeIn',
         onComplete: () => card.destroy(),
       });
     });

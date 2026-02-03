@@ -29,9 +29,21 @@ export class ReconnectionOverlay {
 
     const panel = scene.add.graphics();
     panel.fillStyle(0x1e293b, 0.95);
-    panel.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+    panel.fillRoundedRect(
+      -panelWidth / 2,
+      -panelHeight / 2,
+      panelWidth,
+      panelHeight,
+      12
+    );
     panel.lineStyle(2, 0xf59e0b, 0.6);
-    panel.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+    panel.strokeRoundedRect(
+      -panelWidth / 2,
+      -panelHeight / 2,
+      panelWidth,
+      panelHeight,
+      12
+    );
 
     // Reconnection icon (spinning circle)
     this.spinner = scene.add.graphics();
@@ -41,22 +53,32 @@ export class ReconnectionOverlay {
     this.spinner.strokePath();
 
     // Reconnection text
-    this.reconnectingText = scene.add.text(0, 30, 'Connection lost\nReconnecting...', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
-      color: '#f59e0b',
-      align: 'center'
-    }).setOrigin(0.5);
+    this.reconnectingText = scene.add
+      .text(0, 30, 'Connection lost\nReconnecting...', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '18px',
+        color: '#f59e0b',
+        align: 'center',
+      })
+      .setOrigin(0.5);
 
     // Attempt counter
-    this.attemptText = scene.add.text(0, 65, '', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '14px',
-      color: '#94a3b8',
-      align: 'center'
-    }).setOrigin(0.5);
+    this.attemptText = scene.add
+      .text(0, 65, '', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        color: '#94a3b8',
+        align: 'center',
+      })
+      .setOrigin(0.5);
 
-    this.overlay.add([bg, panel, this.spinner, this.reconnectingText, this.attemptText]);
+    this.overlay.add([
+      bg,
+      panel,
+      this.spinner,
+      this.reconnectingText,
+      this.attemptText,
+    ]);
   }
 
   show(attempt: number = 1): void {
@@ -69,7 +91,7 @@ export class ReconnectionOverlay {
         targets: this.spinner,
         angle: 360,
         duration: 1000,
-        repeat: -1
+        repeat: -1,
       });
     }
   }

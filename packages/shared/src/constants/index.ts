@@ -2,5 +2,5 @@
  * Shared constants
  */
 
-export * from "./game";
-export * from "./config";
+export * from './game';
+export * from './config';

@@ -39,7 +39,7 @@ import {
   getValidCards,
   compareCards,
   findTrickWinner,
-  calculateScore
+  calculateScore,
 } from '@call-break/shared';
 ```
 
@@ -67,24 +67,31 @@ import {
 ### Functions
 
 #### `createDeck(): CardData[]`
+
 Creates a standard 52-card deck.
 
 #### `shuffleDeck(deck: CardData[]): CardData[]`
+
 Shuffles a deck using Fisher-Yates algorithm.
 
 #### `sortHand(hand: CardData[]): CardData[]`
+
 Sorts cards by suit then rank (descending).
 
 #### `getValidCards(hand, leadSuit, currentTrick, mandatoryTrumping): CardData[]`
+
 Determines which cards are legal to play based on Call Break rules.
 
 #### `compareCards(card1, card2, leadSuit): number`
+
 Compares two cards. Returns positive if card1 wins, negative if card2 wins.
 
 #### `findTrickWinner(trick, leadSuit): number`
+
 Finds the winning player index for a completed trick.
 
 #### `calculateScore(bid, tricksWon): number`
+
 Calculates round score based on bid and tricks won.
 
 ## Testing

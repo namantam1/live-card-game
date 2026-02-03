@@ -1,11 +1,11 @@
-import { Rank, Suit } from "./utils/constants";
+import { Rank, Suit } from './utils/constants';
 
 export type Position = {
   x: number;
   y: number;
 };
 
-export type DifficultyLevel = "easy" | "medium" | "hard";
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export interface BotContext {
   tricksNeeded?: number;
@@ -24,7 +24,7 @@ export interface CardData {
   value: number;
 }
 
-export type ConnectionQuality = "good" | "fair" | "poor" | "offline";
+export type ConnectionQuality = 'good' | 'fair' | 'poor' | 'offline';
 
 export interface CardSchema {
   id: string;
@@ -48,7 +48,7 @@ export interface PlayerSchema {
   hand: any; // ArraySchema<CardSchema>
   listen: (
     property: string,
-    callback: (value: any, previousValue?: any) => void,
+    callback: (value: any, previousValue?: any) => void
   ) => void;
 }
 

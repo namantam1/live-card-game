@@ -1,19 +1,19 @@
-import { sentryVitePlugin } from "@sentry/vite-plugin";
-import { defineConfig } from "vite";
-import { VitePWA } from "vite-plugin-pwa";
-import path from "path";
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import path from 'path';
 
 export default defineConfig({
-  base: "./",
+  base: './',
   build: {
-    outDir: "dist",
-    assetsDir: "assets",
+    outDir: 'dist',
+    assetsDir: 'assets',
     sourcemap: true,
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".mts", ".js"],
+    extensions: ['.ts', '.tsx', '.mts', '.js'],
     alias: {
-      "@call-break/shared": path.resolve(__dirname, "../shared/src/index.ts"),
+      '@call-break/shared': path.resolve(__dirname, '../shared/src/index.ts'),
     },
   },
   server: {
@@ -22,44 +22,44 @@ export default defineConfig({
   },
   plugins: [
     VitePWA({
-      registerType: "prompt",
-      includeAssets: ["icons/*", "cards/**/*", "audio/**/*", "assets/**/*"],
+      registerType: 'prompt',
+      includeAssets: ['icons/*', 'cards/**/*', 'audio/**/*', 'assets/**/*'],
 
       manifest: {
-        id: "patte-khelo",
-        name: "Call Break",
-        short_name: "Call Break",
-        description: "Call Break card game - Best played in landscape mode",
-        theme_color: "#1a1a2e",
-        background_color: "#1a1a2e",
-        display: "fullscreen",
-        orientation: "landscape",
-        start_url: "/",
-        scope: "/",
+        id: 'patte-khelo',
+        name: 'Call Break',
+        short_name: 'Call Break',
+        description: 'Call Break card game - Best played in landscape mode',
+        theme_color: '#1a1a2e',
+        background_color: '#1a1a2e',
+        display: 'fullscreen',
+        orientation: 'landscape',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: "icons/web-app-manifest-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable",
+            src: 'icons/web-app-manifest-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
           },
           {
-            src: "icons/web-app-manifest-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
+            src: 'icons/web-app-manifest-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
           {
-            src: "icons/web-app-manifest-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
+            src: 'icons/web-app-manifest-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: "icons/web-app-manifest-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
+            src: 'icons/web-app-manifest-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
           },
           // {
           //   src: "icons/icon.svg",
@@ -69,37 +69,37 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: "screenshots/screenshot1.webp",
-            sizes: "1920x1080",
-            type: "image/webp",
-            label: "Main Menu",
+            src: 'screenshots/screenshot1.webp',
+            sizes: '1920x1080',
+            type: 'image/webp',
+            label: 'Main Menu',
           },
           {
-            src: "screenshots/screenshot2.webp",
-            sizes: "1920x1080",
-            type: "image/webp",
-            label: "In-Game",
+            src: 'screenshots/screenshot2.webp',
+            sizes: '1920x1080',
+            type: 'image/webp',
+            label: 'In-Game',
           },
           {
-            src: "screenshots/screenshot1.webp",
-            sizes: "1920x1080",
-            type: "image/webp",
-            label: "Main Menu",
-            form_factor: "wide",
+            src: 'screenshots/screenshot1.webp',
+            sizes: '1920x1080',
+            type: 'image/webp',
+            label: 'Main Menu',
+            form_factor: 'wide',
           },
           {
-            src: "screenshots/screenshot2.webp",
-            sizes: "1920x1080",
-            type: "image/webp",
-            label: "In-Game",
-            form_factor: "wide",
+            src: 'screenshots/screenshot2.webp',
+            sizes: '1920x1080',
+            type: 'image/webp',
+            label: 'In-Game',
+            form_factor: 'wide',
           },
         ],
       },
 
       workbox: {
         globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp,mp3,ogg,wav,map}",
+          '**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp,mp3,ogg,wav,map}',
         ],
 
         // Increase file size limit for large audio files (bgm.mp3 is ~9MB)
@@ -110,9 +110,9 @@ export default defineConfig({
           {
             // Cache game code with network first
             urlPattern: /^https?:\/\/.*\.(js|css|html|map)$/,
-            handler: "NetworkFirst",
+            handler: 'NetworkFirst',
             options: {
-              cacheName: "game-code-cache",
+              cacheName: 'game-code-cache',
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
@@ -125,9 +125,9 @@ export default defineConfig({
           {
             // Cache static assets with cache first (includes fingerprinted assets)
             urlPattern: /^https?:\/\/.*\.(png|jpg|jpeg|svg|gif|webp|ico)$/,
-            handler: "CacheFirst",
+            handler: 'CacheFirst',
             options: {
-              cacheName: "game-images-cache",
+              cacheName: 'game-images-cache',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
@@ -140,9 +140,9 @@ export default defineConfig({
           {
             // Cache audio with cache first
             urlPattern: /^https?:\/\/.*\.(mp3|ogg|wav)$/,
-            handler: "CacheFirst",
+            handler: 'CacheFirst',
             options: {
-              cacheName: "game-audio-cache",
+              cacheName: 'game-audio-cache',
               expiration: {
                 maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
@@ -164,12 +164,12 @@ export default defineConfig({
 
       devOptions: {
         enabled: false, // Enable PWA in dev mode for testing
-        type: "module",
+        type: 'module',
       },
     }),
     sentryVitePlugin({
-      org: "naman-ip",
-      project: "patte-khelo",
+      org: 'naman-ip',
+      project: 'patte-khelo',
     }),
   ],
 });

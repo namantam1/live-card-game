@@ -1,13 +1,13 @@
-import Phaser from "phaser";
-import Player from "../objects/Player";
-import TrickArea from "../objects/TrickArea";
-import AudioManager from "../managers/AudioManager";
-import NetworkIndicator from "../components/NetworkIndicator";
-import { ReconnectionOverlay } from "../objects/game/ReconnectionOverlay";
-import Common from "../objects/game/Common";
-import GameModeFactory from "../modes/GameModeFactory";
-import type { GameModeBase } from "../modes/GameModeBase";
-import { EVENTS } from "../utils/constants";
+import Phaser from 'phaser';
+import Player from '../objects/Player';
+import TrickArea from '../objects/TrickArea';
+import AudioManager from '../managers/AudioManager';
+import NetworkIndicator from '../components/NetworkIndicator';
+import { ReconnectionOverlay } from '../objects/game/ReconnectionOverlay';
+import Common from '../objects/game/Common';
+import GameModeFactory from '../modes/GameModeFactory';
+import type { GameModeBase } from '../modes/GameModeBase';
+import { EVENTS } from '../utils/constants';
 
 export default class GameScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -19,7 +19,7 @@ export default class GameScene extends Phaser.Scene {
   private initData: any;
 
   constructor() {
-    super({ key: "GameScene" });
+    super({ key: 'GameScene' });
   }
 
   init(data: any) {
@@ -72,7 +72,7 @@ export default class GameScene extends Phaser.Scene {
     this.setupEventListeners();
 
     // Launch UI scene
-    this.scene.launch("UIScene", {
+    this.scene.launch('UIScene', {
       gameMode: this.gameMode,
       audioManager: this.audioManager,
     });
@@ -106,7 +106,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Reconnecting
     this.gameMode.on(EVENTS.RECONNECTING, ({ attempt }: any) => {
-      console.log("GameScene: Reconnecting...", attempt);
+      console.log('GameScene: Reconnecting...', attempt);
       if (this.networkIndicator) {
         this.networkIndicator.container.setVisible(true);
         this.networkIndicator.showReconnecting(attempt);
@@ -116,7 +116,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Reconnected
     this.gameMode.on(EVENTS.RECONNECTED, ({ message }: any) => {
-      console.log("GameScene: Reconnected!", message);
+      console.log('GameScene: Reconnected!', message);
       if (this.networkIndicator) {
         this.networkIndicator.showReconnected();
       }
@@ -124,11 +124,11 @@ export default class GameScene extends Phaser.Scene {
 
       // Show brief success message
       const successText = this.add
-        .text(this.cameras.main.width / 2, 100, "Reconnected!", {
-          fontFamily: "Arial, sans-serif",
-          fontSize: "24px",
-          color: "#22c55e",
-          fontStyle: "bold",
+        .text(this.cameras.main.width / 2, 100, 'Reconnected!', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '24px',
+          color: '#22c55e',
+          fontStyle: 'bold',
         })
         .setOrigin(0.5)
         .setDepth(600);
@@ -144,40 +144,40 @@ export default class GameScene extends Phaser.Scene {
 
     // Reconnection failed
     this.gameMode.on(EVENTS.RECONNECTION_FAILED, ({ message }: any) => {
-      console.log("GameScene: Reconnection failed", message);
+      console.log('GameScene: Reconnection failed', message);
       this.reconnectionOverlay?.hide();
 
       // Show error and redirect to menu
-      this.events.emit("connectionLost", { message });
+      this.events.emit('connectionLost', { message });
 
       this.time.delayedCall(2000, () => {
-        this.scene.stop("UIScene");
-        this.scene.start("MenuScene");
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
       });
     });
 
     // Error handling
     this.gameMode.on(EVENTS.CONNECTION_ERROR, ({ message }: any) => {
-      console.error("Network error:", message);
-      this.events.emit("networkError", {
-        message: `Connection error: ${message || "Unknown error"}`,
+      console.error('Network error:', message);
+      this.events.emit('networkError', {
+        message: `Connection error: ${message || 'Unknown error'}`,
       });
     });
 
     // Room left
     this.gameMode.on(EVENTS.ROOM_LEFT, ({ code }: any) => {
-      console.log("Room left event received:", code);
+      console.log('Room left event received:', code);
 
       const message =
         code === 1000
-          ? "Disconnected from game"
-          : "Connection lost - returning to menu";
+          ? 'Disconnected from game'
+          : 'Connection lost - returning to menu';
 
-      this.events.emit("connectionLost", { message });
+      this.events.emit('connectionLost', { message });
 
       this.time.delayedCall(1500, () => {
-        this.scene.stop("UIScene");
-        this.scene.start("MenuScene");
+        this.scene.stop('UIScene');
+        this.scene.start('MenuScene');
       });
     });
   }
@@ -252,7 +252,7 @@ export default class GameScene extends Phaser.Scene {
     // Cleanup game mode (this will handle network cleanup for multiplayer)
     await this.gameMode.cleanup();
 
-    this.scene.stop("UIScene");
-    this.scene.start("MenuScene");
+    this.scene.stop('UIScene');
+    this.scene.start('MenuScene');
   }
 }

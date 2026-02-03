@@ -1,17 +1,17 @@
-import Hand from "./Hand";
+import Hand from './Hand';
 import {
   PLAYER_POSITIONS,
   COLORS,
   type Position,
   type Suit,
-} from "../utils/constants";
+} from '../utils/constants';
 import {
   TURN_INDICATOR_CONFIG,
   getFontSize,
   getResponsiveConfig,
-} from "../utils/uiConfig";
-import { Scene } from "phaser";
-import type { CardData, TrickEntry } from "../type";
+} from '../utils/uiConfig';
+import { Scene } from 'phaser';
+import type { CardData, TrickEntry } from '../type';
 
 export default class Player {
   scene: Scene;
@@ -38,7 +38,7 @@ export default class Player {
     name: string,
     emoji: string,
     isHuman = false,
-    onCardPlay?: (data: CardData) => void,
+    onCardPlay?: (data: CardData) => void
   ) {
     this.scene = scene;
     this.index = index;
@@ -53,7 +53,7 @@ export default class Player {
     this.roundScore = 0;
 
     // Position mapping: 0=bottom (human), 1=left, 2=top, 3=right
-    const positions: Position[] = ["bottom", "left", "top", "right"];
+    const positions: Position[] = ['bottom', 'left', 'top', 'right'];
     this.position = positions[index];
 
     // Create hand
@@ -74,19 +74,19 @@ export default class Player {
     let labelX, labelY;
 
     switch (this.position) {
-      case "bottom":
+      case 'bottom':
         labelX = width * 0.5;
         labelY = height * posConfig.labelY!;
         break;
-      case "top":
+      case 'top':
         labelX = width * 0.5;
         labelY = height * posConfig.labelY! - 20;
         break;
-      case "left":
+      case 'left':
         labelX = width * posConfig.labelX! - 20;
         labelY = height * 0.5;
         break;
-      case "right":
+      case 'right':
         labelX = width * posConfig.labelX! + 20;
         labelY = height * 0.5;
         break;
@@ -99,11 +99,11 @@ export default class Player {
     // Player name with emoji using responsive font size
     this.nameLabel = this.scene.add
       .text(labelX, labelY, `${this.emoji} ${this.name}`, {
-        fontFamily: "Arial, sans-serif",
-        fontSize: getFontSize("playerName", width, height),
-        fontStyle: "bold",
-        color: "#ffffff",
-        stroke: "#000000",
+        fontFamily: 'Arial, sans-serif',
+        fontSize: getFontSize('playerName', width, height),
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#000000',
         strokeThickness: 3,
       })
       .setOrigin(0.5)
@@ -114,7 +114,7 @@ export default class Player {
     // For left and right players, show stats below name
     let statsX, statsY, statsOrigin;
 
-    if (this.position === "bottom" || this.position === "top") {
+    if (this.position === 'bottom' || this.position === 'top') {
       // Position to the right of the name label
       statsX = labelX + this.nameLabel.width / 2 + 15;
       statsY = labelY;
@@ -127,12 +127,12 @@ export default class Player {
     }
 
     this.statsLabel = this.scene.add
-      .text(statsX, statsY, "", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: getFontSize("playerStats", width, height),
-        fontStyle: "bold",
-        color: "#fbbf24",
-        stroke: "#000000",
+      .text(statsX, statsY, '', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: getFontSize('playerStats', width, height),
+        fontStyle: 'bold',
+        color: '#fbbf24',
+        stroke: '#000000',
         strokeThickness: 2.5,
       })
       .setOrigin(statsOrigin.x, statsOrigin.y)
@@ -207,7 +207,7 @@ export default class Player {
       this.statsLabel.setText(`${this.tricksWon}/${this.bid}`);
       this.updateLabelBackground();
     } else {
-      this.statsLabel.setText("");
+      this.statsLabel.setText('');
       this.updateLabelBackground();
     }
   }

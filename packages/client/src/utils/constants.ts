@@ -1,4 +1,4 @@
-import { CARD_CONFIG } from "./uiConfig";
+import { CARD_CONFIG } from './uiConfig';
 
 // Re-export game constants from shared package
 export {
@@ -12,10 +12,10 @@ export {
   MAX_BID,
   type Suit,
   type Rank,
-} from "@call-break/shared";
+} from '@call-break/shared';
 
 // Player positions (for 4 players around a table)
-export type Position = "bottom" | "left" | "top" | "right";
+export type Position = 'bottom' | 'left' | 'top' | 'right';
 export interface PlayerPosition {
   x: number;
   y: number;
@@ -67,33 +67,33 @@ export const COLORS = {
 
 // Game phases
 export const PHASE = {
-  IDLE: "idle",
-  DEALING: "dealing",
-  BIDDING: "bidding",
-  PLAYING: "playing",
-  TRICK_END: "trickEnd",
-  ROUND_END: "roundEnd",
-  GAME_OVER: "gameOver",
+  IDLE: 'idle',
+  DEALING: 'dealing',
+  BIDDING: 'bidding',
+  PLAYING: 'playing',
+  TRICK_END: 'trickEnd',
+  ROUND_END: 'roundEnd',
+  GAME_OVER: 'gameOver',
 } as const;
 
 export type GamePhase = (typeof PHASE)[keyof typeof PHASE];
 
 // Events
 export const EVENTS = {
-  CARD_PLAYED: "cardPlayed",
-  TRICK_COMPLETE: "trickComplete",
-  ROUND_COMPLETE: "roundComplete",
-  GAME_COMPLETE: "gameComplete",
-  BID_PLACED: "bidPlayed",
-  TURN_CHANGED: "turnChanged",
-  PHASE_CHANGED: "phaseChanged",
+  CARD_PLAYED: 'cardPlayed',
+  TRICK_COMPLETE: 'trickComplete',
+  ROUND_COMPLETE: 'roundComplete',
+  GAME_COMPLETE: 'gameComplete',
+  BID_PLACED: 'bidPlayed',
+  TURN_CHANGED: 'turnChanged',
+  PHASE_CHANGED: 'phaseChanged',
   // Connection events (multiplayer only, ignored by solo mode)
-  CONNECTION_QUALITY_CHANGED: "connectionQualityChanged",
-  RECONNECTING: "reconnecting",
-  RECONNECTED: "reconnected",
-  RECONNECTION_FAILED: "reconnectionFailed",
-  CONNECTION_ERROR: "connectionError",
-  ROOM_LEFT: "roomLeft",
+  CONNECTION_QUALITY_CHANGED: 'connectionQualityChanged',
+  RECONNECTING: 'reconnecting',
+  RECONNECTED: 'reconnected',
+  RECONNECTION_FAILED: 'reconnectionFailed',
+  CONNECTION_ERROR: 'connectionError',
+  ROOM_LEFT: 'roomLeft',
 } as const;
 
 // UI timing constants
@@ -106,5 +106,5 @@ export type GameEvent = (typeof EVENTS)[keyof typeof EVENTS];
 // Server configuration
 export const SERVER = {
   // Use environment variable in production, fallback to localhost for development
-  URL: (import.meta as any).env.VITE_SERVER_URL || "ws://localhost:2567",
+  URL: (import.meta as any).env.VITE_SERVER_URL || 'ws://localhost:2567',
 } as const;

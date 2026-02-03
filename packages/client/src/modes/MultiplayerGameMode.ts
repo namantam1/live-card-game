@@ -1,11 +1,11 @@
-import type { Scene } from "phaser";
-import { GameModeBase, type PlayerData } from "./GameModeBase";
-import NetworkManager from "../managers/NetworkManager";
-import Player from "../objects/Player";
-import type TrickArea from "../objects/TrickArea";
-import type { CardData } from "../type";
-import { EVENTS, type Suit } from "../utils/constants";
-import { calculateBid, TRUMP_SUIT } from "@call-break/shared";
+import type { Scene } from 'phaser';
+import { GameModeBase, type PlayerData } from './GameModeBase';
+import NetworkManager from '../managers/NetworkManager';
+import Player from '../objects/Player';
+import type TrickArea from '../objects/TrickArea';
+import type { CardData } from '../type';
+import { EVENTS, type Suit } from '../utils/constants';
+import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
 
 /**
  * Multiplayer game mode implementation (via Colyseus)
@@ -23,7 +23,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     this.networkManager = data.networkManager;
 
     if (!this.networkManager) {
-      throw new Error("NetworkManager required for multiplayer mode");
+      throw new Error('NetworkManager required for multiplayer mode');
     }
 
     // Create players from network state
@@ -61,7 +61,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         isLocal, // isHuman = isLocal in multiplayer
         isLocal
           ? (cardData: CardData) => this.onCardPlayed(cardData)
-          : undefined,
+          : undefined
       );
       players.push(player);
 
@@ -165,10 +165,10 @@ export default class MultiplayerGameMode extends GameModeBase {
    */
   private setupNetworkListeners(): void {
     // Phase change
-    this.networkManager.on("phaseChange", ({ phase }: any) => {
+    this.networkManager.on('phaseChange', ({ phase }: any) => {
       this.emit(EVENTS.PHASE_CHANGED, phase);
 
-      if (phase === "roundEnd") {
+      if (phase === 'roundEnd') {
         const players = this.networkManager.getPlayers();
         this.emit(EVENTS.ROUND_COMPLETE, {
           players: players.map((p) => ({
@@ -182,7 +182,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         });
       }
 
-      if (phase === "gameOver") {
+      if (phase === 'gameOver') {
         const players = this.networkManager.getPlayers();
         const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
         const winner = sortedPlayers[0];
@@ -202,10 +202,10 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Turn change
-    this.networkManager.on("turnChange", ({ playerId, isMyTurn }: any) => {
+    this.networkManager.on('turnChange', ({ playerId, isMyTurn }: any) => {
       // Convert network playerId to local player index
       const playerIndex = this.players.findIndex(
-        (p) => p.networkId === playerId,
+        (p) => p.networkId === playerId
       );
 
       if (playerIndex === -1) {
@@ -221,7 +221,7 @@ export default class MultiplayerGameMode extends GameModeBase {
             const leadSuit = this.networkManager.getLeadSuit();
             const currentTrick = this.networkManager.getCurrentTrick();
             const phase = this.networkManager.getPhase();
-            if (phase === "playing") {
+            if (phase === 'playing') {
               p.hand.updatePlayableCards(leadSuit, currentTrick);
             }
           }
@@ -236,9 +236,9 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Card added to hand
-    this.networkManager.on("cardAdded", ({ card }: any) => {
+    this.networkManager.on('cardAdded', ({ card }: any) => {
       const localPlayer = this.players.find(
-        (p) => p.networkId === this.networkManager.playerId,
+        (p) => p.networkId === this.networkManager.playerId
       );
       if (localPlayer) {
         localPlayer.hand.addCard(card);
@@ -246,7 +246,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Card played by any player
-    this.networkManager.on("cardPlayed", ({ playerId, card }: any) => {
+    this.networkManager.on('cardPlayed', ({ playerId, card }: any) => {
       // Find player in local array
       let player = this.players.find((p) => p.networkId === playerId);
       let relativePosition;
@@ -276,12 +276,12 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Trick cleared
-    this.networkManager.on("trickCleared", () => {
+    this.networkManager.on('trickCleared', () => {
       this.trickArea.clear();
     });
 
     // Trick winner
-    this.networkManager.on("trickWinner", (winnerId: any) => {
+    this.networkManager.on('trickWinner', (winnerId: any) => {
       const winner = this.players.find((p) => p.networkId === winnerId);
       if (winner) {
         // Update tricks won count
@@ -308,7 +308,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Player bid
-    this.networkManager.on("playerBid", ({ playerId, bid }: any) => {
+    this.networkManager.on('playerBid', ({ playerId, bid }: any) => {
       const player = this.players.find((p) => p.networkId === playerId);
       if (player) {
         // Update the local player's bid and stats display
@@ -321,7 +321,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Round change
-    this.networkManager.on("roundChange", () => {
+    this.networkManager.on('roundChange', () => {
       // Reset all players for new round
       this.players.forEach((player) => {
         player.reset();
@@ -330,48 +330,48 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     // Connection quality changes
     this.networkManager.on(
-      "connectionQualityChange",
+      'connectionQualityChange',
       ({ quality, connected }: any) => {
         this.emit(EVENTS.CONNECTION_QUALITY_CHANGED, { quality, connected });
-      },
+      }
     );
 
     // Reconnecting
-    this.networkManager.on("reconnecting", ({ attempt }: any) => {
+    this.networkManager.on('reconnecting', ({ attempt }: any) => {
       this.emit(EVENTS.RECONNECTING, { attempt });
     });
 
     // Reconnected
-    this.networkManager.on("reconnected", ({ message }: any) => {
+    this.networkManager.on('reconnected', ({ message }: any) => {
       this.emit(EVENTS.RECONNECTED, { message });
     });
 
     // Reconnection failed
-    this.networkManager.on("reconnectionFailed", ({ message }: any) => {
+    this.networkManager.on('reconnectionFailed', ({ message }: any) => {
       this.emit(EVENTS.RECONNECTION_FAILED, { message });
     });
 
     // Connection error
-    this.networkManager.on("error", (data: any) => {
+    this.networkManager.on('error', (data: any) => {
       this.emit(EVENTS.CONNECTION_ERROR, {
-        message: data.message || "Unknown error",
+        message: data.message || 'Unknown error',
         code: data.code,
       });
     });
 
     // Room left
-    this.networkManager.on("roomLeft", (data: any) => {
+    this.networkManager.on('roomLeft', (data: any) => {
       this.emit(EVENTS.ROOM_LEFT, { code: data.code });
     });
 
     // Lead suit changed - update playable cards if it's our turn
-    this.networkManager.on("leadSuitChange", (leadSuit: Suit) => {
+    this.networkManager.on('leadSuitChange', (leadSuit: Suit) => {
       if (
         this.networkManager.isMyTurn() &&
-        this.networkManager.getPhase() === "playing"
+        this.networkManager.getPhase() === 'playing'
       ) {
         const localPlayer = this.players.find(
-          (p) => p.networkId === this.networkManager.playerId,
+          (p) => p.networkId === this.networkManager.playerId
         );
         if (localPlayer) {
           const currentTrick = this.networkManager.getCurrentTrick();
@@ -382,13 +382,13 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     // Remote player hand changes (for visual card backs)
     this.networkManager.on(
-      "remoteHandChanged",
+      'remoteHandChanged',
       ({ playerId, handCount }: any) => {
         const player = this.players.find((p) => p.networkId === playerId);
         if (player) {
           player.hand.updateCardCount(handCount);
         }
-      },
+      }
     );
   }
 
@@ -400,13 +400,13 @@ export default class MultiplayerGameMode extends GameModeBase {
     // Get current hand from server and display
     const hand = this.networkManager.getMyHand();
     const localPlayer = this.players.find(
-      (p) => p.networkId === this.networkManager.playerId,
+      (p) => p.networkId === this.networkManager.playerId
     );
 
     if (localPlayer) {
       console.log(
-        "MultiplayerGameMode: Syncing hand from server. Cards:",
-        hand.length,
+        'MultiplayerGameMode: Syncing hand from server. Cards:',
+        hand.length
       );
       localPlayer.hand.setCards(hand, false);
     }
@@ -418,11 +418,11 @@ export default class MultiplayerGameMode extends GameModeBase {
         if (sessionId !== this.networkManager.playerId) {
           const handCount = player.hand.length;
           const localPlayerObj = this.players.find(
-            (p) => p.networkId === sessionId,
+            (p) => p.networkId === sessionId
           );
           if (localPlayerObj) {
             console.log(
-              `MultiplayerGameMode: Updating card count for ${player.name}: ${handCount}`,
+              `MultiplayerGameMode: Updating card count for ${player.name}: ${handCount}`
             );
             localPlayerObj.hand.updateCardCount(handCount);
           }
@@ -446,16 +446,16 @@ export default class MultiplayerGameMode extends GameModeBase {
 
       // Emit phase changed event immediately after state sync completes
       // This ensures consistent behavior between normal phase changes and reconnection
-      if (phase === "bidding" && isMyTurn) {
+      if (phase === 'bidding' && isMyTurn) {
         this.emit(EVENTS.PHASE_CHANGED, phase);
         this.emit(EVENTS.TURN_CHANGED, { isMyTurn });
-      } else if (phase === "playing" && isMyTurn && localPlayer) {
+      } else if (phase === 'playing' && isMyTurn && localPlayer) {
         // If it's our turn to play, update playable cards
-        const leadSuit = state.leadSuit || "";
+        const leadSuit = state.leadSuit || '';
         const currentTrick = this.networkManager.getCurrentTrick();
         console.log(
-          "MultiplayerGameMode: Reconnected during our turn, updating playable cards. Lead suit:",
-          leadSuit,
+          'MultiplayerGameMode: Reconnected during our turn, updating playable cards. Lead suit:',
+          leadSuit
         );
         localPlayer.hand.updatePlayableCards(leadSuit, currentTrick);
       }

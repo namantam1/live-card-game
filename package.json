@@ -22,10 +22,27 @@
     "test:server": "npm run test --workspace=packages/server",
     "test:shared": "npm run test --workspace=packages/shared",
     "clean": "rm -rf packages/*/node_modules packages/*/dist node_modules",
-    "clean:build": "rm -rf packages/*/dist"
+    "clean:build": "rm -rf packages/*/dist",
+    "prepare": "husky",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "version:patch": "npm version patch --workspaces && npm version patch",
+    "version:minor": "npm version minor --workspaces && npm version minor",
+    "version:major": "npm version major --workspaces && npm version major"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3"
   },
   "engines": {

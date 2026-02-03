@@ -1,11 +1,11 @@
-import { Scene } from "phaser";
+import { Scene } from 'phaser';
 import {
   getResponsiveConfig,
   SETTINGS_ICON_CONFIG,
-} from "../../utils/uiConfig";
-import Button from "../../components/Button";
-import AudioManager from "../../managers/AudioManager";
-import CanvasInput from "phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput";
+} from '../../utils/uiConfig';
+import Button from '../../components/Button';
+import AudioManager from '../../managers/AudioManager';
+import CanvasInput from 'phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput';
 
 export default class Common {
   static createBackground(scene: Scene): void {
@@ -45,7 +45,7 @@ export default class Common {
 
     positions.forEach(({ x, y, delay }) => {
       const card = scene.add
-        .image(x, y, "card-back")
+        .image(x, y, 'card-back')
         .setScale(0.5)
         .setAlpha(0.3);
 
@@ -57,7 +57,7 @@ export default class Common {
         delay,
         yoyo: true,
         repeat: -1,
-        ease: "Sine.easeInOut",
+        ease: 'Sine.easeInOut',
       });
     });
   }
@@ -68,23 +68,23 @@ export default class Common {
     const centerY = height / 2;
 
     // use image asset for table background if available
-    const tableBg = scene.add.image(centerX, centerY, "table-bg");
+    const tableBg = scene.add.image(centerX, centerY, 'table-bg');
     const scaleFactor = Math.min(
       (width * 0.85) / tableBg.width,
-      (height * 0.85) / tableBg.height,
+      (height * 0.85) / tableBg.height
     );
     tableBg.setScale(scaleFactor);
 
     // add a custom trump icon in the middle of table with custom color
     scene.add
-      .text(centerX, centerY - 20, "\u2660", {
-        fontFamily: "Arial, sans-serif",
+      .text(centerX, centerY - 20, '\u2660', {
+        fontFamily: 'Arial, sans-serif',
         fontSize: 200,
-        color: "#6c91b8",
+        color: '#6c91b8',
         shadow: {
           offsetX: 0,
           offsetY: 0,
-          color: "#3d3d46",
+          color: '#3d3d46',
           blur: 10,
           fill: true,
         },
@@ -94,7 +94,7 @@ export default class Common {
 
   static createSettingIcon(
     scene: Scene,
-    config: { audioManager: AudioManager; onClick: () => void },
+    config: { audioManager: AudioManager; onClick: () => void }
   ): void {
     const { width, height } = scene.cameras.main;
     const iconConfig = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
@@ -102,7 +102,7 @@ export default class Common {
     Button.createIconButton(scene, width - margin, margin, {
       iconSize,
       fontSize,
-      icon: "\u2699",
+      icon: '\u2699',
       onClick: config.onClick,
       audioManager: config.audioManager,
     });
@@ -110,7 +110,7 @@ export default class Common {
 
   static createInputField(
     scene: Scene,
-    config: { x: number; y: number; width: number; uppercase?: boolean },
+    config: { x: number; y: number; width: number; uppercase?: boolean }
   ) {
     const { x, y, width, uppercase = false } = config;
     // Create rexUI CanvasInput (truly canvas-based)
@@ -121,18 +121,18 @@ export default class Common {
           stroke: 0x475569,
           strokeThickness: 2,
           cornerRadius: 8,
-          "focus.stroke": 0x6366f1,
+          'focus.stroke': 0x6366f1,
         },
         style: {
-          fontSize: "18px",
-          fontFamily: "Arial, sans-serif",
-          color: "#ffffff",
+          fontSize: '18px',
+          fontFamily: 'Arial, sans-serif',
+          color: '#ffffff',
         },
         wrap: {
-          hAlign: "center",
-          vAlign: "center",
+          hAlign: 'center',
+          vAlign: 'center',
         },
-        text: "",
+        text: '',
         maxLength: uppercase ? 4 : 20,
       })
       .setOrigin(0.5)
@@ -140,7 +140,7 @@ export default class Common {
 
     // Transform to uppercase if needed
     if (uppercase) {
-      canvasInput.on("textchange", (canvasInput: CanvasInput) => {
+      canvasInput.on('textchange', (canvasInput: CanvasInput) => {
         const { text, cursorPosition } = canvasInput;
         if (!text) return;
         const upper = canvasInput.text.toUpperCase();

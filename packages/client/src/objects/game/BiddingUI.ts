@@ -1,8 +1,8 @@
-import { Scene } from "phaser";
-import { COLORS, MAX_BID } from "../../utils/constants";
-import { BIDDING_CONFIG, getResponsiveConfig } from "../../utils/uiConfig";
-import Button from "../../components/Button";
-import AudioManager from "../../managers/AudioManager";
+import { Scene } from 'phaser';
+import { COLORS, MAX_BID } from '../../utils/constants';
+import { BIDDING_CONFIG, getResponsiveConfig } from '../../utils/uiConfig';
+import Button from '../../components/Button';
+import AudioManager from '../../managers/AudioManager';
 
 export default class BiddingUI {
   private scene: Scene;
@@ -14,7 +14,7 @@ export default class BiddingUI {
   constructor(
     scene: Scene,
     onBidSelected: (bid: number) => void,
-    audioManager: AudioManager,
+    audioManager: AudioManager
   ) {
     this.scene = scene;
     const { width, height } = scene.cameras.main;
@@ -43,11 +43,11 @@ export default class BiddingUI {
 
     // Title - centered horizontally
     const title = scene.add
-      .text(0, -100, "Place Your Bid", {
-        fontFamily: "Arial, sans-serif",
+      .text(0, -100, 'Place Your Bid', {
+        fontFamily: 'Arial, sans-serif',
         fontSize: config.titleFontSize,
-        fontStyle: "bold",
-        color: "#ffffff",
+        fontStyle: 'bold',
+        color: '#ffffff',
       })
       .setOrigin(0.5);
 
@@ -112,7 +112,7 @@ export default class BiddingUI {
       alpha: 1,
       y: this.scene.cameras.main.height * 0.5,
       duration: 300,
-      ease: "Back.easeOut",
+      ease: 'Back.easeOut',
     });
   }
 
@@ -147,7 +147,7 @@ export default class BiddingUI {
         10 - config.buttonHeight / 2 - 4,
         config.buttonWidth + 8,
         config.buttonHeight + 8,
-        config.borderRadius + 2,
+        config.borderRadius + 2
       );
       border.setVisible(true);
 
@@ -158,7 +158,7 @@ export default class BiddingUI {
         duration: 800,
         yoyo: true,
         repeat: -1,
-        ease: "Sine.easeInOut",
+        ease: 'Sine.easeInOut',
       });
     }
   }

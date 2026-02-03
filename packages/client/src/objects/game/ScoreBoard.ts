@@ -1,16 +1,16 @@
-import { Scene } from "phaser";
+import { Scene } from 'phaser';
 import {
   getResponsiveConfig,
   isMobile,
   SCOREBOARD_CONFIG,
-} from "../../utils/uiConfig";
-import { TOTAL_ROUNDS } from "../../utils/constants";
+} from '../../utils/uiConfig';
+import { TOTAL_ROUNDS } from '../../utils/constants';
 
 export default class ScoreBoard {
   scoreboard: Phaser.GameObjects.Container;
   scoreboardConfig: {
     height: number;
-    padding: number,
+    padding: number;
     spacing: number;
     roundFontSize?: string | number;
     emojiFontSize?: string | number;
@@ -24,7 +24,12 @@ export default class ScoreBoard {
   playerScoreEntries: any[];
   isMultiplayer: boolean;
 
-  constructor(scene: Scene, isMultiplayer: boolean, players: any[], round: number) {
+  constructor(
+    scene: Scene,
+    isMultiplayer: boolean,
+    players: any[],
+    round: number
+  ) {
     this.isMultiplayer = isMultiplayer;
 
     const { width, height } = scene.cameras.main;
@@ -47,11 +52,11 @@ export default class ScoreBoard {
     this.scoreboardBg = scene.add.graphics();
     // Round text
     this.roundIndicator = scene.add
-      .text(this.scoreboardConfig.padding, 0, "", {
-        fontFamily: "Arial, sans-serif",
+      .text(this.scoreboardConfig.padding, 0, '', {
+        fontFamily: 'Arial, sans-serif',
         fontSize: this.scoreboardConfig.roundFontSize,
-        fontStyle: "bold",
-        color: "#94a3b8",
+        fontStyle: 'bold',
+        color: '#94a3b8',
       })
       .setOrigin(0, 0.5);
     // Divider
@@ -64,16 +69,16 @@ export default class ScoreBoard {
       const entry = {
         emoji: scene.add
           .text(0, 0, player.emoji, {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: 'Arial, sans-serif',
             fontSize: this.scoreboardConfig.emojiFontSize,
           })
           .setOrigin(0, 0.5),
         score: scene.add
-          .text(0, 0, "0.0", {
-            fontFamily: "Arial, sans-serif",
+          .text(0, 0, '0.0', {
+            fontFamily: 'Arial, sans-serif',
             fontSize: this.scoreboardConfig.scoreFontSize,
-            fontStyle: "bold",
-            color: "#22c55e",
+            fontStyle: 'bold',
+            color: '#22c55e',
           })
           .setOrigin(0, 0.5),
         playerId: this.isMultiplayer ? player.id : index,
@@ -127,11 +132,11 @@ export default class ScoreBoard {
         ? player.id === topPlayer?.id
         : player === topPlayer;
       if (isTopPlayer && score > 0) {
-        entry.score.setColor("#facc15"); // Yellow for leader
+        entry.score.setColor('#facc15'); // Yellow for leader
       } else if (score >= 0) {
-        entry.score.setColor("#22c55e"); // Green for positive
+        entry.score.setColor('#22c55e'); // Green for positive
       } else {
-        entry.score.setColor("#ef4444"); // Red for negative
+        entry.score.setColor('#ef4444'); // Red for negative
       }
 
       xOffset += entry.score.width + (config.isMobile ? 20 : 16);
@@ -148,7 +153,7 @@ export default class ScoreBoard {
       -height / 2,
       totalWidth,
       height,
-      height / 2,
+      height / 2
     );
     this.scoreboardBg.lineStyle(config.isMobile ? 2 : 1, 0x6366f1, 0.6);
     this.scoreboardBg.strokeRoundedRect(
@@ -156,7 +161,7 @@ export default class ScoreBoard {
       -height / 2,
       totalWidth,
       height,
-      height / 2,
+      height / 2
     );
   }
 }

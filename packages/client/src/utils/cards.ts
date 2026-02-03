@@ -1,4 +1,4 @@
-import type { CardData } from "../type";
+import type { CardData } from '../type';
 export {
   createDeck,
   shuffleDeck,
@@ -8,7 +8,7 @@ export {
   findTrickWinner,
   getValidCards,
   calculateScore,
-} from "@call-break/shared";
+} from '@call-break/shared';
 
 /**
  * Get the asset path for a card image

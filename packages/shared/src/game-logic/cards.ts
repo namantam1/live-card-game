@@ -2,8 +2,8 @@
  * Card deck creation and manipulation functions
  */
 
-import type { CardData } from "../types/card";
-import { SUITS, RANKS, RANK_VALUES } from "../constants/game";
+import type { CardData } from '../types/card';
+import { SUITS, RANKS, RANK_VALUES } from '../constants/game';
 
 /**
  * Create a standard 52-card deck

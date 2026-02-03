@@ -1,4 +1,4 @@
-import { registerSW } from "virtual:pwa-register";
+import { registerSW } from 'virtual:pwa-register';
 
 /**
  * Register service worker with update notification
@@ -9,8 +9,8 @@ export function registerServiceWorker() {
     onNeedRefresh() {
       // Auto-update in background, but show a notification
       // The update will apply on next visit without interrupting current session
-      console.log("New version available, updating in background...");
-      showToast("New version available, updating game...", 5000);
+      console.log('New version available, updating in background...');
+      showToast('New version available, updating game...', 5000);
       // Optionally: auto-reload immediately (uncomment if preferred)
       setTimeout(() => {
         updateSW(true);
@@ -24,12 +24,12 @@ export function registerServiceWorker() {
       // }
     },
     onOfflineReady() {
-      console.log("Call Break is ready to work offline!");
+      console.log('Call Break is ready to work offline!');
       // Optional: Show a toast notification
-      showToast("Game is ready to play offline!");
+      showToast('Game is ready to play offline!');
     },
     onRegistered(registration) {
-      console.log("Service Worker registered successfully");
+      console.log('Service Worker registered successfully');
 
       // Check for updates periodically (every hour)
       if (registration) {
@@ -37,12 +37,12 @@ export function registerServiceWorker() {
           () => {
             registration.update();
           },
-          60 * 60 * 1000,
+          60 * 60 * 1000
         ); // 1 hour
       }
     },
     onRegisterError(error) {
-      console.error("Service Worker registration failed:", error);
+      console.error('Service Worker registration failed:', error);
     },
   });
 
@@ -56,7 +56,7 @@ export function registerServiceWorker() {
  */
 function showToast(message: string, duration: number = 3000): void {
   // Create toast element
-  const toast = document.createElement("div");
+  const toast = document.createElement('div');
   toast.textContent = message;
   toast.style.cssText = `
     position: fixed;
@@ -75,7 +75,7 @@ function showToast(message: string, duration: number = 3000): void {
   `;
 
   // Add animation
-  const style = document.createElement("style");
+  const style = document.createElement('style');
   style.textContent = `
     @keyframes slideUp {
       from {
@@ -94,7 +94,7 @@ function showToast(message: string, duration: number = 3000): void {
 
   // Remove toast after specified duration
   setTimeout(() => {
-    toast.style.animation = "slideUp 0.3s ease-in reverse";
+    toast.style.animation = 'slideUp 0.3s ease-in reverse';
     setTimeout(() => {
       document.body.removeChild(toast);
       document.head.removeChild(style);
@@ -107,7 +107,7 @@ function showToast(message: string, duration: number = 3000): void {
  */
 export function isPWA(): boolean {
   return (
-    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as any).standalone === true
   );
 }
@@ -120,7 +120,7 @@ export function enforceLandscapeOnMobile(): void {
   // Check if device is mobile
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
+      navigator.userAgent
     );
 
   if (!isMobile) {
@@ -129,7 +129,7 @@ export function enforceLandscapeOnMobile(): void {
 
   // Check if screen orientation API is available
   if (!screen.orientation) {
-    console.warn("Screen Orientation API not supported");
+    console.warn('Screen Orientation API not supported');
     return;
   }
 
@@ -146,11 +146,11 @@ export function enforceLandscapeOnMobile(): void {
 
   // Show orientation warning overlay
   function showOrientationWarning(): void {
-    let overlay = document.getElementById("orientation-overlay");
+    let overlay = document.getElementById('orientation-overlay');
 
     if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.id = "orientation-overlay";
+      overlay = document.createElement('div');
+      overlay.id = 'orientation-overlay';
       overlay.innerHTML = `
         <div style="text-align: center;">
           <svg width="100" height="100" viewBox="0 0 100 100" style="margin-bottom: 20px;">
@@ -177,15 +177,15 @@ export function enforceLandscapeOnMobile(): void {
       `;
       document.body.appendChild(overlay);
     } else {
-      overlay.style.display = "flex";
+      overlay.style.display = 'flex';
     }
   }
 
   // Hide orientation warning overlay
   function hideOrientationWarning(): void {
-    const overlay = document.getElementById("orientation-overlay");
+    const overlay = document.getElementById('orientation-overlay');
     if (overlay) {
-      overlay.style.display = "none";
+      overlay.style.display = 'none';
     }
   }
 
@@ -193,6 +193,6 @@ export function enforceLandscapeOnMobile(): void {
   checkOrientation();
 
   // Listen for orientation changes
-  window.addEventListener("resize", checkOrientation);
-  window.addEventListener("orientationchange", checkOrientation);
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
 }

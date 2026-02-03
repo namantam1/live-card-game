@@ -1,14 +1,14 @@
-import Phaser from "phaser";
-import ScoreBoard from "../objects/game/ScoreBoard";
-import BiddingUI from "../objects/game/BiddingUI";
-import RoundModal from "../objects/game/RoundModal";
-import GameOverModal from "../objects/game/GameOverModal";
-import SettingsModal from "../objects/game/SettingsModal";
-import AudioManager from "../managers/AudioManager";
-import GameScene from "./GameScene";
-import Common from "../objects/game/Common";
-import type { GameModeBase } from "../modes/GameModeBase";
-import { EVENTS, UI_TIMING } from "../utils/constants";
+import Phaser from 'phaser';
+import ScoreBoard from '../objects/game/ScoreBoard';
+import BiddingUI from '../objects/game/BiddingUI';
+import RoundModal from '../objects/game/RoundModal';
+import GameOverModal from '../objects/game/GameOverModal';
+import SettingsModal from '../objects/game/SettingsModal';
+import AudioManager from '../managers/AudioManager';
+import GameScene from './GameScene';
+import Common from '../objects/game/Common';
+import type { GameModeBase } from '../modes/GameModeBase';
+import { EVENTS, UI_TIMING } from '../utils/constants';
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -21,7 +21,7 @@ export default class UIScene extends Phaser.Scene {
   biddingUI!: BiddingUI;
 
   constructor() {
-    super({ key: "UIScene" });
+    super({ key: 'UIScene' });
   }
 
   init(data: any) {
@@ -31,28 +31,28 @@ export default class UIScene extends Phaser.Scene {
 
   create() {
     // Get reference to game scene
-    this.gameScene = this.scene.get("GameScene") as GameScene;
+    this.gameScene = this.scene.get('GameScene') as GameScene;
 
     // Create scoreboard - unified for both modes!
     this.scoreBoard = new ScoreBoard(
       this,
       false, // We'll update this based on game mode later if needed
       this.gameMode.getPlayers(),
-      this.gameMode.getCurrentRound(),
+      this.gameMode.getCurrentRound()
     );
 
     // Create modals
     this.roundModal = new RoundModal(
       this,
       () => this.gameScene.continueToNextRound(),
-      this.audioManager,
+      this.audioManager
     );
 
     this.gameOverModal = new GameOverModal(
       this,
       () => this.gameScene.restartGame(),
       () => this.gameScene.returnToMenu(),
-      this.audioManager,
+      this.audioManager
     );
 
     // Get responsive sizing from centralized config
@@ -73,7 +73,7 @@ export default class UIScene extends Phaser.Scene {
     this.biddingUI = new BiddingUI(
       this,
       (bid) => this.gameMode.onBidSelected(bid),
-      this.audioManager,
+      this.audioManager
     );
 
     // Setup unified event listeners
@@ -88,7 +88,7 @@ export default class UIScene extends Phaser.Scene {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound(),
+        this.gameMode.getCurrentRound()
       );
 
       // Note: Don't show bidding UI here!
@@ -98,7 +98,7 @@ export default class UIScene extends Phaser.Scene {
     // Turn changed
     this.gameMode.on(EVENTS.TURN_CHANGED, ({ isMyTurn }: any) => {
       const phase = this.gameMode.getPhase();
-      if (phase === "bidding" && isMyTurn) {
+      if (phase === 'bidding' && isMyTurn) {
         // Small delay to allow card animations to settle before showing UI
         this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => {
           const recommendedBid = this.gameMode.getRecommendedBid();
@@ -112,7 +112,7 @@ export default class UIScene extends Phaser.Scene {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound(),
+        this.gameMode.getCurrentRound()
       );
 
       // Hide bidding UI if it was the local player
@@ -125,7 +125,7 @@ export default class UIScene extends Phaser.Scene {
     this.gameMode.on(EVENTS.ROUND_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound(),
+        this.gameMode.getCurrentRound()
       );
       this.time.delayedCall(500, () => this.roundModal.showRoundResults(data));
     });
@@ -134,10 +134,10 @@ export default class UIScene extends Phaser.Scene {
     this.gameMode.on(EVENTS.GAME_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound(),
+        this.gameMode.getCurrentRound()
       );
       this.time.delayedCall(500, () =>
-        this.gameOverModal.showGameResults(data),
+        this.gameOverModal.showGameResults(data)
       );
     });
   }

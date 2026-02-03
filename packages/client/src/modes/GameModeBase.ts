@@ -1,9 +1,9 @@
-import Phaser from "phaser";
-import type { Scene } from "phaser";
-import type Player from "../objects/Player";
-import type TrickArea from "../objects/TrickArea";
-import type { CardData } from "../type";
-import { type GameEvent } from "../utils/constants";
+import Phaser from 'phaser';
+import type { Scene } from 'phaser';
+import type Player from '../objects/Player';
+import type TrickArea from '../objects/TrickArea';
+import type { CardData } from '../type';
+import { type GameEvent } from '../utils/constants';
 
 export interface PlayerData {
   name: string;
@@ -57,7 +57,7 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    * @param fn - The listener function
    * @param context - The context to invoke the listener with
    */
-  override on(event: GameModeEvent, fn: Function, context?: any): this {
+  override on(event: GameModeEvent, fn: () => void, context?: any): this {
     return super.on(event, fn, context);
   }
 
@@ -67,7 +67,7 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    * @param fn - The listener function
    * @param context - The context to invoke the listener with
    */
-  override once(event: GameModeEvent, fn: Function, context?: any): this {
+  override once(event: GameModeEvent, fn: () => void, context?: any): this {
     return super.once(event, fn, context);
   }
 
@@ -80,9 +80,9 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    */
   override off(
     event: GameModeEvent,
-    fn?: Function,
+    fn?: () => void,
     context?: any,
-    once?: boolean,
+    once?: boolean
   ): this {
     return super.off(event, fn, context, once);
   }
@@ -100,12 +100,12 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
 
   async initialize(_scene: Scene, _data: any): Promise<void> {
     console.error(`${this.constructor.name}: initialize() not implemented`);
-    throw new Error("initialize() must be implemented");
+    throw new Error('initialize() must be implemented');
   }
 
   async startGame(): Promise<void> {
     console.error(`${this.constructor.name}: startGame() not implemented`);
-    throw new Error("startGame() must be implemented");
+    throw new Error('startGame() must be implemented');
   }
 
   cleanup(): void | Promise<void> {
@@ -116,24 +116,24 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
 
   createPlayers(_scene: Scene): Player[] {
     console.error(`${this.constructor.name}: createPlayers() not implemented`);
-    throw new Error("createPlayers() must be implemented");
+    throw new Error('createPlayers() must be implemented');
   }
 
   getPlayers(): PlayerData[] {
     console.error(`${this.constructor.name}: getPlayers() not implemented`);
-    throw new Error("getPlayers() must be implemented");
+    throw new Error('getPlayers() must be implemented');
   }
 
   getCurrentRound(): number {
     console.error(
-      `${this.constructor.name}: getCurrentRound() not implemented`,
+      `${this.constructor.name}: getCurrentRound() not implemented`
     );
-    throw new Error("getCurrentRound() must be implemented");
+    throw new Error('getCurrentRound() must be implemented');
   }
 
   getPhase(): string {
     console.error(`${this.constructor.name}: getPhase() not implemented`);
-    throw new Error("getPhase() must be implemented");
+    throw new Error('getPhase() must be implemented');
   }
 
   /**
@@ -142,7 +142,7 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    */
   getLocalPlayer(): PlayerData | null {
     console.error(`${this.constructor.name}: getLocalPlayer() not implemented`);
-    throw new Error("getLocalPlayer() must be implemented");
+    throw new Error('getLocalPlayer() must be implemented');
   }
 
   /**
@@ -164,33 +164,33 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
    */
   getRecommendedBid(): number | undefined {
     console.error(
-      `${this.constructor.name}: getRecommendedBid() not implemented`,
+      `${this.constructor.name}: getRecommendedBid() not implemented`
     );
-    throw new Error("getRecommendedBid() must be implemented");
+    throw new Error('getRecommendedBid() must be implemented');
   }
 
   // Game Actions
 
   onBidSelected(_bid: number): void {
     console.error(`${this.constructor.name}: onBidSelected() not implemented`);
-    throw new Error("onBidSelected() must be implemented");
+    throw new Error('onBidSelected() must be implemented');
   }
 
   onCardPlayed(_cardData: CardData): void {
     console.error(`${this.constructor.name}: onCardPlayed() not implemented`);
-    throw new Error("onCardPlayed() must be implemented");
+    throw new Error('onCardPlayed() must be implemented');
   }
 
   continueToNextRound(): void {
     console.error(
-      `${this.constructor.name}: continueToNextRound() not implemented`,
+      `${this.constructor.name}: continueToNextRound() not implemented`
     );
-    throw new Error("continueToNextRound() must be implemented");
+    throw new Error('continueToNextRound() must be implemented');
   }
 
   restartGame(): void {
     console.error(`${this.constructor.name}: restartGame() not implemented`);
-    throw new Error("restartGame() must be implemented");
+    throw new Error('restartGame() must be implemented');
   }
 
   returnToMenu(): void | Promise<void> {

@@ -2,8 +2,8 @@
  * Card comparison and value functions
  */
 
-import type { CardData, Suit } from "../types/";
-import { RANK_VALUES, TRUMP_SUIT } from "../constants/game";
+import type { CardData, Suit } from '../types/';
+import { RANK_VALUES, TRUMP_SUIT } from '../constants/game';
 
 /**
  * Get the numeric value of a card
@@ -24,7 +24,7 @@ export function getCardValue(card: CardData): number {
 export function compareCards(
   card1: CardData,
   card2: CardData,
-  leadSuit: Suit,
+  leadSuit: Suit
 ): number {
   // Trump (spades) beats non-trump
   if (card1.suit === TRUMP_SUIT && card2.suit !== TRUMP_SUIT) return 1;

@@ -7,7 +7,9 @@ const dependencies = Object.keys(packageJson.dependencies || {});
 
 // Filter out workspace dependencies (those starting with @call-break/)
 // We want to bundle those, but keep node_modules external
-const externalDeps = dependencies.filter(dep => !dep.startsWith('@call-break/'));
+const externalDeps = dependencies.filter(
+  (dep) => !dep.startsWith('@call-break/')
+);
 
 await build({
   entryPoints: ['src/index.ts'],

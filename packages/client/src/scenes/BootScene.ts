@@ -1,10 +1,10 @@
-import Phaser, { Scene } from "phaser";
-import { SUITS, RANKS, COLORS } from "../utils/constants";
-import { CARD_CONFIG } from "../utils/uiConfig";
+import Phaser, { Scene } from 'phaser';
+import { SUITS, RANKS, COLORS } from '../utils/constants';
+import { CARD_CONFIG } from '../utils/uiConfig';
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
-    super({ key: "BootScene" });
+    super({ key: 'BootScene' });
   }
 
   preload() {
@@ -17,10 +17,10 @@ export default class BootScene extends Phaser.Scene {
 
     // Loading text
     const loadingText = this.add
-      .text(centerX, centerY - 50, "Loading...", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "28px",
-        color: "#ffffff",
+      .text(centerX, centerY - 50, 'Loading...', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '28px',
+        color: '#ffffff',
       })
       .setOrigin(0.5);
 
@@ -34,21 +34,21 @@ export default class BootScene extends Phaser.Scene {
 
     // Percentage text
     const percentText = this.add
-      .text(centerX, centerY + 45, "0%", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "22px",
-        color: "#94a3b8",
+      .text(centerX, centerY + 45, '0%', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '22px',
+        color: '#94a3b8',
       })
       .setOrigin(0.5);
 
     // Update progress bar on load progress
-    this.load.on("progress", (value: number) => {
+    this.load.on('progress', (value: number) => {
       progressBar.width = 390 * value;
       percentText.setText(`${Math.round(value * 100)}%`);
     });
 
-    this.load.on("complete", () => {
-      loadingText.setText("Ready!");
+    this.load.on('complete', () => {
+      loadingText.setText('Ready!');
       percentText.destroy();
     });
   }
@@ -67,23 +67,23 @@ export default class BootScene extends Phaser.Scene {
     }
 
     // Card back using centralized card dimensions
-    scene.load.svg("card-back", "cards/back.svg", {
+    scene.load.svg('card-back', 'cards/back.svg', {
       width: CARD_CONFIG.WIDTH,
       height: CARD_CONFIG.HEIGHT,
     });
 
-    scene.load.image("table-bg", "assets/table-bg.webp");
+    scene.load.image('table-bg', 'assets/table-bg.webp');
 
     // Audio (optional - check if exists)
-    scene.load.audio("bgm", "audio/bgm.mp3").on("loaderror", () => {
-      console.log("BGM not found, continuing without music");
+    scene.load.audio('bgm', 'audio/bgm.mp3').on('loaderror', () => {
+      console.log('BGM not found, continuing without music');
     });
   }
 
   create() {
     // Small delay before transitioning to menu
     this.time.delayedCall(500, () => {
-      this.scene.start("MenuScene");
+      this.scene.start('MenuScene');
     });
   }
 }

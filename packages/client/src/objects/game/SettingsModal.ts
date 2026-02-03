@@ -1,11 +1,11 @@
-import { Scene } from "phaser";
-import BaseModal from "./BaseModal";
-import AudioManager from "../../managers/AudioManager";
-import { COLORS } from "../../utils/constants";
+import { Scene } from 'phaser';
+import BaseModal from './BaseModal';
+import AudioManager from '../../managers/AudioManager';
+import { COLORS } from '../../utils/constants';
 
 const HEIGHT = 300;
 const WIDTH = 300;
-const SETTINGS_LABEL_FONT_SIZE = "22px";
+const SETTINGS_LABEL_FONT_SIZE = '22px';
 const ITEM_SPACING = 50;
 
 export default class SettingsModal extends BaseModal {
@@ -18,16 +18,16 @@ export default class SettingsModal extends BaseModal {
       audioManager: AudioManager;
       onQuit: () => void;
       onNewGame: null | (() => void);
-    },
+    }
   ) {
     const { onNewGame, onQuit, audioManager } = config;
     super(
       scene,
-      "Settings",
+      'Settings',
       audioManager,
       true,
       WIDTH,
-      onNewGame ? HEIGHT : HEIGHT - ITEM_SPACING,
+      onNewGame ? HEIGHT : HEIGHT - ITEM_SPACING
     );
     this.onNewGame = onNewGame;
     this.onQuit = onQuit;
@@ -42,11 +42,11 @@ export default class SettingsModal extends BaseModal {
     this.createSettingRow(
       0,
       startY,
-      "Music",
+      'Music',
       this.audioManager.isMusicEnabled(),
       () => {
         this.audioManager.toggleMusic();
-      },
+      }
     );
     startY += ITEM_SPACING;
 
@@ -54,11 +54,11 @@ export default class SettingsModal extends BaseModal {
     this.createSettingRow(
       0,
       startY,
-      "Sound",
+      'Sound',
       this.audioManager.isSoundEnabled(),
       () => {
         this.audioManager.toggleButtonSound();
-      },
+      }
     );
     startY += ITEM_SPACING;
 
@@ -73,7 +73,7 @@ export default class SettingsModal extends BaseModal {
       const newGameBtn = this.createModalButton({
         x: 0,
         y: startY + 15,
-        text: "New Game",
+        text: 'New Game',
         callback: () => {
           this.hide();
           this.onNewGame!();
@@ -86,7 +86,7 @@ export default class SettingsModal extends BaseModal {
     const quitBtn = this.createModalButton({
       x: 0,
       y: startY + 15,
-      text: "Quit",
+      text: 'Quit',
       callback: () => {
         this.hide();
         this.onQuit();
@@ -101,7 +101,7 @@ export default class SettingsModal extends BaseModal {
     y: number,
     label: string,
     initialState: boolean,
-    callback: () => void,
+    callback: () => void
   ) {
     const container = this.scene.add.container(x, y);
     let isEnabled = initialState;
@@ -109,9 +109,9 @@ export default class SettingsModal extends BaseModal {
     // Label with responsive font size
     const labelText = this.scene.add
       .text(-100, 0, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: 'Arial, sans-serif',
         fontSize: SETTINGS_LABEL_FONT_SIZE,
-        color: "#e2e8f0",
+        color: '#e2e8f0',
       })
       .setOrigin(0, 0.5);
 
@@ -129,7 +129,7 @@ export default class SettingsModal extends BaseModal {
         -toggleHeight / 2,
         toggleWidth,
         toggleHeight,
-        toggleHeight / 2,
+        toggleHeight / 2
       );
 
       toggleKnob.clear();
@@ -145,10 +145,10 @@ export default class SettingsModal extends BaseModal {
       toggleWidth + 10,
       toggleHeight + 10,
       0x000000,
-      0,
+      0
     );
     hitArea.setInteractive({ useHandCursor: true });
-    hitArea.on("pointerdown", () => {
+    hitArea.on('pointerdown', () => {
       isEnabled = !isEnabled;
       drawToggle();
       this.audioManager.playButtonSound();

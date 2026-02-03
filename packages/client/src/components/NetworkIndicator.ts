@@ -1,6 +1,6 @@
-import Phaser, { Scene } from "phaser";
+import Phaser, { Scene } from 'phaser';
 
-export type Quality = "good" | "fair" | "poor" | "offline";
+export type Quality = 'good' | 'fair' | 'poor' | 'offline';
 
 const size = 40;
 
@@ -17,7 +17,7 @@ export default class NetworkIndicator {
   constructor(scene: Scene, x: number, y: number) {
     this.scene = scene;
     this.container = scene.add.container(x, y);
-    this.currentQuality = "good";
+    this.currentQuality = 'good';
     this.isReconnecting = false;
 
     this.createIndicator();
@@ -46,7 +46,7 @@ export default class NetworkIndicator {
         10,
         barWidth,
         height,
-        0x22c55e,
+        0x22c55e
       );
       bar.setOrigin(0, 1);
       this.bars.push(bar);
@@ -55,11 +55,11 @@ export default class NetworkIndicator {
 
     // Status text (hidden by default)
     this.statusText = this.scene.add
-      .text(0, 35, "", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "18px",
-        color: "#94a3b8",
-        align: "center",
+      .text(0, 35, '', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '18px',
+        color: '#94a3b8',
+        align: 'center',
       })
       .setOrigin(0.5, 0);
     this.statusText.setVisible(false);
@@ -72,11 +72,11 @@ export default class NetworkIndicator {
     this.container.setSize(size * 2, size * 2);
     this.container.setInteractive(
       new Phaser.Geom.Circle(0, 0, size),
-      Phaser.Geom.Circle.Contains,
+      Phaser.Geom.Circle.Contains
     );
 
-    this.container.on("pointerover", () => this.showTooltip());
-    this.container.on("pointerout", () => this.hideTooltip());
+    this.container.on('pointerover', () => this.showTooltip());
+    this.container.on('pointerout', () => this.hideTooltip());
     this.container.setDepth(1000);
     this.container.setVisible(true);
   }
@@ -129,7 +129,7 @@ export default class NetworkIndicator {
 
   showReconnecting(attempt: number = 1) {
     this.isReconnecting = true;
-    this.updateQuality("offline");
+    this.updateQuality('offline');
 
     // Add pulsing animation
     if (!this.pulseAnimation) {
@@ -149,7 +149,7 @@ export default class NetworkIndicator {
 
   showReconnected() {
     this.isReconnecting = false;
-    this.updateQuality("good");
+    this.updateQuality('good');
 
     // Flash green
     this.scene.tweens.add({
@@ -166,15 +166,15 @@ export default class NetworkIndicator {
 
   showTooltip() {
     const messages = {
-      good: "Good",
-      fair: "Fair",
-      poor: "Poor",
-      offline: "Offline",
+      good: 'Good',
+      fair: 'Fair',
+      poor: 'Poor',
+      offline: 'Offline',
     };
 
     const message = this.isReconnecting
-      ? "Reconnecting..."
-      : messages[this.currentQuality] || "Unknown";
+      ? 'Reconnecting...'
+      : messages[this.currentQuality] || 'Unknown';
 
     this.statusText.setText(message);
     this.statusText.setVisible(true);

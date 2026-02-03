@@ -1,4 +1,4 @@
-import { Room, type Client, CloseCode } from "colyseus";
+import { Room, type Client, CloseCode } from 'colyseus';
 import {
   GameState,
   Player,
@@ -9,11 +9,11 @@ import {
   getValidCards,
   calculateScore,
   getDealtCards,
-} from "./GameState.js";
-import { calculateBid } from "@call-break/shared";
+} from './GameState.js';
+import { calculateBid } from '@call-break/shared';
 
-const EMOJIS = ["😎", "🤖", "🦊", "🐱"];
-const BOT_NAMES = ["Bot Alice", "Bot Bob", "Bot Charlie"];
+const EMOJIS = ['😎', '🤖', '🦊', '🐱'];
+const BOT_NAMES = ['Bot Alice', 'Bot Bob', 'Bot Charlie'];
 const CARDS_PER_PLAYER = 13;
 const NUM_PLAYERS = 4;
 const BOT_DELAY = 1000; // Delay for bot actions in ms
@@ -45,21 +45,21 @@ export class CallBreakRoom extends Room {
     console.log(`Room created: ${this.state.roomCode}`);
 
     // Handle messages
-    this.onMessage("ready", (client) => this.handleReady(client));
-    this.onMessage("bid", (client, data: BidData) =>
-      this.handleBid(client, data),
+    this.onMessage('ready', (client) => this.handleReady(client));
+    this.onMessage('bid', (client, data: BidData) =>
+      this.handleBid(client, data)
     );
-    this.onMessage("playCard", (client, data: PlayCardData) =>
-      this.handlePlayCard(client, data),
+    this.onMessage('playCard', (client, data: PlayCardData) =>
+      this.handlePlayCard(client, data)
     );
-    this.onMessage("nextRound", (client) => this.handleNextRound(client));
+    this.onMessage('nextRound', (client) => this.handleNextRound(client));
     // TODO: This restart doesn;t make any sense in multiplayer, Do cleanup
-    this.onMessage("restart", (client) => this.handleRestart(client));
+    this.onMessage('restart', (client) => this.handleRestart(client));
   }
 
   generateRoomCode(): string {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "";
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
     for (let i = 0; i < 4; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -70,7 +70,7 @@ export class CallBreakRoom extends Room {
     // Validate room code if provided (for join attempts, not create)
     if (options.roomCode && options.roomCode !== this.state.roomCode) {
       throw new Error(
-        `Invalid room code. Room code is ${this.state.roomCode}, but got ${options.roomCode}`,
+        `Invalid room code. Room code is ${this.state.roomCode}, but got ${options.roomCode}`
       );
     }
 
@@ -87,11 +87,11 @@ export class CallBreakRoom extends Room {
     this.state.playerOrder.push(client.sessionId);
 
     console.log(
-      `${name} joined room ${this.state.roomCode} (seat ${seatIndex})`,
+      `${name} joined room ${this.state.roomCode} (seat ${seatIndex})`
     );
 
     // Notify client of their seat
-    client.send("seated", { seatIndex, roomCode: this.state.roomCode });
+    client.send('seated', { seatIndex, roomCode: this.state.roomCode });
   }
 
   async onLeave(client: Client, code: number): Promise<void> {
@@ -100,7 +100,7 @@ export class CallBreakRoom extends Room {
     if (player) {
       player.isConnected = false;
       console.log(
-        `${player.name} disconnected (code: ${code}, consented: ${consented})`,
+        `${player.name} disconnected (code: ${code}, consented: ${consented})`
       );
 
       // If player intentionally left (consented), remove them immediately
@@ -111,16 +111,16 @@ export class CallBreakRoom extends Room {
         if (orderIndex !== -1) {
           this.state.playerOrder.splice(orderIndex, 1);
         }
-        if (this.state.phase !== "waiting") {
-          this.broadcast("playerLeft", { name: player.name });
+        if (this.state.phase !== 'waiting') {
+          this.broadcast('playerLeft', { name: player.name });
         }
 
         // If we're in active gameplay and all human players left, end the room
         const remainingHumans = Array.from(this.state.players.values()).filter(
-          (p) => !p.isBot,
+          (p) => !p.isBot
         );
-        if (remainingHumans.length === 0 && this.state.phase !== "waiting") {
-          console.log("All human players left, ending room");
+        if (remainingHumans.length === 0 && this.state.phase !== 'waiting') {
+          console.log('All human players left, ending room');
           await this.disconnect();
         }
         return;
@@ -129,7 +129,7 @@ export class CallBreakRoom extends Room {
       try {
         // Allow reconnection within 60 seconds for unintentional disconnects
         console.log(
-          `${player.name} disconnected unexpectedly. Allowing 60s for reconnection...`,
+          `${player.name} disconnected unexpectedly. Allowing 60s for reconnection...`
         );
         await this.allowReconnection(client, 60);
 
@@ -137,33 +137,33 @@ export class CallBreakRoom extends Room {
         console.log(`${player.name} reconnected successfully`);
 
         // Notify player they've reconnected
-        client.send("reconnected", {
-          message: "Successfully reconnected",
+        client.send('reconnected', {
+          message: 'Successfully reconnected',
           roomCode: this.state.roomCode,
         });
 
         // Broadcast to other players
         this.broadcast(
-          "playerReconnected",
+          'playerReconnected',
           {
             playerId: client.sessionId,
             name: player.name,
           },
-          { except: client },
+          { except: client }
         );
       } catch (e) {
         // Player didn't reconnect, handle game state
         console.log(`${player.name} failed to reconnect within timeout`);
-        if (this.state.phase !== "waiting") {
-          this.broadcast("playerLeft", { name: player.name });
+        if (this.state.phase !== 'waiting') {
+          this.broadcast('playerLeft', { name: player.name });
         }
 
         // If all human players are gone, end the room
         const remainingHumans = Array.from(this.state.players.values()).filter(
-          (p) => !p.isBot && p.isConnected,
+          (p) => !p.isBot && p.isConnected
         );
         if (remainingHumans.length === 0) {
-          console.log("All human players disconnected, ending room");
+          console.log('All human players disconnected, ending room');
           await this.disconnect();
         }
       }
@@ -178,7 +178,7 @@ export class CallBreakRoom extends Room {
 
     // Check if all human players are ready
     const humanPlayers = Array.from(this.state.players.values()).filter(
-      (p) => !p.isBot,
+      (p) => !p.isBot
     );
     const allHumansReady = humanPlayers.every((p) => p.isReady);
 
@@ -215,7 +215,7 @@ export class CallBreakRoom extends Room {
   }
 
   startGame(): void {
-    console.log("Starting game!");
+    console.log('Starting game!');
     this.state.currentRound = 1;
 
     // Reset all players
@@ -228,9 +228,9 @@ export class CallBreakRoom extends Room {
   }
 
   startRound(): void {
-    this.state.phase = "dealing";
+    this.state.phase = 'dealing';
     this.state.trickNumber = 0;
-    this.state.leadSuit = "";
+    this.state.leadSuit = '';
     // Rotate the starting bidder each round (round 1 -> player 0, round 2 -> player 1, etc.)
     this.state.biddingPlayerIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
     this.state.currentTrick.clear();
@@ -247,13 +247,13 @@ export class CallBreakRoom extends Room {
     this.dealCards();
 
     // Notify all clients that dealing is done
-    this.broadcast("dealt");
+    this.broadcast('dealt');
 
     // Start bidding after a short delay
     this.clock.setTimeout(() => {
-      this.state.phase = "bidding";
+      this.state.phase = 'bidding';
       this.state.currentTurn =
-        this.state.playerOrder[this.state.biddingPlayerIndex] || "";
+        this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if first player is a bot
       this.checkBotTurn();
@@ -279,7 +279,7 @@ export class CallBreakRoom extends Room {
   }
 
   handleBid(client: Client, data: BidData): void {
-    if (this.state.phase !== "bidding") return;
+    if (this.state.phase !== 'bidding') return;
     if (this.state.currentTurn !== client.sessionId) return;
 
     const player = this.state.players.get(client.sessionId);
@@ -292,14 +292,14 @@ export class CallBreakRoom extends Room {
 
     // Count how many players have bid
     const bidsPlaced = Array.from(this.state.players.values()).filter(
-      (p) => p.bid > 0,
+      (p) => p.bid > 0
     ).length;
 
     if (bidsPlaced >= NUM_PLAYERS) {
       // All bids placed, start playing - first bidder starts
       const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
-      this.state.phase = "playing";
-      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || "";
+      this.state.phase = 'playing';
+      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
 
       // Check if first player in playing phase is a bot
       this.checkBotTurn();
@@ -308,7 +308,7 @@ export class CallBreakRoom extends Room {
       this.state.biddingPlayerIndex =
         (this.state.biddingPlayerIndex + 1) % NUM_PLAYERS;
       this.state.currentTurn =
-        this.state.playerOrder[this.state.biddingPlayerIndex] || "";
+        this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if next bidder is a bot
       this.checkBotTurn();
@@ -316,7 +316,7 @@ export class CallBreakRoom extends Room {
   }
 
   handlePlayCard(client: Client, data: PlayCardData): void {
-    if (this.state.phase !== "playing") return;
+    if (this.state.phase !== 'playing') return;
     if (this.state.currentTurn !== client.sessionId) return;
 
     this.playCard(client.sessionId, data.cardId);
@@ -350,7 +350,7 @@ export class CallBreakRoom extends Room {
           rank: e!.card.rank as any,
           value: e!.card.value,
         },
-      })),
+      }))
     );
     if (!validCards.find((c) => c.id === cardId)) return;
 
@@ -385,7 +385,7 @@ export class CallBreakRoom extends Room {
       // Next player's turn
       const currentIndex = this.state.playerOrder.indexOf(playerId);
       const nextIndex = (currentIndex + 1) % NUM_PLAYERS;
-      this.state.currentTurn = this.state.playerOrder[nextIndex] || "";
+      this.state.currentTurn = this.state.playerOrder[nextIndex] || '';
 
       // Check if next player is a bot
       this.checkBotTurn();
@@ -393,28 +393,28 @@ export class CallBreakRoom extends Room {
   }
 
   completeTrick(): void {
-    this.state.phase = "trickEnd";
+    this.state.phase = 'trickEnd';
 
     // Find winner
     const winnerId = this.findTrickWinner();
 
     // Validate winner exists
     if (!winnerId) {
-      console.error("No trick winner found! Trick cannot be completed.");
+      console.error('No trick winner found! Trick cannot be completed.');
       // Fallback: use first player in order
-      this.state.currentTurn = this.state.playerOrder[0] || "";
-      this.state.phase = "playing";
+      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.phase = 'playing';
       return;
     }
 
     const winner = this.state.players.get(winnerId);
     if (!winner) {
       console.error(
-        `Winner ${winnerId} not found in players! Player may have disconnected.`,
+        `Winner ${winnerId} not found in players! Player may have disconnected.`
       );
       // Fallback: use first available player
-      this.state.currentTurn = this.state.playerOrder[0] || "";
-      this.state.phase = "playing";
+      this.state.currentTurn = this.state.playerOrder[0] || '';
+      this.state.phase = 'playing';
       return;
     }
 
@@ -426,14 +426,14 @@ export class CallBreakRoom extends Room {
     // Wait, then clear trick and continue
     this.clock.setTimeout(() => {
       this.state.currentTrick.clear();
-      this.state.leadSuit = "";
+      this.state.leadSuit = '';
       this.state.trickNumber++;
-      this.state.trickWinner = "";
+      this.state.trickWinner = '';
 
       if (this.state.trickNumber >= CARDS_PER_PLAYER) {
         this.completeRound();
       } else {
-        this.state.phase = "playing";
+        this.state.phase = 'playing';
         this.state.currentTurn = winnerId; // Winner leads next trick
 
         // Check if winner is a bot
@@ -445,14 +445,14 @@ export class CallBreakRoom extends Room {
   findTrickWinner(): string {
     // Validate trick has entries
     if (this.state.currentTrick.length === 0) {
-      console.error("findTrickWinner called with empty trick!");
-      return "";
+      console.error('findTrickWinner called with empty trick!');
+      return '';
     }
 
     const firstEntry = this.state.currentTrick[0];
     if (!firstEntry) {
-      console.error("First trick entry is undefined!");
-      return "";
+      console.error('First trick entry is undefined!');
+      return '';
     }
 
     let winningEntry = firstEntry;
@@ -468,7 +468,7 @@ export class CallBreakRoom extends Room {
       }
     }
 
-    return winningEntry.playerId || "";
+    return winningEntry.playerId || '';
   }
 
   beats(card1: Card, card2: Card): boolean {
@@ -492,7 +492,7 @@ export class CallBreakRoom extends Room {
   }
 
   completeRound(): void {
-    this.state.phase = "roundEnd";
+    this.state.phase = 'roundEnd';
 
     // Calculate scores
     this.state.players.forEach((player) => {
@@ -501,14 +501,14 @@ export class CallBreakRoom extends Room {
       player.score += roundScore;
     });
 
-    console.log("Round complete!");
+    console.log('Round complete!');
   }
 
   handleNextRound(client: Client): void {
-    if (this.state.phase !== "roundEnd") return;
+    if (this.state.phase !== 'roundEnd') return;
 
     if (this.state.currentRound >= this.state.totalRounds) {
-      this.state.phase = "gameOver";
+      this.state.phase = 'gameOver';
     } else {
       this.state.currentRound++;
       this.startRound();
@@ -535,7 +535,7 @@ export class CallBreakRoom extends Room {
       }
     });
 
-    this.state.phase = "waiting";
+    this.state.phase = 'waiting';
     this.state.currentRound = 1;
   }
 
@@ -549,9 +549,9 @@ export class CallBreakRoom extends Room {
 
     // Add delay before bot action to make it feel natural
     this.clock.setTimeout(() => {
-      if (this.state.phase === "bidding") {
+      if (this.state.phase === 'bidding') {
         this.botBid(currentPlayerId);
-      } else if (this.state.phase === "playing") {
+      } else if (this.state.phase === 'playing') {
         this.botPlayCard(currentPlayerId);
       }
     }, BOT_DELAY);
@@ -572,7 +572,7 @@ export class CallBreakRoom extends Room {
     const bid = calculateBid(
       hand,
       this.state.trumpSuit as any,
-      this.state.maxBid,
+      this.state.maxBid
     );
 
     // Set bid
@@ -581,21 +581,21 @@ export class CallBreakRoom extends Room {
 
     // Count how many players have bid
     const bidsPlaced = Array.from(this.state.players.values()).filter(
-      (p) => p.bid > 0,
+      (p) => p.bid > 0
     ).length;
 
     if (bidsPlaced >= NUM_PLAYERS) {
       // All bids placed, start playing - first bidder starts
       const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
-      this.state.phase = "playing";
-      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || "";
+      this.state.phase = 'playing';
+      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
       this.checkBotTurn();
     } else {
       // Move to next bidder with wrap-around
       this.state.biddingPlayerIndex =
         (this.state.biddingPlayerIndex + 1) % NUM_PLAYERS;
       this.state.currentTurn =
-        this.state.playerOrder[this.state.biddingPlayerIndex] || "";
+        this.state.playerOrder[this.state.biddingPlayerIndex] || '';
       this.checkBotTurn();
     }
   }
@@ -622,7 +622,7 @@ export class CallBreakRoom extends Room {
           rank: e!.card.rank as any,
           value: e!.card.value,
         },
-      })),
+      }))
     );
     if (validCards.length === 0) return;
 
@@ -630,7 +630,7 @@ export class CallBreakRoom extends Room {
     let cardToPlay = this.selectBotCard(validCards, bot);
 
     console.log(
-      `${bot.name} (bot) playing ${cardToPlay.rank} of ${cardToPlay.suit}`,
+      `${bot.name} (bot) playing ${cardToPlay.rank} of ${cardToPlay.suit}`
     );
     this.playCard(botId, cardToPlay.id);
   }
@@ -687,7 +687,7 @@ export class CallBreakRoom extends Room {
     if (isLastPlayer && canWin) {
       // Last player and can win - play the lowest winning card
       const winningCards = validCards.filter(
-        (c) => winningCard && this.cardBeats(c, winningCard),
+        (c) => winningCard && this.cardBeats(c, winningCard)
       );
       return winningCards.sort((a, b) => a.value - b.value)[0];
     }
@@ -695,7 +695,7 @@ export class CallBreakRoom extends Room {
     if (canWin && bot.tricksWon < bot.bid) {
       // Need more tricks - try to win
       const winningCards = validCards.filter(
-        (c) => winningCard && this.cardBeats(c, winningCard),
+        (c) => winningCard && this.cardBeats(c, winningCard)
       );
       return winningCards.sort((a, b) => a.value - b.value)[0]; // Lowest winning card
     }

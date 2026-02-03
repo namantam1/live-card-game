@@ -1,7 +1,7 @@
-import Phaser, { Scene } from "phaser";
-import { CARD, COLORS } from "../utils/constants";
-import { getCardAssetKey } from "../utils/cards";
-import type { CardData } from "../type";
+import Phaser, { Scene } from 'phaser';
+import { CARD, COLORS } from '../utils/constants';
+import { getCardAssetKey } from '../utils/cards';
+import type { CardData } from '../type';
 
 export interface CardConfig {
   x: number;
@@ -37,7 +37,7 @@ export default class Card {
 
     // Create card sprite
     const textureKey = this.isFaceDown
-      ? "card-back"
+      ? 'card-back'
       : getCardAssetKey(config.cardData);
     this.initialScale = this.isFaceDown ? CARD.SCALE * 0.6 : CARD.SCALE;
     this.sprite = scene.add.image(0, 0, textureKey);
@@ -53,7 +53,7 @@ export default class Card {
     // Set size for hit area
     this.container.setSize(
       CARD.WIDTH * this.initialScale,
-      CARD.HEIGHT * this.initialScale,
+      CARD.HEIGHT * this.initialScale
     );
   }
 
@@ -76,7 +76,7 @@ export default class Card {
           targets: this.container,
           y: this.originalY - CARD.HOVER_LIFT,
           duration: 200,
-          ease: "Back.easeOut",
+          ease: 'Back.easeOut',
         });
         this.showGlow();
       }
@@ -95,7 +95,7 @@ export default class Card {
           targets: this.container,
           y: this.originalY,
           duration: 150,
-          ease: "Quad.easeOut",
+          ease: 'Quad.easeOut',
         });
       }
 
@@ -118,15 +118,15 @@ export default class Card {
   }
 
   setupInteraction() {
-    this.container.on("pointerover", this.onHover, this);
-    this.container.on("pointerout", this.onHoverEnd, this);
-    this.container.on("pointerdown", this.onPointerDown, this);
+    this.container.on('pointerover', this.onHover, this);
+    this.container.on('pointerout', this.onHoverEnd, this);
+    this.container.on('pointerdown', this.onPointerDown, this);
   }
 
   removeInteraction() {
-    this.container.off("pointerover", this.onHover, this);
-    this.container.off("pointerout", this.onHoverEnd, this);
-    this.container.off("pointerdown", this.onPointerDown, this);
+    this.container.off('pointerover', this.onHover, this);
+    this.container.off('pointerout', this.onHoverEnd, this);
+    this.container.off('pointerdown', this.onPointerDown, this);
   }
 
   onHover() {
@@ -139,7 +139,7 @@ export default class Card {
       scaleX: 1.05 * CARD.SCALE,
       scaleY: 1.05 * CARD.SCALE,
       duration: 100,
-      ease: "Back.easeOut",
+      ease: 'Back.easeOut',
     });
   }
 
@@ -153,7 +153,7 @@ export default class Card {
       scaleX: 1 * CARD.SCALE,
       scaleY: 1 * CARD.SCALE,
       duration: 100,
-      ease: "Quad.easeOut",
+      ease: 'Quad.easeOut',
     });
   }
 
@@ -179,7 +179,7 @@ export default class Card {
       -cardHeight / 2 - 2,
       cardWidth,
       cardHeight + 4,
-      8,
+      8
     );
     this.glow.setVisible(true);
   }
@@ -196,10 +196,10 @@ export default class Card {
         targets: this.sprite,
         // scaleX: 0,
         duration: 100,
-        ease: "Quad.easeIn",
+        ease: 'Quad.easeIn',
         onComplete: () => {
           const textureKey = toFaceDown
-            ? "card-back"
+            ? 'card-back'
             : getCardAssetKey(this.cardData);
           this.sprite.setTexture(textureKey);
           this.isFaceDown = toFaceDown;
@@ -208,7 +208,7 @@ export default class Card {
             targets: this.sprite,
             //scaleX: CARD.SCALE,
             duration: 100,
-            ease: "Quad.easeOut",
+            ease: 'Quad.easeOut',
             onComplete: resolve,
           });
         },
@@ -242,7 +242,7 @@ export default class Card {
       alpha,
       animate = false,
       duration = 200,
-      ease = "Quad.easeOut",
+      ease = 'Quad.easeOut',
       delay = 0,
       onComplete,
       moveToTop = false,

@@ -1,4 +1,4 @@
-import { Scene } from "phaser";
+import { Scene } from 'phaser';
 
 export default class AudioManager {
   scene: any;
@@ -11,14 +11,14 @@ export default class AudioManager {
   constructor(scene: Scene) {
     this.scene = scene;
     // Load preferences from localStorage
-    const savedMusicEnabled = localStorage.getItem("audioMusicEnabled");
-    const savedSoundEnabled = localStorage.getItem("audioSoundEnabled");
+    const savedMusicEnabled = localStorage.getItem('audioMusicEnabled');
+    const savedSoundEnabled = localStorage.getItem('audioSoundEnabled');
 
     this.enabled = true;
     this.musicEnabled =
-      savedMusicEnabled !== null ? savedMusicEnabled === "true" : true;
+      savedMusicEnabled !== null ? savedMusicEnabled === 'true' : true;
     this.soundEnabled =
-      savedSoundEnabled !== null ? savedSoundEnabled === "true" : true;
+      savedSoundEnabled !== null ? savedSoundEnabled === 'true' : true;
     this.bgMusic = null;
     this.audioContext = null;
     this.initialized = false;
@@ -37,11 +37,11 @@ export default class AudioManager {
           window.AudioContext || (window as any).webkitAudioContext
         )();
       } catch (e) {
-        console.log("Could not create AudioContext");
+        console.log('Could not create AudioContext');
       }
     }
     // Resume if suspended
-    if (this.audioContext?.state === "suspended") {
+    if (this.audioContext?.state === 'suspended') {
       this.audioContext.resume();
     }
   }
@@ -51,9 +51,9 @@ export default class AudioManager {
     if (this.bgMusic && this.bgMusic.isPlaying) return;
 
     try {
-      if (this.scene.cache.audio.exists("bgm")) {
+      if (this.scene.cache.audio.exists('bgm')) {
         if (!this.bgMusic) {
-          this.bgMusic = this.scene.sound.add("bgm", {
+          this.bgMusic = this.scene.sound.add('bgm', {
             volume: 0.3,
             loop: true,
           });
@@ -61,7 +61,7 @@ export default class AudioManager {
         this.bgMusic!.play();
       }
     } catch (e) {
-      console.log("Could not start background music");
+      console.log('Could not start background music');
     }
   }
 
@@ -88,7 +88,7 @@ export default class AudioManager {
 
   toggleMusic() {
     this.musicEnabled = !this.musicEnabled;
-    localStorage.setItem("audioMusicEnabled", String(this.musicEnabled));
+    localStorage.setItem('audioMusicEnabled', String(this.musicEnabled));
 
     if (this.musicEnabled) {
       this.startBackgroundMusic();
@@ -101,7 +101,7 @@ export default class AudioManager {
 
   toggleButtonSound() {
     this.soundEnabled = !this.soundEnabled;
-    localStorage.setItem("audioSoundEnabled", String(this.soundEnabled));
+    localStorage.setItem('audioSoundEnabled', String(this.soundEnabled));
     return this.soundEnabled;
   }
 
@@ -125,12 +125,12 @@ export default class AudioManager {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = 800;
-    oscillator.type = "sine";
+    oscillator.type = 'sine';
 
     gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.01,
-      this.audioContext.currentTime + 0.1,
+      this.audioContext.currentTime + 0.1
     );
 
     oscillator.start(this.audioContext.currentTime);
@@ -150,12 +150,12 @@ export default class AudioManager {
       gainNode.connect(this.audioContext!.destination);
 
       oscillator.frequency.value = freq;
-      oscillator.type = "triangle";
+      oscillator.type = 'triangle';
 
       gainNode.gain.setValueAtTime(0.15, this.audioContext!.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
-        this.audioContext!.currentTime + 0.3,
+        this.audioContext!.currentTime + 0.3
       );
 
       oscillator.start(this.audioContext!.currentTime + i * 0.05);
@@ -175,12 +175,12 @@ export default class AudioManager {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = 600;
-    oscillator.type = "sine";
+    oscillator.type = 'sine';
 
     gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.01,
-      this.audioContext.currentTime + 0.05,
+      this.audioContext.currentTime + 0.05
     );
 
     oscillator.start(this.audioContext.currentTime);
@@ -200,12 +200,12 @@ export default class AudioManager {
       gainNode.connect(this.audioContext!.destination);
 
       oscillator.frequency.value = freq;
-      oscillator.type = "sine";
+      oscillator.type = 'sine';
 
       gainNode.gain.setValueAtTime(0.2, this.audioContext!.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
-        this.audioContext!.currentTime + 0.4,
+        this.audioContext!.currentTime + 0.4
       );
 
       oscillator.start(this.audioContext!.currentTime + i * 0.1);

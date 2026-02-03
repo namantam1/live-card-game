@@ -1,14 +1,14 @@
-import NetworkIndicator from "../components/NetworkIndicator";
-import AudioManager from "../managers/AudioManager";
-import SettingsModal from "../objects/game/SettingsModal";
-import type { CardData } from "../type";
-import { createDeck, shuffleDeck } from "../utils/cards";
-import { SUITS } from "../utils/constants";
-import ScoreBoard from "../objects/game/ScoreBoard";
-import Common from "../objects/game/Common";
-import Player from "../objects/Player";
-import TrickArea from "../objects/TrickArea";
-import BootScene from "./BootScene";
+import NetworkIndicator from '../components/NetworkIndicator';
+import AudioManager from '../managers/AudioManager';
+import SettingsModal from '../objects/game/SettingsModal';
+import type { CardData } from '../type';
+import { createDeck, shuffleDeck } from '../utils/cards';
+import { SUITS } from '../utils/constants';
+import ScoreBoard from '../objects/game/ScoreBoard';
+import Common from '../objects/game/Common';
+import Player from '../objects/Player';
+import TrickArea from '../objects/TrickArea';
+import BootScene from './BootScene';
 
 const CARD: CardData = createDeck()[0];
 
@@ -16,7 +16,7 @@ export default class DebugScene extends Phaser.Scene {
   audioManager: AudioManager = new AudioManager(this);
 
   constructor() {
-    super({ key: "DebugScene" });
+    super({ key: 'DebugScene' });
   }
 
   preload() {
@@ -25,7 +25,7 @@ export default class DebugScene extends Phaser.Scene {
 
   create() {
     // set bg color to dark gray
-    this.cameras.main.setBackgroundColor("#2d2d2d");
+    this.cameras.main.setBackgroundColor('#2d2d2d');
     const { width, height } = this.cameras.main;
 
     // set bg image if available
@@ -54,10 +54,10 @@ export default class DebugScene extends Phaser.Scene {
     // );
 
     const players = [
-      { id: "player1", name: "Alice", emoji: "😀", score: 10 },
-      { id: "player2", name: "Bob", emoji: "😎", score: 20 },
-      { id: "player3", name: "Charlie", emoji: "🤠", score: 15 },
-      { id: "player4", name: "Diana", emoji: "🧐", score: 25 },
+      { id: 'player1', name: 'Alice', emoji: '😀', score: 10 },
+      { id: 'player2', name: 'Bob', emoji: '😎', score: 20 },
+      { id: 'player3', name: 'Charlie', emoji: '🤠', score: 15 },
+      { id: 'player4', name: 'Diana', emoji: '🧐', score: 25 },
     ];
     const scoreboard = new ScoreBoard(this, false, players, 0);
     scoreboard.updateScoreboard(players, 2);
@@ -107,10 +107,10 @@ export default class DebugScene extends Phaser.Scene {
     const setting = new SettingsModal(this, {
       audioManager: this.audioManager,
       onNewGame: () => {
-        console.log("New Game clicked");
+        console.log('New Game clicked');
       },
       onQuit: () => {
-        console.log("Quit clicked");
+        console.log('Quit clicked');
       },
     });
     // setting.showSettings();
@@ -118,8 +118,8 @@ export default class DebugScene extends Phaser.Scene {
       audioManager: this.audioManager,
       onClick: () => {
         // setting.showSettings();
-        this.scene.start("GameScene");
-        return console.log("Settings clicked");
+        this.scene.start('GameScene');
+        return console.log('Settings clicked');
       },
     });
 
@@ -138,8 +138,8 @@ export default class DebugScene extends Phaser.Scene {
     // });
 
     new TrickArea(this);
-    const player = new Player(this, 0, "Alice", "😀", true, (data: CardData) =>
-      console.log(data),
+    const player = new Player(this, 0, 'Alice', '😀', true, (data: CardData) =>
+      console.log(data)
     );
     const cards = shuffleDeck(createDeck());
     player.setCards(cards.slice(0, 13), false).then(() => {
@@ -151,7 +151,7 @@ export default class DebugScene extends Phaser.Scene {
     });
     // create other players
     for (let i = 1; i < 4; i++) {
-      const otherPlayer = new Player(this, i, `Player ${i + 1}`, "🤖", false);
+      const otherPlayer = new Player(this, i, `Player ${i + 1}`, '🤖', false);
       otherPlayer.setCards(cards.slice(0, 13), false);
     }
   }

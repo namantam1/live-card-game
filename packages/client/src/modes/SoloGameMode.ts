@@ -1,11 +1,11 @@
-import type { Scene } from "phaser";
-import { GameModeBase, type PlayerData } from "./GameModeBase";
-import GameManager from "../managers/GameManager";
-import { calculateBid, TRUMP_SUIT } from "@call-break/shared";
-import Player from "../objects/Player";
-import type TrickArea from "../objects/TrickArea";
-import type { CardData } from "../type";
-import { EVENTS } from "../utils/constants";
+import type { Scene } from 'phaser';
+import { GameModeBase, type PlayerData } from './GameModeBase';
+import GameManager from '../managers/GameManager';
+import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
+import Player from '../objects/Player';
+import type TrickArea from '../objects/TrickArea';
+import type { CardData } from '../type';
+import { EVENTS } from '../utils/constants';
 
 /**
  * Solo game mode implementation (vs AI bots)
@@ -44,7 +44,7 @@ export default class SoloGameMode extends GameModeBase {
         playerInfo[i].isHuman,
         playerInfo[i].isHuman
           ? (cardData: CardData) => this.onCardPlayed(cardData)
-          : undefined,
+          : undefined
       );
       players.push(player);
     }

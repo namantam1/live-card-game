@@ -1,14 +1,14 @@
-import Phaser, { Scene } from "phaser";
-import Card from "./Card";
+import Phaser, { Scene } from 'phaser';
+import Card from './Card';
 import {
   ANIMATION,
   PLAYER_POSITIONS,
   type Position,
   type Suit,
-} from "../utils/constants";
-import { sortHand, getValidCards } from "../utils/cards";
-import { CARD_CONFIG, isMobile } from "../utils/uiConfig";
-import type { CardData, TrickEntry } from "../type";
+} from '../utils/constants';
+import { sortHand, getValidCards } from '../utils/cards';
+import { CARD_CONFIG, isMobile } from '../utils/uiConfig';
+import type { CardData, TrickEntry } from '../type';
 
 export default class Hand {
   isHuman: boolean;
@@ -29,7 +29,7 @@ export default class Hand {
       position: Position;
       isHuman: boolean;
       onCardPlay?: (data: CardData) => void;
-    },
+    }
   ) {
     const { position, isHuman, onCardPlay } = config;
     const { width, height } = scene.cameras.main;
@@ -104,7 +104,7 @@ export default class Hand {
         rotation: this.rotation + targetPos.rotation,
         animate: true,
         duration: ANIMATION.CARD_DEAL,
-        ease: "Quad.easeOut",
+        ease: 'Quad.easeOut',
       });
 
       this.cards.push(card);
@@ -139,7 +139,7 @@ export default class Hand {
 
     // For left/right positions, stack cards vertically instead of horizontally
     const isVertical =
-      this.playerPosition === "left" || this.playerPosition === "right";
+      this.playerPosition === 'left' || this.playerPosition === 'right';
 
     if (isVertical) {
       return {
@@ -172,7 +172,7 @@ export default class Hand {
         // scale: this.cardScale,
         animate,
         duration: 200,
-        ease: "Quad.easeOut",
+        ease: 'Quad.easeOut',
       });
     });
   }
@@ -228,7 +228,7 @@ export default class Hand {
   removeCard(cardDataOrId: CardData | string) {
     // Accept either cardData object or card ID string
     const cardId =
-      typeof cardDataOrId === "string" ? cardDataOrId : cardDataOrId.id;
+      typeof cardDataOrId === 'string' ? cardDataOrId : cardDataOrId.id;
     const index = this.cards.findIndex((c) => c.cardData.id === cardId);
     if (index === -1) return null;
 
@@ -282,8 +282,8 @@ export default class Hand {
         // Create a dummy card object for placeholder
         const dummyCard: CardData = {
           id: `placeholder_${Date.now()}_${i}`,
-          suit: "spades",
-          rank: "A",
+          suit: 'spades',
+          rank: 'A',
           value: 0,
         };
         const card = new Card(this.scene, {

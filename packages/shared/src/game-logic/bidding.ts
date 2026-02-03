@@ -1,5 +1,5 @@
-import { MAX_BID } from "../constants/config";
-import type { CardData, Suit } from "../types";
+import { MAX_BID } from '../constants/config';
+import type { CardData, Suit } from '../types';
 
 /**
  * Recommends a bid for a given hand based on card strength
@@ -12,7 +12,7 @@ import type { CardData, Suit } from "../types";
 export function calculateBid(
   hand: CardData[],
   trumpSuit: Suit,
-  maxBid: number = MAX_BID,
+  maxBid: number = MAX_BID
 ): number {
   let bid = 1; // Minimum bid
 

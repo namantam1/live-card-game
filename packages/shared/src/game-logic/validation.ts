@@ -2,9 +2,9 @@
  * Card validation logic - determines which cards are legal to play
  */
 
-import type { CardData, Suit, TrickEntry } from "../types/";
-import { TRUMP_SUIT } from "../constants/game";
-import { compareCards } from "./comparison";
+import type { CardData, Suit, TrickEntry } from '../types/';
+import { TRUMP_SUIT } from '../constants/game';
+import { compareCards } from './comparison';
 
 /**
  * Get valid cards a player can play based on game rules
@@ -28,7 +28,7 @@ export function getValidCards(
   hand: CardData[],
   leadSuit: Suit | null,
   currentTrick: TrickEntry[] = [],
-  mandatoryTrumping: boolean = false,
+  mandatoryTrumping: boolean = false
 ): CardData[] {
   if (!leadSuit || currentTrick.length === 0) {
     // Leading - can play anything
@@ -48,7 +48,7 @@ export function getValidCards(
   if (leadSuitCards.length > 0) {
     // Must play higher card of lead suit if possible
     const higherCards = leadSuitCards.filter(
-      (c) => compareCards(c, highestCard, leadSuit) > 0,
+      (c) => compareCards(c, highestCard, leadSuit) > 0
     );
     if (higherCards.length > 0) {
       return higherCards;
@@ -62,7 +62,7 @@ export function getValidCards(
   if (spadeCards.length > 0) {
     // Check if player can beat the current highest card with a spade
     const higherSpades = spadeCards.filter(
-      (c) => compareCards(c, highestCard, leadSuit) > 0,
+      (c) => compareCards(c, highestCard, leadSuit) > 0
     );
 
     if (higherSpades.length > 0) {

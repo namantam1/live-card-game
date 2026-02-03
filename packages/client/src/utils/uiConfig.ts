@@ -54,16 +54,16 @@ export const BIDDING_CONFIG = {
     buttonHeight: 150,
     buttonSpacing: 20,
     borderRadius: 30,
-    fontSize: "50px",
-    titleFontSize: "50px",
+    fontSize: '50px',
+    titleFontSize: '50px',
   },
   MOBILE: {
     buttonWidth: 60, // Larger for easier tapping
     buttonHeight: 50,
     buttonSpacing: 10,
     borderRadius: 10,
-    fontSize: "20px",
-    titleFontSize: "22px",
+    fontSize: '20px',
+    titleFontSize: '22px',
   },
 };
 
@@ -75,9 +75,9 @@ export const SCOREBOARD_CONFIG = {
     height: 70,
     padding: 30,
     spacing: 15,
-    roundFontSize: "40px",
-    emojiFontSize: "40px",
-    scoreFontSize: "40px",
+    roundFontSize: '40px',
+    emojiFontSize: '40px',
+    scoreFontSize: '40px',
   },
   MOBILE: {
     margin: 15,
@@ -85,9 +85,9 @@ export const SCOREBOARD_CONFIG = {
     height: 50,
     padding: 20,
     spacing: 10,
-    roundFontSize: "22px",
-    emojiFontSize: "22px",
-    scoreFontSize: "22px",
+    roundFontSize: '22px',
+    emojiFontSize: '22px',
+    scoreFontSize: '22px',
   },
 };
 
@@ -107,62 +107,62 @@ export const SETTINGS_ICON_CONFIG = {
 export const FONT_CONFIG = {
   DESKTOP: {
     // Game UI
-    trumpIndicator: "22px",
-    trumpSymbol: "35px",
-    roundIndicator: "11px",
+    trumpIndicator: '22px',
+    trumpSymbol: '35px',
+    roundIndicator: '11px',
 
     // Player labels
-    playerName: "20px",
-    playerStats: "20px",
+    playerName: '20px',
+    playerStats: '20px',
 
     // Menu
-    menuTitle: "100px",
-    menuSpadeIcon: "180px",
-    menuSubtitle: "25px",
-    menuButton: "30px",
-    credit: "30px",
+    menuTitle: '100px',
+    menuSpadeIcon: '180px',
+    menuSubtitle: '25px',
+    menuButton: '30px',
+    credit: '30px',
 
     // Lobby
-    lobbyTitle: "100px",
-    lobbySubtitle: "25px",
-    lobbyButton: "30px",
+    lobbyTitle: '100px',
+    lobbySubtitle: '25px',
+    lobbyButton: '30px',
 
     // Modals
-    modalTitle: "28px",
-    modalContent: "16px",
+    modalTitle: '28px',
+    modalContent: '16px',
 
     // Settings
-    settingsLabel: "22px",
+    settingsLabel: '22px',
 
     // Action buttons
-    actionButton: "20px",
+    actionButton: '20px',
   },
   MOBILE: {
     // Game UI
-    trumpIndicator: "14px", // Slightly larger for mobile
-    trumpSymbol: "26px",
-    roundIndicator: "13px",
+    trumpIndicator: '14px', // Slightly larger for mobile
+    trumpSymbol: '26px',
+    roundIndicator: '13px',
 
     // Player labels
-    playerName: "18px",
-    playerStats: "16px",
+    playerName: '18px',
+    playerStats: '16px',
 
     // Menu
-    menuTitle: "56px",
-    menuSpadeIcon: "72px",
-    menuSubtitle: "20px",
-    menuButton: "20px",
-    credit: "14px",
+    menuTitle: '56px',
+    menuSpadeIcon: '72px',
+    menuSubtitle: '20px',
+    menuButton: '20px',
+    credit: '14px',
 
     // Modals
-    modalTitle: "28px",
-    modalContent: "16px",
+    modalTitle: '28px',
+    modalContent: '16px',
 
     // Settings
-    settingsLabel: "22px",
+    settingsLabel: '22px',
 
     // Action buttons
-    actionButton: "20px",
+    actionButton: '20px',
   },
 };
 
@@ -204,7 +204,7 @@ export const TURN_INDICATOR_CONFIG = {
 export const getResponsiveConfig = (
   config: { DESKTOP: any; MOBILE: any },
   width: number,
-  height: number,
+  height: number
 ): Record<string, any> => {
   return isMobile(width, height) ? config.MOBILE : config.DESKTOP;
 };
@@ -219,9 +219,9 @@ export const getResponsiveConfig = (
 export const getFontSize = (
   key: string,
   width: number,
-  height: number,
+  height: number
 ): string => {
   const config = getResponsiveConfig(FONT_CONFIG, width, height);
   // console.log(`getFontSize: key=${key}, width=${width}, height=${height} => fontSize=${config[key] || '14px'}`);
-  return config[key] || "14px";
+  return config[key] || '14px';
 };

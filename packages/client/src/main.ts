@@ -1,28 +1,28 @@
-import Phaser from "phaser";
-import CanvasInputPlugin from "phaser3-rex-plugins/plugins/canvasinput-plugin";
-import BootScene from "./scenes/BootScene";
-import MenuScene from "./scenes/MenuScene";
-import LobbyScene from "./scenes/LobbyScene";
-import GameScene from "./scenes/GameScene";
-import UIScene from "./scenes/UIScene";
-import { registerServiceWorker, enforceLandscapeOnMobile } from "./pwaUtils";
-import DebugScene from "./scenes/DebugScene";
-import { initSentry } from "./sentry.config";
+import Phaser from 'phaser';
+import CanvasInputPlugin from 'phaser3-rex-plugins/plugins/canvasinput-plugin';
+import BootScene from './scenes/BootScene';
+import MenuScene from './scenes/MenuScene';
+import LobbyScene from './scenes/LobbyScene';
+import GameScene from './scenes/GameScene';
+import UIScene from './scenes/UIScene';
+import { registerServiceWorker, enforceLandscapeOnMobile } from './pwaUtils';
+import DebugScene from './scenes/DebugScene';
+import { initSentry } from './sentry.config';
 
 // Initialize Sentry before anything else
 initSentry();
 
 const config = {
   type: Phaser.AUTO,
-  parent: "game-container",
-  backgroundColor: "#1a1a2e",
+  parent: 'game-container',
+  backgroundColor: '#1a1a2e',
   dom: {
     createContainer: true,
   },
   plugins: {
     global: [
       {
-        key: "rexCanvasInputPlugin",
+        key: 'rexCanvasInputPlugin',
         plugin: CanvasInputPlugin,
         start: true,
       },
@@ -59,7 +59,7 @@ const config = {
 const game = new Phaser.Game(config);
 
 // Handle visibility change for audio
-document.addEventListener("visibilitychange", () => {
+document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     game.sound.pauseAll();
   } else {
@@ -68,7 +68,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // Register PWA service worker
-if ("serviceWorker" in navigator) {
+if ('serviceWorker' in navigator) {
   registerServiceWorker();
 }
 
