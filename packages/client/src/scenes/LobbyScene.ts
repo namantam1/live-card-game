@@ -1,360 +1,106 @@
 import Phaser from 'phaser';
-import { COLORS, ANIMATION, SERVER } from '../utils/constants';
+import { ANIMATION, SERVER } from '../utils/constants';
 import NetworkManager from '../managers/NetworkManager';
 import NetworkIndicator from '../components/NetworkIndicator';
-import Button from '../components/Button';
-import { getFontSize } from '../utils/uiConfig';
 import Common from '../objects/game/Common';
+import { MenuView } from '../components/lobby/MenuView';
+import { JoinView } from '../components/lobby/JoinView';
+import { WaitingView } from '../components/lobby/WaitingView';
+import { storage } from '../managers/StorageManager';
+import { validatePlayerName, validateRoomCode } from '../utils/validation';
 
 export default class LobbyScene extends Phaser.Scene {
-  networkManager!: NetworkManager;
-  playerName: string;
-  roomCode: string;
-  mode: string;
-  players: never[];
-  isTransitioning: boolean;
-  PLAYER_NAME_KEY: string;
-  centerX!: number;
-  centerY!: number;
-  menuContainer!: Phaser.GameObjects.Container;
-  joinContainer!: Phaser.GameObjects.Container;
-  waitingContainer!: Phaser.GameObjects.Container;
-  networkIndicator!: NetworkIndicator;
-  nameInput: any;
-  connectionStatus: any;
-  roomCodeInput: any;
-  joinError!: Phaser.GameObjects.Text;
-  roomCodeDisplay!: Phaser.GameObjects.Text;
-  playersListContainer!: Phaser.GameObjects.Container;
-  waitingText!: Phaser.GameObjects.Text;
-  readyBtn!: Phaser.GameObjects.Container;
+  // Managers
+  private networkManager!: NetworkManager;
+  private networkIndicator!: NetworkIndicator;
+
+  // View components
+  private menuView!: MenuView;
+  private joinView!: JoinView;
+  private waitingView!: WaitingView;
+
+  // Scene state
+  private currentView: 'menu' | 'join' | 'waiting' = 'menu';
+  private playerName: string = '';
+  private roomCode: string = '';
+  private isTransitioning: boolean = false;
+  private isCreatingRoom: boolean = false;
+  private isJoiningRoom: boolean = false;
+  private isReadying: boolean = false;
+
+  // Constants
+  private readonly PLAYER_NAME_KEY = 'player_name';
 
   constructor() {
     super({ key: 'LobbyScene' });
-    this.playerName = '';
-    this.roomCode = '';
-    this.mode = 'menu'; // 'menu', 'join', 'waiting'
-    this.players = [];
-    this.isTransitioning = false;
-    this.PLAYER_NAME_KEY = 'callbreak_player_name'; // localStorage key
   }
 
   create() {
-    const { centerX, centerY } = this.cameras.main;
-    this.centerX = centerX;
-    this.centerY = centerY;
-
     // Reset state
     this.isTransitioning = false;
-
-    // Initialize network manager
-    this.networkManager = new NetworkManager();
 
     // Background
     Common.createBackground(this);
 
-    // Container for different views
-    this.menuContainer = this.add.container(0, 0);
-    this.joinContainer = this.add.container(0, 0).setVisible(false);
-    this.waitingContainer = this.add.container(0, 0).setVisible(false);
+    // Initialize managers
+    this.initializeManagers();
 
-    // Create different views
-    this.createMenuView();
-    this.createJoinView();
-    this.createWaitingView();
+    // Create view components
+    this.createViews();
 
-    // Create network indicator (will be shown after connection)
-    this.createNetworkIndicator();
+    // Setup event handlers
+    this.setupViewEventHandlers();
 
     // Connect to server
     this.connectToServer();
+
+    // Show initial view
+    this.showView('menu');
   }
 
-  createNetworkIndicator() {
+  private initializeManagers() {
+    // Initialize network manager
+    this.networkManager = new NetworkManager();
+
+    // Create network indicator
     const { width } = this.cameras.main;
-
-    // Create network indicator in top-right corner
     this.networkIndicator = new NetworkIndicator(this, width - 50, 50);
-    // this.networkIndicator.setVisible(false); // Hide until connected
   }
 
-  createMenuView() {
-    const { centerX, centerY } = this;
-    const { width, height } = this.cameras.main;
+  private createViews() {
+    // Create all view components
+    this.menuView = new MenuView(this);
+    this.joinView = new JoinView(this);
+    this.waitingView = new WaitingView(this);
 
-    // Title
-    const title = this.add
-      .text(centerX, centerY - 200, 'Call Break', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('lobbyTitle', width, height),
-        fontStyle: 'bold',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5);
-
-    const subtitle = this.add
-      .text(centerX, centerY - 130, 'Multiplayer', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('lobbySubtitle', width, height),
-        color: '#94a3b8',
-      })
-      .setOrigin(0.5);
-
-    // Name input label
-    const nameLabel = this.add
-      .text(centerX, centerY - 70, 'Enter your name:', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
-        color: '#cbd5e1',
-      })
-      .setOrigin(0.5);
-
-    // Name input field (using rexUI InputText)
-    this.nameInput = Common.createInputField(this, {
-      x: centerX,
-      y: centerY - 30,
-      width: 350,
-    });
-
-    // Load and prefill saved name from localStorage
-    const savedName = this.loadPlayerName();
+    // Load saved player name
+    const savedName = storage.load<string>(this.PLAYER_NAME_KEY);
     if (savedName) {
-      this.nameInput.setText(savedName);
+      this.menuView.setPlayerName(savedName);
     }
 
-    // Create Room button
-    const createBtn = this.createButton(
-      centerX,
-      centerY + 50,
-      'Create Room',
-      () => {
-        this.handleCreateRoom();
-      }
-    );
-
-    // Join Room button
-    const joinBtn = this.createButton(
-      centerX,
-      centerY + 150,
-      'Join Room',
-      () => {
-        const name = this.nameInput.text.trim();
-        if (!name) {
-          this.connectionStatus
-            .setText('Please enter your name first')
-            .setColor('#ef4444');
-          return;
-        }
-        this.showJoinView();
-      }
-    );
-
-    // Back to Menu button
-    const backBtn = this.createButton(
-      centerX,
-      centerY + 250,
-      'Back to Menu',
-      () => {
-        this.scene.start('MenuScene');
-      },
-      0x475569
-    );
-
-    // Connection status
-    this.connectionStatus = this.add
-      .text(centerX, this.cameras.main.height - 30, 'Connecting...', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        color: '#f59e0b',
-      })
-      .setOrigin(0.5);
-
-    this.menuContainer.add([
-      title,
-      subtitle,
-      nameLabel,
-      createBtn,
-      joinBtn,
-      backBtn,
-      this.connectionStatus,
-    ]);
+    // Hide all views initially
+    this.menuView.hide();
+    this.joinView.hide();
+    this.waitingView.hide();
   }
 
-  createJoinView() {
-    const { centerX, centerY } = this;
+  private setupViewEventHandlers() {
+    // Menu view events
+    this.events.on('menuView:createRoom', this.handleCreateRoom, this);
+    this.events.on('menuView:joinRoom', this.handleJoinRoomClick, this);
+    this.events.on('menuView:backToMenu', this.handleBackToMainMenu, this);
 
-    // Title
-    const title = this.add
-      .text(centerX, centerY - 120, 'Join Room', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '32px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5);
+    // Join view events
+    this.events.on('joinView:join', this.handleJoinRoom, this);
+    this.events.on('joinView:back', () => this.showView('menu'), this);
 
-    // Room code label
-    const codeLabel = this.add
-      .text(centerX, centerY - 50, 'Enter Room Code:', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
-        color: '#cbd5e1',
-      })
-      .setOrigin(0.5);
-
-    // Room code input
-    this.roomCodeInput = Common.createInputField(this, {
-      x: centerX,
-      y: centerY - 10,
-      width: 350,
-      uppercase: true,
-    });
-    this.roomCodeInput.setVisible(false); // Hidden initially
-
-    // Join button
-    const joinBtn = this.createButton(centerX, centerY + 70, 'Join', () => {
-      this.handleJoinRoom();
-    });
-
-    // Back button
-    const backBtn = this.createButton(
-      centerX,
-      centerY + 180,
-      'Back',
-      () => {
-        this.showMenuView();
-      },
-      0x475569
-    );
-
-    // Error message
-    this.joinError = this.add
-      .text(centerX, centerY + 200, '', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        color: '#ef4444',
-      })
-      .setOrigin(0.5);
-
-    this.joinContainer.add([
-      title,
-      codeLabel,
-      joinBtn,
-      backBtn,
-      this.joinError,
-    ]);
+    // Waiting view events
+    this.events.on('waitingView:ready', this.handleReady, this);
+    this.events.on('waitingView:leave', this.handleLeaveRoom, this);
   }
 
-  createWaitingView() {
-    const { centerX, centerY } = this;
-
-    // Title
-    const waitTitle = this.add
-      .text(centerX, centerY - 180, 'Waiting Room', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '40px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5);
-
-    // Room code display
-    this.roomCodeDisplay = this.add
-      .text(centerX, centerY - 135, 'Room Code: ----', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '35px',
-        fontStyle: 'bold',
-        color: '#22c55e',
-      })
-      .setOrigin(0.5);
-
-    // Copy hint
-    const copyHint = this.add
-      .text(centerX, centerY - 85, 'Share this code with friends!', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
-        color: '#94a3b8',
-      })
-      .setOrigin(0.5);
-
-    // Players list container
-    this.playersListContainer = this.add.container(centerX, centerY);
-
-    // Waiting text
-    this.waitingText = this.add
-      .text(centerX, centerY + 120, 'Waiting for players... (0/4)', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
-        color: '#94a3b8',
-      })
-      .setOrigin(0.5);
-
-    // Ready button
-    this.readyBtn = this.createButton(centerX, centerY + 180, 'Ready', () => {
-      this.handleReady();
-    });
-    this.readyBtn.setVisible(false);
-
-    // Leave button
-    const leaveBtn = this.createButton(
-      centerX,
-      centerY + 280,
-      'Leave Room',
-      () => {
-        this.handleLeaveRoom();
-      },
-      0xef4444
-    );
-
-    this.waitingContainer.add([
-      waitTitle,
-      this.roomCodeDisplay,
-      copyHint,
-      this.playersListContainer,
-      this.waitingText,
-      this.readyBtn,
-      leaveBtn,
-    ]);
-  }
-
-  createButton(
-    x: number,
-    y: number,
-    text: string,
-    callback: () => void,
-    bgColor: number = COLORS.PRIMARY
-  ) {
-    return Button.create(this, x, y, {
-      width: 350,
-      height: 80,
-      text,
-      onClick: callback,
-      bgColor,
-      borderRadius: 10,
-      fontSize: '30px',
-      hoverScale: 1.05,
-      pressScale: 0.95,
-    });
-  }
-
-  async connectToServer() {
-    const connected = await this.networkManager.connect(SERVER.URL);
-    if (connected) {
-      this.connectionStatus.setText('Connected').setColor('#22c55e');
-      // this.networkIndicator.setVisible(true);
-      this.networkIndicator.updateQuality('good');
-      this.setupNetworkListeners();
-    } else {
-      this.connectionStatus
-        .setText('Connection failed. Retry...')
-        .setColor('#ef4444');
-      this.networkIndicator.updateQuality('offline');
-      // Retry after 3 seconds
-      this.time.delayedCall(3000, () => this.connectToServer());
-    }
-  }
-
-  setupNetworkListeners() {
+  private setupNetworkListeners() {
     // Connection quality changes
     this.networkManager.on('connectionQualityChange', ({ quality }: any) => {
       if (this.networkIndicator) {
@@ -365,21 +111,21 @@ export default class LobbyScene extends Phaser.Scene {
     // Room created/joined - receive seat and room code
     this.networkManager.on('seated', (data: any) => {
       this.roomCode = data.roomCode;
-      this.roomCodeDisplay.setText(`Room Code: ${this.roomCode}`);
+      this.waitingView.setRoomCode(this.roomCode);
     });
 
     // Player joined
-    this.networkManager.on('playerJoined', (data: any) => {
+    this.networkManager.on('playerJoined', () => {
       this.updatePlayersList();
     });
 
     // Player left
-    this.networkManager.on('playerRemoved', (data: any) => {
+    this.networkManager.on('playerRemoved', () => {
       this.updatePlayersList();
     });
 
     // Player ready status changed
-    this.networkManager.on('playerReady', (data: any) => {
+    this.networkManager.on('playerReady', () => {
       this.updatePlayersList();
     });
 
@@ -393,224 +139,203 @@ export default class LobbyScene extends Phaser.Scene {
     // Error handling
     this.networkManager.on('error', (data: any) => {
       console.error('Network error:', data);
-      this.joinError.setText('Error: ' + data.message);
+      if (this.currentView === 'join') {
+        this.joinView.showError('Error: ' + data.message);
+      }
     });
 
     // Room left
     this.networkManager.on('roomLeft', () => {
-      this.showMenuView();
+      this.showView('menu');
     });
   }
 
-  showMenuView() {
-    this.mode = 'menu';
-    this.menuContainer.setVisible(true);
-    this.joinContainer.setVisible(false);
-    this.waitingContainer.setVisible(false);
-    this.nameInput.setVisible(true);
-    this.roomCodeInput.setVisible(false);
-    this.joinError.setText('');
+  private showView(view: 'menu' | 'join' | 'waiting') {
+    // Hide all views
+    this.menuView.hide();
+    this.joinView.hide();
+    this.waitingView.hide();
+
+    // Clear errors
+    this.joinView.clearError();
+
+    // Show requested view
+    this.currentView = view;
+    switch (view) {
+      case 'menu':
+        this.menuView.show();
+        break;
+      case 'join':
+        this.joinView.show();
+        break;
+      case 'waiting':
+        this.waitingView.show();
+        this.updatePlayersList();
+        break;
+    }
   }
 
-  showJoinView() {
-    this.mode = 'join';
-    this.menuContainer.setVisible(false);
-    this.joinContainer.setVisible(true);
-    this.waitingContainer.setVisible(false);
-    this.nameInput.setVisible(false);
-    this.roomCodeInput.setVisible(true);
-    this.joinError.setText('');
+  private async connectToServer() {
+    const connected = await this.networkManager.connect(SERVER.URL);
+    if (connected) {
+      this.menuView.setConnectionStatus('Connected', '#22c55e');
+      this.networkIndicator.updateQuality('good');
+      this.setupNetworkListeners();
+    } else {
+      this.menuView.setConnectionStatus(
+        'Connection failed. Retry...',
+        '#ef4444'
+      );
+      this.networkIndicator.updateQuality('offline');
+      // Retry after 3 seconds
+      this.time.delayedCall(3000, () => this.connectToServer());
+    }
   }
 
-  showWaitingView() {
-    this.mode = 'waiting';
-    this.menuContainer.setVisible(false);
-    this.joinContainer.setVisible(false);
-    this.waitingContainer.setVisible(true);
-    this.nameInput.setVisible(false);
-    this.roomCodeInput.setVisible(false);
-    this.readyBtn.setVisible(true);
-    this.updatePlayersList();
+  private handleJoinRoomClick() {
+    const nameResult = validatePlayerName(this.menuView.getPlayerName());
+    if (!nameResult.valid) {
+      this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
+      return;
+    }
+    this.showView('join');
   }
 
-  async handleCreateRoom() {
-    const name = this.nameInput.text.trim();
+  private handleBackToMainMenu() {
+    this.scene.start('MenuScene');
+  }
+
+  private async handleCreateRoom() {
+    // Prevent duplicate requests
+    if (this.isCreatingRoom) {
+      return;
+    }
+
+    const nameResult = validatePlayerName(this.menuView.getPlayerName());
 
     // Validate name
-    if (!name) {
-      this.connectionStatus
-        .setText('Please enter your name')
-        .setColor('#ef4444');
-      return;
-    }
-
-    if (name.length > 20) {
-      this.connectionStatus
-        .setText('Name too long (max 20 characters)')
-        .setColor('#ef4444');
-      return;
-    }
-
-    // Sanitize name (remove special characters that could break UI)
-    const sanitizedName = name.replace(/[<>]/g, '');
-    if (sanitizedName !== name) {
-      this.connectionStatus
-        .setText('Name contains invalid characters')
-        .setColor('#ef4444');
+    if (!nameResult.valid) {
+      this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
       return;
     }
 
     if (!this.networkManager.isConnected()) {
-      this.connectionStatus
-        .setText('Not connected to server')
-        .setColor('#ef4444');
+      this.menuView.setConnectionStatus('Not connected to server', '#ef4444');
       return;
     }
 
-    this.connectionStatus.setText('Creating room...').setColor('#f59e0b');
-    const room = await this.networkManager.createRoom(sanitizedName);
+    // Set processing state
+    this.isCreatingRoom = true;
+    this.menuView.setButtonsEnabled(false);
+    this.menuView.setConnectionStatus('Creating room...', '#f59e0b');
 
-    if (room) {
-      this.playerName = sanitizedName;
-      this.savePlayerName(sanitizedName);
-      this.showWaitingView();
-    } else {
-      this.connectionStatus
-        .setText('Failed to create room')
-        .setColor('#ef4444');
+    try {
+      const room = await this.networkManager.createRoom(nameResult.value!);
+
+      if (room) {
+        this.playerName = nameResult.value!;
+        storage.save(this.PLAYER_NAME_KEY, this.playerName);
+        this.showView('waiting');
+      } else {
+        this.menuView.setConnectionStatus('Failed to create room', '#ef4444');
+      }
+    } finally {
+      // Reset processing state
+      this.isCreatingRoom = false;
+      this.menuView.setButtonsEnabled(true);
     }
   }
 
-  async handleJoinRoom() {
-    const name = this.nameInput.text.trim();
-    const code = this.roomCodeInput.text.trim().toUpperCase();
+  private async handleJoinRoom() {
+    // Prevent duplicate requests
+    if (this.isJoiningRoom) {
+      return;
+    }
+
+    const nameResult = validatePlayerName(this.menuView.getPlayerName());
+    const codeResult = validateRoomCode(this.joinView.getRoomCode());
 
     // Validate name
-    if (!name) {
-      this.joinError.setText('Please enter your name first');
-      return;
-    }
-
-    if (name.length > 20) {
-      this.joinError.setText('Name too long (max 20 characters)');
-      return;
-    }
-
-    // Sanitize name
-    const sanitizedName = name.replace(/[<>]/g, '');
-    if (sanitizedName !== name) {
-      this.joinError.setText('Name contains invalid characters');
+    if (!nameResult.valid) {
+      this.joinView.showError(nameResult.error!);
       return;
     }
 
     // Validate room code
-    if (!code || code.length !== 4) {
-      this.joinError.setText('Please enter a valid 4-character room code');
-      return;
-    }
-
-    // Validate room code contains only allowed characters
-    const validChars = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/;
-    if (!validChars.test(code)) {
-      this.joinError.setText('Invalid room code format');
+    if (!codeResult.valid) {
+      this.joinView.showError(codeResult.error!);
       return;
     }
 
     if (!this.networkManager.isConnected()) {
-      this.joinError.setText('Not connected to server');
+      this.joinView.showError('Not connected to server');
       return;
     }
 
-    this.joinError.setText('Joining room...').setColor('#f59e0b');
+    // Set processing state
+    this.isJoiningRoom = true;
+    this.joinView.setButtonsEnabled(false);
+    this.joinView.showError('Joining room...', '#f59e0b');
 
     try {
-      const room = await this.networkManager.joinRoom(code, sanitizedName);
+      const room = await this.networkManager.joinRoom(
+        codeResult.value!,
+        nameResult.value!
+      );
 
       if (room) {
-        this.playerName = sanitizedName;
-        this.savePlayerName(sanitizedName);
-        this.roomCode = code;
-        this.showWaitingView();
+        this.playerName = nameResult.value!;
+        storage.save(this.PLAYER_NAME_KEY, this.playerName);
+        this.roomCode = codeResult.value!;
+        this.showView('waiting');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to join room:', error);
-      const errorMsg = error.message || 'Room not found or full';
-      this.joinError.setText(errorMsg).setColor('#ef4444');
+      const errorMsg = (error as Error).message || 'Room not found or full';
+      this.joinView.showError(errorMsg);
+    } finally {
+      // Reset processing state
+      this.isJoiningRoom = false;
+      this.joinView.setButtonsEnabled(true);
     }
   }
 
-  handleReady() {
-    this.networkManager.sendReady();
-    // Don't hide button immediately - let server confirm via playerReady event
-    // Button will be hidden in updatePlayersList() when server confirms
+  private handleReady() {
+    // Prevent spam clicking
+    if (this.isReadying) {
+      return;
+    }
 
+    this.isReadying = true;
+    this.networkManager.sendReady();
     // Update text to show action is pending
-    this.waitingText.setText('Sending ready status...');
+    this.waitingView.setWaitingMessage('Sending ready status...');
+
+    // Reset after 2 seconds (server should respond before this)
+    this.time.delayedCall(2000, () => {
+      this.isReadying = false;
+    });
   }
 
-  async handleLeaveRoom() {
+  private async handleLeaveRoom() {
     try {
       await this.networkManager.leaveRoom();
       // Reset input fields
-      this.roomCodeInput.setText('');
-      this.showMenuView();
+      this.joinView.clearRoomCode();
+      this.showView('menu');
     } catch (error) {
       console.error('Error leaving room:', error);
-      this.showMenuView();
+      this.showView('menu');
     }
   }
 
-  updatePlayersList() {
-    // Clear existing list
-    this.playersListContainer.removeAll(true);
-
+  private updatePlayersList() {
     const players = this.networkManager.getPlayers();
-    const localId = this.networkManager.playerId;
-
-    players.forEach((player, index) => {
-      const y = -50 + index * 35;
-      const isLocal = player.id === localId;
-
-      // Player emoji and name
-      const nameText = this.add
-        .text(
-          -100,
-          y,
-          `${player.emoji} ${player.name}${isLocal ? ' (You)' : ''}`,
-          {
-            fontFamily: 'Arial, sans-serif',
-            fontSize: '22px',
-            color: isLocal ? '#22c55e' : '#ffffff',
-          }
-        )
-        .setOrigin(0, 0.5);
-
-      // Ready status
-      const status = this.add
-        .text(150, y, player.isReady ? 'Ready' : 'Waiting...', {
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '22px',
-          color: player.isReady ? '#22c55e' : '#94a3b8',
-        })
-        .setOrigin(1, 0.5);
-
-      this.playersListContainer.add([nameText, status]);
-    });
-
-    // Update waiting text
-    const readyCount = players.filter((p) => p.isReady).length;
-    this.waitingText.setText(
-      `Waiting for players... (${players.length}/4) - ${readyCount} ready`
-    );
-
-    // Show ready button only if local player hasn't readied
-    const localPlayer = players.find((p) => p.id === localId);
-    if (localPlayer && !localPlayer.isReady) {
-      this.readyBtn.setVisible(true);
-    }
+    const localId = this.networkManager.playerId || '';
+    this.waitingView.updatePlayersList(players, localId);
   }
 
-  startGame() {
+  private startGame() {
     // Prevent multiple calls
     if (this.isTransitioning) return;
     this.isTransitioning = true;
@@ -625,31 +350,27 @@ export default class LobbyScene extends Phaser.Scene {
     });
   }
 
-  savePlayerName(name: string) {
-    try {
-      localStorage.setItem(this.PLAYER_NAME_KEY, name);
-    } catch (error) {
-      console.error('Error saving player name to localStorage:', error);
-    }
-  }
-
-  loadPlayerName() {
-    try {
-      return localStorage.getItem(this.PLAYER_NAME_KEY);
-    } catch (error) {
-      console.error('Error loading player name from localStorage:', error);
-      return null;
-    }
-  }
-
   shutdown() {
-    // Clean up input text objects
-    if (this.nameInput) {
-      this.nameInput.destroy();
+    // Remove event listeners
+    this.events.off('menuView:createRoom', this.handleCreateRoom, this);
+    this.events.off('menuView:joinRoom', this.handleJoinRoomClick, this);
+    this.events.off('menuView:backToMenu', this.handleBackToMainMenu, this);
+    this.events.off('joinView:join', this.handleJoinRoom, this);
+    this.events.off('joinView:back');
+    this.events.off('waitingView:ready', this.handleReady, this);
+    this.events.off('waitingView:leave', this.handleLeaveRoom, this);
+
+    // Clean up view components
+    if (this.menuView) {
+      this.menuView.destroy();
     }
-    if (this.roomCodeInput) {
-      this.roomCodeInput.destroy();
+    if (this.joinView) {
+      this.joinView.destroy();
     }
+    if (this.waitingView) {
+      this.waitingView.destroy();
+    }
+
     // Clean up network indicator
     if (this.networkIndicator) {
       this.networkIndicator.destroy();
