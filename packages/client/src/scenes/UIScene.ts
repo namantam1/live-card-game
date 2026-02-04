@@ -190,12 +190,6 @@ export default class UIScene extends Phaser.Scene {
   }
 
   private setupReactionUI(): void {
-    // Only show reactions in multiplayer mode
-    if (!this.isMultiplayer()) {
-      return;
-    }
-
-    // Create reaction panel (bottom center of screen)
     const reactionPanel = new ReactionPanel(
       this,
       (type: string) => this.gameMode.sendReaction(type),

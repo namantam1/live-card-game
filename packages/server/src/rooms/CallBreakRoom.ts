@@ -14,6 +14,7 @@ import {
   type ReactionType,
   type Suit,
   chooseBotCard,
+  decideBotReaction,
 } from '@call-break/shared';
 
 const EMOJIS = ['😎', '🤖', '🦊', '🐱'];
@@ -424,6 +425,11 @@ export class CallBreakRoom extends Room {
 
     console.log(`${winner.name} won the trick!`);
 
+    // Trigger bot reactions after trick
+    this.clock.setTimeout(() => {
+      this.triggerBotTrickReactions(winnerId);
+    }, 300);
+
     // Wait, then clear trick and continue
     this.clock.setTimeout(() => {
       this.state.currentTrick.clear();
@@ -501,6 +507,11 @@ export class CallBreakRoom extends Room {
       player.roundScore = roundScore;
       player.score += roundScore;
     });
+
+    // Trigger bot reactions at round end
+    this.clock.setTimeout(() => {
+      this.triggerBotRoundEndReactions();
+    }, 300);
 
     console.log('Round complete!');
   }
@@ -646,5 +657,68 @@ export class CallBreakRoom extends Room {
     console.log(
       `${player.name} sent reaction: ${data.type} in room ${this.state.roomCode}`
     );
+  }
+
+  /**
+   * Trigger bot reactions after a trick is completed
+   */
+  private triggerBotTrickReactions(winnerId: string): void {
+    this.state.players.forEach((player, playerId) => {
+      if (!player.isBot) return;
+
+      const wonTrick = playerId === winnerId;
+      const reaction = decideBotReaction({
+        event: wonTrick ? 'trickWon' : 'trickLost',
+        botTricksWon: player.tricksWon,
+        botBid: player.bid,
+        trumpSuit: this.state.trumpSuit as Suit,
+      });
+
+      if (reaction) {
+        // Stagger bot reactions for realism
+        const delay = player.seatIndex * 200;
+        this.clock.setTimeout(() => {
+          this.broadcast('playerReaction', {
+            playerId: playerId,
+            playerName: player.name,
+            seatIndex: player.seatIndex,
+            type: reaction,
+            timestamp: Date.now(),
+          });
+          console.log(`${player.name} (bot) reacted: ${reaction}`);
+        }, delay);
+      }
+    });
+  }
+
+  /**
+   * Trigger bot reactions at the end of a round
+   */
+  private triggerBotRoundEndReactions(): void {
+    this.state.players.forEach((player) => {
+      if (!player.isBot) return;
+
+      const reaction = decideBotReaction({
+        event: 'roundEnd',
+        botTricksWon: player.tricksWon,
+        botBid: player.bid,
+        trumpSuit: this.state.trumpSuit as Suit,
+      });
+
+      if (reaction) {
+        // Stagger bot reactions for realism
+        const delay = player.seatIndex * 300;
+        this.clock.setTimeout(() => {
+          this.broadcast('playerReaction', {
+            playerId: player.id,
+            playerName: player.name,
+            seatIndex: player.seatIndex,
+            type: reaction,
+            timestamp: Date.now(),
+          });
+          console.log(`${player.name} (bot) reacted at round end: ${reaction}`);
+        }, delay);
+      }
+    });
   }
 }

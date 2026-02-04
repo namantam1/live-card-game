@@ -1,4 +1,4 @@
-import { getValidCards } from './validation';
+import { getValidCards } from '../game-logic/validation';
 import type { CardData, TrickEntry, BotContext, Suit } from '../types';
 
 /**

@@ -20,7 +20,11 @@ import {
 import Player from '../objects/Player';
 import TrickArea from '../objects/TrickArea';
 import type { CardData, TrickEntry } from '../type';
-import { calculateBid, chooseBotCard } from '@call-break/shared';
+import {
+  calculateBid,
+  decideBotReaction,
+  chooseBotCard,
+} from '@call-break/shared';
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   scene: Scene;
@@ -245,6 +249,9 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     this.emit(EVENTS.TRICK_COMPLETE, { winnerIndex });
 
+    // Bot reactions after trick
+    this.triggerBotTrickReactions(winnerIndex);
+
     // Collect cards animation
     await this.delay(500);
     await this.trickArea!.collectTrick(winnerIndex);
@@ -279,6 +286,9 @@ export default class GameManager extends Phaser.Events.EventEmitter {
       const score = calculateScore(player.bid, player.tricksWon);
       player.setRoundScore(score);
     });
+
+    // Bot reactions at round end
+    this.triggerBotRoundEndReactions();
 
     this.emit(EVENTS.ROUND_COMPLETE, {
       round: this.currentRound,
@@ -345,5 +355,52 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
   getPlayers() {
     return this.players;
+  }
+
+  /**
+   * Trigger bot reactions after a trick is completed
+   */
+  private triggerBotTrickReactions(winnerIndex: number) {
+    this.players.forEach((player, index) => {
+      if (player.isHuman) return;
+
+      const wonTrick = index === winnerIndex;
+      const reaction = decideBotReaction({
+        event: wonTrick ? 'trickWon' : 'trickLost',
+        botTricksWon: player.tricksWon,
+        botBid: player.bid,
+        trumpSuit: TRUMP_SUIT,
+      });
+
+      if (reaction) {
+        // Small delay between bot reactions for realism
+        this.scene.time.delayedCall(index * 200, () => {
+          player.showReaction(reaction);
+        });
+      }
+    });
+  }
+
+  /**
+   * Trigger bot reactions at the end of a round
+   */
+  private triggerBotRoundEndReactions() {
+    this.players.forEach((player, index) => {
+      if (player.isHuman) return;
+
+      const reaction = decideBotReaction({
+        event: 'roundEnd',
+        botTricksWon: player.tricksWon,
+        botBid: player.bid,
+        trumpSuit: TRUMP_SUIT,
+      });
+
+      if (reaction) {
+        // Stagger reactions for realism
+        this.scene.time.delayedCall(index * 300, () => {
+          player.showReaction(reaction);
+        });
+      }
+    });
   }
 }

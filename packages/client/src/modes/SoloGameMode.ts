@@ -119,6 +119,14 @@ export default class SoloGameMode extends GameModeBase {
     this.cleanup();
   }
 
+  override sendReaction(reactionType: string): void {
+    // In solo mode, only show reaction for the local player (index 0)
+    const localPlayer = this.players[0];
+    if (localPlayer) {
+      localPlayer.showReaction(reactionType);
+    }
+  }
+
   /**
    * Forward events from GameManager to IGameMode event system
    * This translates GameManager events to the unified IGameMode event API
