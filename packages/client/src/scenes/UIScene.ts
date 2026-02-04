@@ -88,28 +88,64 @@ export default class UIScene extends Phaser.Scene {
   setupEventListeners() {
     // Unified event listeners - no mode conditionals!
 
+    // Helper function to check and show bidding UI
+    // This handles race conditions between phase and turn state updates
+    const checkAndShowBiddingUI = () => {
+      const phase = this.gameMode.getPhase();
+      const localPlayer = this.gameMode.getLocalPlayer();
+
+      if (!localPlayer) return;
+
+      // Get current turn from game mode
+      const players = this.gameMode.getPlayers();
+      const currentTurnPlayer = players.find((p) => {
+        // In multiplayer, check against network state
+        if (this.isMultiplayer()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const networkManager = (this.gameMode as any).networkManager;
+          if (networkManager) {
+            const currentTurnId = networkManager.getState()?.currentTurn;
+            return p.id === currentTurnId;
+          }
+        }
+        return false;
+      });
+
+      const isMyTurn = currentTurnPlayer?.id === localPlayer.id;
+
+      console.log(
+        `UIScene: checkAndShowBiddingUI - phase: ${phase}, isMyTurn: ${isMyTurn}`
+      );
+
+      if (phase === 'bidding' && isMyTurn) {
+        console.log('UIScene: Showing bidding UI');
+        // Small delay to allow card animations to settle before showing UI
+        this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => {
+          // Double-check conditions haven't changed during delay
+          if (this.gameMode.getPhase() === 'bidding') {
+            const recommendedBid = this.gameMode.getRecommendedBid();
+            this.biddingUI.show(recommendedBid);
+          }
+        });
+      }
+    };
+
     // Phase changed
-    this.gameMode.on(EVENTS.PHASE_CHANGED, (phase: string) => {
+    this.gameMode.on(EVENTS.PHASE_CHANGED, (_phase: string) => {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
         this.gameMode.getPlayers(),
         this.gameMode.getCurrentRound()
       );
 
-      // Note: Don't show bidding UI here!
-      // It will be shown by the turnChanged event when it's actually the player's turn
+      // Check if we should show bidding UI (handles race condition)
+      checkAndShowBiddingUI();
     });
 
     // Turn changed
-    this.gameMode.on(EVENTS.TURN_CHANGED, ({ isMyTurn }: any) => {
-      const phase = this.gameMode.getPhase();
-      if (phase === 'bidding' && isMyTurn) {
-        // Small delay to allow card animations to settle before showing UI
-        this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => {
-          const recommendedBid = this.gameMode.getRecommendedBid();
-          this.biddingUI.show(recommendedBid);
-        });
-      }
+    this.gameMode.on(EVENTS.TURN_CHANGED, (_data: { isMyTurn: boolean }) => {
+      // Check if we should show bidding UI (handles race condition)
+      checkAndShowBiddingUI();
     });
 
     // Bid placed
