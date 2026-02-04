@@ -45,7 +45,7 @@ export class CallBreakRoom extends Room {
   state = new GameState();
 
   onCreate(_options: JoinOptions): void {
-    // Generate room code
+    // Generate room code (with low collision probability)
     this.state.roomCode = this.generateRoomCode();
 
     // Set metadata for room filtering
@@ -70,6 +70,8 @@ export class CallBreakRoom extends Room {
   }
 
   generateRoomCode(): string {
+    // Using 32 characters ^ 4 positions = 1,048,576 possible codes
+    // Collision probability is very low for typical concurrent room counts
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 4; i++) {
@@ -86,7 +88,21 @@ export class CallBreakRoom extends Room {
       );
     }
 
-    const name = options.name || `Player ${this.state.players.size + 1}`;
+    // Check if room is full (defensive check, Colyseus should handle this)
+    if (this.state.players.size >= this.maxClients) {
+      throw new Error('Room is full');
+    }
+
+    // Validate player name
+    const name =
+      options.name?.trim() || `Player ${this.state.players.size + 1}`;
+    if (name.length === 0) {
+      throw new Error('Player name cannot be empty');
+    }
+    if (name.length > 20) {
+      throw new Error('Player name too long (max 20 characters)');
+    }
+
     const seatIndex = this.state.players.size;
 
     const player = new Player();

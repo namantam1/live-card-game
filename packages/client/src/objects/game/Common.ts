@@ -5,7 +5,6 @@ import {
 } from '../../utils/uiConfig';
 import Button from '../../components/Button';
 import AudioManager from '../../managers/AudioManager';
-import CanvasInput from 'phaser3-rex-plugins/plugins/gameobjects/dynamictext/canvasinput/CanvasInput';
 
 export default class Common {
   static createBackground(scene: Scene): void {
@@ -138,16 +137,47 @@ export default class Common {
       .setOrigin(0.5)
       .setDepth(100);
 
-    // Transform to uppercase if needed
+    // Transform to uppercase hack if needed
     if (uppercase) {
-      canvasInput.on('textchange', (canvasInput: CanvasInput) => {
-        const { text, cursorPosition } = canvasInput;
-        if (!text) return;
-        const upper = canvasInput.text.toUpperCase();
-        if (canvasInput.text !== upper) {
-          canvasInput.setText(upper);
-          canvasInput.setCursorPosition(cursorPosition);
+      let isUpdating = false;
+      let lastText = '';
+
+      const handleTextChange = () => {
+        if (isUpdating) return;
+
+        const currentText = canvasInput.text || '';
+
+        // Only process if text actually changed (optimization)
+        if (currentText === lastText) return;
+        lastText = currentText;
+
+        const upperText = currentText.toUpperCase();
+
+        if (currentText !== upperText) {
+          isUpdating = true;
+          const cursorPos = canvasInput.cursorPosition;
+          canvasInput.setText(upperText);
+          canvasInput.setCursorPosition(cursorPos);
+          lastText = upperText;
+          requestAnimationFrame(() => {
+            isUpdating = false;
+          });
         }
+      };
+
+      // Poll for text changes while input is open
+      // This is necessary because rexCanvasInput doesn't reliably fire textchange events
+      canvasInput.on('open', () => {
+        lastText = canvasInput.text || '';
+        const updateInterval = scene.time.addEvent({
+          delay: 50, // Check every 50ms
+          callback: handleTextChange,
+          loop: true,
+        });
+
+        canvasInput.once('close', () => {
+          updateInterval.destroy();
+        });
       });
     }
 

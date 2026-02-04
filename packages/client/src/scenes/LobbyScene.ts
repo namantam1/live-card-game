@@ -435,9 +435,27 @@ export default class LobbyScene extends Phaser.Scene {
 
   async handleCreateRoom() {
     const name = this.nameInput.text.trim();
+
+    // Validate name
     if (!name) {
       this.connectionStatus
         .setText('Please enter your name')
+        .setColor('#ef4444');
+      return;
+    }
+
+    if (name.length > 20) {
+      this.connectionStatus
+        .setText('Name too long (max 20 characters)')
+        .setColor('#ef4444');
+      return;
+    }
+
+    // Sanitize name (remove special characters that could break UI)
+    const sanitizedName = name.replace(/[<>]/g, '');
+    if (sanitizedName !== name) {
+      this.connectionStatus
+        .setText('Name contains invalid characters')
         .setColor('#ef4444');
       return;
     }
@@ -450,11 +468,11 @@ export default class LobbyScene extends Phaser.Scene {
     }
 
     this.connectionStatus.setText('Creating room...').setColor('#f59e0b');
-    const room = await this.networkManager.createRoom(name);
+    const room = await this.networkManager.createRoom(sanitizedName);
 
     if (room) {
-      this.playerName = name;
-      this.savePlayerName(name);
+      this.playerName = sanitizedName;
+      this.savePlayerName(sanitizedName);
       this.showWaitingView();
     } else {
       this.connectionStatus
@@ -467,13 +485,34 @@ export default class LobbyScene extends Phaser.Scene {
     const name = this.nameInput.text.trim();
     const code = this.roomCodeInput.text.trim().toUpperCase();
 
+    // Validate name
     if (!name) {
       this.joinError.setText('Please enter your name first');
       return;
     }
 
+    if (name.length > 20) {
+      this.joinError.setText('Name too long (max 20 characters)');
+      return;
+    }
+
+    // Sanitize name
+    const sanitizedName = name.replace(/[<>]/g, '');
+    if (sanitizedName !== name) {
+      this.joinError.setText('Name contains invalid characters');
+      return;
+    }
+
+    // Validate room code
     if (!code || code.length !== 4) {
       this.joinError.setText('Please enter a valid 4-character room code');
+      return;
+    }
+
+    // Validate room code contains only allowed characters
+    const validChars = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/;
+    if (!validChars.test(code)) {
+      this.joinError.setText('Invalid room code format');
       return;
     }
 
@@ -485,11 +524,11 @@ export default class LobbyScene extends Phaser.Scene {
     this.joinError.setText('Joining room...').setColor('#f59e0b');
 
     try {
-      const room = await this.networkManager.joinRoom(code, name);
+      const room = await this.networkManager.joinRoom(code, sanitizedName);
 
       if (room) {
-        this.playerName = name;
-        this.savePlayerName(name);
+        this.playerName = sanitizedName;
+        this.savePlayerName(sanitizedName);
         this.roomCode = code;
         this.showWaitingView();
       }
@@ -502,19 +541,17 @@ export default class LobbyScene extends Phaser.Scene {
 
   handleReady() {
     this.networkManager.sendReady();
-    this.readyBtn.setVisible(false);
+    // Don't hide button immediately - let server confirm via playerReady event
+    // Button will be hidden in updatePlayersList() when server confirms
 
-    // Show "waiting for others" text
-    const players = this.networkManager.getPlayers();
-    const readyCount = players.filter((p) => p.isReady).length;
-    this.waitingText.setText(`Ready! Waiting for others... (${readyCount}/4)`);
+    // Update text to show action is pending
+    this.waitingText.setText('Sending ready status...');
   }
 
   async handleLeaveRoom() {
     try {
       await this.networkManager.leaveRoom();
       // Reset input fields
-      this.nameInput.setText('');
       this.roomCodeInput.setText('');
       this.showMenuView();
     } catch (error) {

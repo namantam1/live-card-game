@@ -9,7 +9,7 @@ export default config({
     /**
      * Define your room handlers:
      */
-    gameServer.define('call_break', CallBreakRoom);
+    gameServer.define('call_break', CallBreakRoom).filterBy(['roomCode']);
   },
 
   initializeExpress: (app: Application) => {
