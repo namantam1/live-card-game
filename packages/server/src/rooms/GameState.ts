@@ -12,6 +12,8 @@ import {
   getValidCards,
   calculateScore,
   type CardData as SharedCardData,
+  type Suit,
+  type Rank,
 } from '@call-break/shared';
 
 // Card schema
@@ -20,6 +22,15 @@ export class Card extends Schema {
   @type('string') suit: string = '';
   @type('string') rank: string = '';
   @type('number') value: number = 0;
+
+  toCardData(): CardData {
+    return {
+      id: this.id,
+      suit: this.suit as Suit,
+      rank: this.rank as Rank,
+      value: this.value,
+    };
+  }
 }
 
 // Trick entry (card played in current trick)
@@ -54,7 +65,7 @@ export class GameState extends Schema {
   @type('number') trickNumber: number = 0;
   @type('string') currentTurn: string = ''; // Player ID whose turn it is
   @type('string') leadSuit: string = '';
-  @type('string') trumpSuit: string = 'spades';
+  @type('string') trumpSuit: Suit = 'spades';
   @type('number') biddingPlayerIndex: number = 0;
   @type('string') trickWinner: string = '';
 

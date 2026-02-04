@@ -1,12 +1,5 @@
-/**
- * Core game constants for Call Break
- */
-
 import type { Suit, Rank } from '../types/card';
 
-/**
- * All valid card suits in the game
- */
 export const SUITS: readonly Suit[] = [
   'spades',
   'hearts',
@@ -14,9 +7,6 @@ export const SUITS: readonly Suit[] = [
   'clubs',
 ] as const;
 
-/**
- * All valid card ranks in ascending order
- */
 export const RANKS: readonly Rank[] = [
   '2',
   '3',
@@ -33,9 +23,6 @@ export const RANKS: readonly Rank[] = [
   'A',
 ] as const;
 
-/**
- * Numeric values for each rank (used for card comparison)
- */
 export const RANK_VALUES: Record<Rank, number> = {
   '2': 2,
   '3': 3,
@@ -52,7 +39,4 @@ export const RANK_VALUES: Record<Rank, number> = {
   A: 14,
 } as const;
 
-/**
- * The trump suit in Call Break (always spades)
- */
 export const TRUMP_SUIT: Suit = 'spades';

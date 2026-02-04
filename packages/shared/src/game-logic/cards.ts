@@ -1,13 +1,8 @@
-/**
- * Card deck creation and manipulation functions
- */
-
 import type { CardData } from '../types/card';
 import { SUITS, RANKS, RANK_VALUES } from '../constants/game';
 
 /**
  * Create a standard 52-card deck
- * @returns Array of 52 cards
  */
 export function createDeck(): CardData[] {
   const deck: CardData[] = [];
@@ -26,8 +21,6 @@ export function createDeck(): CardData[] {
 
 /**
  * Shuffle a deck using Fisher-Yates algorithm
- * @param deck - Array of cards to shuffle
- * @returns New shuffled array (does not modify original)
  */
 export function shuffleDeck(deck: CardData[]): CardData[] {
   const shuffled = [...deck];
@@ -41,8 +34,6 @@ export function shuffleDeck(deck: CardData[]): CardData[] {
 /**
  * Sort a hand by suit then by rank (descending within each suit)
  * Suit order: spades, hearts, diamonds, clubs
- * @param hand - Array of cards to sort
- * @returns New sorted array (does not modify original)
  */
 export function sortHand(hand: CardData[]): CardData[] {
   const suitOrder: Record<string, number> = {

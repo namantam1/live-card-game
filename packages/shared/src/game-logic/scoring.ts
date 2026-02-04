@@ -1,8 +1,4 @@
 /**
- * Scoring calculation for Call Break
- */
-
-/**
  * Calculate round score for a player based on their bid and tricks won
  *
  * Scoring Rules:
@@ -13,10 +9,6 @@
  * - Bid 3, won 3: 3.0 points
  * - Bid 3, won 5: 3.2 points (3 + 0.1*2)
  * - Bid 4, won 2: -4.0 points (penalty)
- *
- * @param bid - Player's bid for the round
- * @param tricksWon - Number of tricks actually won
- * @returns Score for the round (can be negative)
  */
 export function calculateScore(bid: number, tricksWon: number): number {
   if (tricksWon >= bid) {

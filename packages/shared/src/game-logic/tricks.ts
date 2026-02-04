@@ -1,15 +1,8 @@
-/**
- * Trick winner determination logic
- */
-
 import type { TrickEntry, Suit } from '../types/';
 import { compareCards } from './comparison';
 
 /**
- * Find the winner of a completed trick
- * @param trick - Array of cards played in the trick with player indices
- * @param leadSuit - The suit that was led
- * @returns Index of the winning player (0-3)
+ * Find the index winner of a completed trick (0-3)
  */
 export function findTrickWinner(trick: TrickEntry[], leadSuit: Suit): number {
   let winnerIndex = 0;

@@ -1,14 +1,6 @@
 import { MAX_BID } from '../constants/config';
 import type { CardData, Suit } from '../types';
 
-/**
- * Recommends a bid for a given hand based on card strength
- * This logic is used by bots and can be used to suggest bids to human players
- * @param hand - The player's hand
- * @param trumpSuit - The trump suit for the round
- * @param maxBid - Maximum allowed bid (default: MAX_BID)
- * @returns Recommended bid value (1 to maxBid)
- */
 export function calculateBid(
   hand: CardData[],
   trumpSuit: Suit,

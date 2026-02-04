@@ -20,7 +20,7 @@ import {
 import Player from '../objects/Player';
 import TrickArea from '../objects/TrickArea';
 import type { CardData, TrickEntry } from '../type';
-import { calculateBid } from '@call-break/shared';
+import { calculateBid, chooseBotCard } from '@call-break/shared';
 
 export default class GameManager extends Phaser.Events.EventEmitter {
   scene: Scene;
@@ -225,11 +225,13 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     const player = this.players[this.currentTurn];
     const hand = player.getCardData();
-    const validCards = getValidCards(hand, this.leadSuit!, this.currentTrick);
 
-    // Simple bot strategy: play lowest valid card
-    validCards.sort((a, b) => a.value - b.value);
-    const cardToPlay = validCards[0];
+    const cardToPlay = chooseBotCard(hand, this.leadSuit, this.currentTrick, {
+      trumpSuit: TRUMP_SUIT,
+      tricksWon: player.tricksWon,
+      bid: player.bid,
+      numPlayers: NUM_PLAYERS,
+    });
 
     await this.playCard(cardToPlay, this.currentTurn);
   }

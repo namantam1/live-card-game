@@ -1,14 +1,8 @@
-/**
- * Card comparison and value functions
- */
-
 import type { CardData, Suit } from '../types/';
 import { RANK_VALUES, TRUMP_SUIT } from '../constants/game';
 
 /**
- * Get the numeric value of a card
- * @param card - The card to evaluate
- * @returns Numeric value from 2-14
+ * Get Numeric value of card from 2-14
  */
 export function getCardValue(card: CardData): number {
   return RANK_VALUES[card.rank];
@@ -16,9 +10,6 @@ export function getCardValue(card: CardData): number {
 
 /**
  * Compare two cards given a lead suit
- * @param card1 - First card
- * @param card2 - Second card
- * @param leadSuit - The suit that was led in the trick
  * @returns Positive if card1 wins, negative if card2 wins, 0 if equal
  */
 export function compareCards(

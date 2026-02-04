@@ -1,7 +1,3 @@
-/**
- * Card type definitions for Call Break game
- */
-
 export type Suit = 'spades' | 'hearts' | 'diamonds' | 'clubs';
 
 export type Rank =
@@ -19,16 +15,9 @@ export type Rank =
   | 'K'
   | 'A';
 
-/**
- * Represents a playing card in the game
- */
 export interface CardData {
-  /** Unique identifier for the card (e.g., "A-spades") */
-  id: string;
-  /** Card suit */
+  id: string; // "A-spades"
   suit: Suit;
-  /** Card rank */
   rank: Rank;
-  /** Numeric value for comparison (2-14) */
-  value: number;
+  value: number; // 2-14
 }

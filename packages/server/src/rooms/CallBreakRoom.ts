@@ -4,13 +4,17 @@ import {
   Player,
   Card,
   TrickEntry,
-  type CardData,
   createDeck,
   getValidCards,
   calculateScore,
   getDealtCards,
 } from './GameState.js';
-import { calculateBid, type ReactionType } from '@call-break/shared';
+import {
+  calculateBid,
+  type ReactionType,
+  type Suit,
+  chooseBotCard,
+} from '@call-break/shared';
 
 const EMOJIS = ['😎', '🤖', '🦊', '🐱'];
 const BOT_NAMES = ['Bot Alice', 'Bot Bob', 'Bot Charlie'];
@@ -39,7 +43,7 @@ export class CallBreakRoom extends Room {
   maxClients = 4;
   state = new GameState();
 
-  onCreate(options: JoinOptions): void {
+  onCreate(_options: JoinOptions): void {
     // Generate room code
     this.state.roomCode = this.generateRoomCode();
 
@@ -160,7 +164,7 @@ export class CallBreakRoom extends Room {
         );
       } catch (e) {
         // Player didn't reconnect, handle game state
-        console.log(`${player.name} failed to reconnect within timeout`);
+        console.warn(`${player.name} failed to reconnect within timeout: ${e}`);
         if (this.state.phase !== 'waiting') {
           this.broadcast('playerLeft', { name: player.name });
         }
@@ -342,21 +346,11 @@ export class CallBreakRoom extends Room {
 
     // Validate the card can be played
     const validCards = getValidCards(
-      player.hand.map((c) => ({
-        id: c.id,
-        suit: c.suit as any,
-        rank: c.rank as any,
-        value: c.value,
-      })),
-      this.state.leadSuit as any,
+      player.hand.map((c) => c.toCardData()),
+      this.state.leadSuit as Suit,
       Array.from(this.state.currentTrick).map((e, index) => ({
         playerIndex: index,
-        card: {
-          id: e!.card.id,
-          suit: e!.card.suit as any,
-          rank: e!.card.rank as any,
-          value: e!.card.value,
-        },
+        card: e.card.toCardData(),
       }))
     );
     if (!validCards.find((c) => c.id === cardId)) return;
@@ -511,7 +505,7 @@ export class CallBreakRoom extends Room {
     console.log('Round complete!');
   }
 
-  handleNextRound(client: Client): void {
+  handleNextRound(_client: Client): void {
     if (this.state.phase !== 'roundEnd') return;
 
     if (this.state.currentRound >= this.state.totalRounds) {
@@ -522,7 +516,7 @@ export class CallBreakRoom extends Room {
     }
   }
 
-  handleRestart(client: Client): void {
+  handleRestart(_client: Client): void {
     // Reset everything - remove bots first
     const botIds: string[] = [];
     this.state.players.forEach((player, id) => {
@@ -568,17 +562,9 @@ export class CallBreakRoom extends Room {
     const bot = this.state.players.get(botId);
     if (!bot) return;
 
-    // Use shared bid recommendation logic
-    const hand = Array.from(bot.hand).map((c) => ({
-      id: c.id,
-      suit: c.suit as any,
-      rank: c.rank as any,
-      value: c.value,
-    }));
-
     const bid = calculateBid(
-      hand,
-      this.state.trumpSuit as any,
+      Array.from(bot.hand).map((c) => c.toCardData()),
+      this.state.trumpSuit,
       this.state.maxBid
     );
 
@@ -611,124 +597,30 @@ export class CallBreakRoom extends Room {
     const bot = this.state.players.get(botId);
     if (!bot || bot.hand.length === 0) return;
 
-    const hand = bot.hand.map((c) => ({
-      id: c.id,
-      suit: c.suit as any,
-      rank: c.rank as any,
-      value: c.value,
-    }));
-
-    const validCards = getValidCards(
-      hand,
-      this.state.leadSuit as any,
-      Array.from(this.state.currentTrick).map((e, index) => ({
+    const hand = bot.hand.map((c) => c.toCardData());
+    const currentTrick = Array.from(this.state.currentTrick).map(
+      (e, index) => ({
         playerIndex: index,
-        card: {
-          id: e!.card.id,
-          suit: e!.card.suit as any,
-          rank: e!.card.rank as any,
-          value: e!.card.value,
-        },
-      }))
+        card: e.card.toCardData(),
+      })
     );
-    if (validCards.length === 0) return;
 
-    // Bot strategy for playing cards
-    let cardToPlay = this.selectBotCard(validCards, bot);
+    const cardToPlay = chooseBotCard(
+      hand,
+      this.state.leadSuit as Suit,
+      currentTrick,
+      {
+        trumpSuit: this.state.trumpSuit as Suit,
+        tricksWon: bot.tricksWon,
+        bid: bot.bid,
+        numPlayers: NUM_PLAYERS,
+      }
+    );
 
     console.log(
       `${bot.name} (bot) playing ${cardToPlay.rank} of ${cardToPlay.suit}`
     );
     this.playCard(botId, cardToPlay.id);
-  }
-
-  selectBotCard(validCards: CardData[], bot: Player): CardData {
-    const leadSuit = this.state.leadSuit;
-    const trumpSuit = this.state.trumpSuit;
-    const isLeading = this.state.currentTrick.length === 0;
-    const isLastPlayer = this.state.currentTrick.length === NUM_PLAYERS - 1;
-
-    // Find current winning card in trick
-    let winningCard: CardData | null = null;
-    if (!isLeading) {
-      for (const entry of this.state.currentTrick) {
-        const card = {
-          id: entry.card.id,
-          suit: entry.card.suit as any,
-          rank: entry.card.rank as any,
-          value: entry.card.value,
-        };
-        if (
-          !winningCard ||
-          this.beats(entry.card, {
-            suit: winningCard.suit,
-            rank: winningCard.rank,
-            value: winningCard.value,
-            id: winningCard.id,
-          } as Card)
-        ) {
-          winningCard = card;
-        }
-      }
-    }
-
-    // Sort valid cards by value
-    const sortedCards = [...validCards].sort((a, b) => a.value - b.value);
-    const sortedCardsDesc = [...validCards].sort((a, b) => b.value - a.value);
-
-    if (isLeading) {
-      // When leading, play a strong non-trump card if possible
-      const nonTrumpCards = sortedCardsDesc.filter((c) => c.suit !== trumpSuit);
-      if (nonTrumpCards.length > 0) {
-        return nonTrumpCards[0]; // Play highest non-trump
-      }
-      return sortedCardsDesc[0]; // Play highest card
-    }
-
-    // Following a lead
-    const canWin = validCards.some((c) => {
-      if (!winningCard) return true;
-      return this.cardBeats(c, winningCard);
-    });
-
-    if (isLastPlayer && canWin) {
-      // Last player and can win - play the lowest winning card
-      const winningCards = validCards.filter(
-        (c) => winningCard && this.cardBeats(c, winningCard)
-      );
-      return winningCards.sort((a, b) => a.value - b.value)[0];
-    }
-
-    if (canWin && bot.tricksWon < bot.bid) {
-      // Need more tricks - try to win
-      const winningCards = validCards.filter(
-        (c) => winningCard && this.cardBeats(c, winningCard)
-      );
-      return winningCards.sort((a, b) => a.value - b.value)[0]; // Lowest winning card
-    }
-
-    // Can't win or don't need to - play lowest card
-    return sortedCards[0];
-  }
-
-  cardBeats(card1: CardData, card2: CardData): boolean {
-    const trumpSuit = this.state.trumpSuit;
-    const leadSuit = this.state.leadSuit;
-
-    // Trump beats non-trump
-    if (card1.suit === trumpSuit && card2.suit !== trumpSuit) return true;
-    if (card2.suit === trumpSuit && card1.suit !== trumpSuit) return false;
-
-    // Same suit: higher value wins
-    if (card1.suit === card2.suit) {
-      return card1.value > card2.value;
-    }
-
-    // Lead suit beats non-lead non-trump
-    if (card1.suit === leadSuit) return true;
-    if (card2.suit === leadSuit) return false;
-
-    return false;
   }
 
   private handleReaction(client: Client, data: ReactionData): void {

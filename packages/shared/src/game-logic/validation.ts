@@ -1,7 +1,3 @@
-/**
- * Card validation logic - determines which cards are legal to play
- */
-
 import type { CardData, Suit, TrickEntry } from '../types/';
 import { TRUMP_SUIT } from '../constants/game';
 import { compareCards } from './comparison';
