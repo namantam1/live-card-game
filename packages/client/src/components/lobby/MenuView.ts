@@ -4,6 +4,12 @@ import Button from '../Button';
 import { getFontSize } from '../../utils/uiConfig';
 import Common from '../../objects/game/Common';
 
+export interface MenuViewCallbacks {
+  onCreateRoom: () => void;
+  onJoinRoom: () => void;
+  onBackToMenu: () => void;
+}
+
 /**
  * MenuView - Main lobby menu where players enter their name and choose to create or join a room
  */
@@ -15,9 +21,11 @@ export class MenuView {
   private createRoomBtn!: Phaser.GameObjects.Container;
   private joinRoomBtn!: Phaser.GameObjects.Container;
   private isProcessing: boolean = false;
+  private callbacks: MenuViewCallbacks;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, callbacks: MenuViewCallbacks) {
     this.scene = scene;
+    this.callbacks = callbacks;
     this.container = this.scene.add.container(0, 0);
     this.createUI();
   }
@@ -68,7 +76,7 @@ export class MenuView {
       'Create Room',
       () => {
         if (!this.isProcessing) {
-          this.emit('createRoom');
+          this.callbacks.onCreateRoom();
         }
       }
     );
@@ -80,7 +88,7 @@ export class MenuView {
       'Join Room',
       () => {
         if (!this.isProcessing) {
-          this.emit('joinRoom');
+          this.callbacks.onJoinRoom();
         }
       }
     );
@@ -90,9 +98,7 @@ export class MenuView {
       centerX,
       centerY + 250,
       'Back to Menu',
-      () => {
-        this.emit('backToMenu');
-      },
+      this.callbacks.onBackToMenu,
       0x475569
     );
 
@@ -136,19 +142,18 @@ export class MenuView {
     });
   }
 
-  private emit(event: string, data?: unknown) {
-    this.scene.events.emit(`menuView:${event}`, data);
-  }
-
   // Public API
   show() {
-    this.container.setVisible(true);
-    this.nameInput.setVisible(true);
+    this.setVisible(true);
   }
 
   hide() {
-    this.container.setVisible(false);
-    this.nameInput.setVisible(false);
+    this.setVisible(false);
+  }
+
+  setVisible(visible: boolean) {
+    this.container.setVisible(visible);
+    this.nameInput.setVisible(visible);
   }
 
   getPlayerName(): string {

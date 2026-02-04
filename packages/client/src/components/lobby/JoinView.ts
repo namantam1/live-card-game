@@ -3,6 +3,11 @@ import { COLORS } from '../../utils/constants';
 import Button from '../Button';
 import Common from '../../objects/game/Common';
 
+export interface JoinViewCallbacks {
+  onJoin: () => void;
+  onBack: () => void;
+}
+
 /**
  * JoinView - UI for entering a room code to join an existing room
  */
@@ -13,9 +18,11 @@ export class JoinView {
   private joinError!: Phaser.GameObjects.Text;
   private joinBtn!: Phaser.GameObjects.Container;
   private isProcessing: boolean = false;
+  private callbacks: JoinViewCallbacks;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, callbacks: JoinViewCallbacks) {
     this.scene = scene;
+    this.callbacks = callbacks;
     this.container = this.scene.add.container(0, 0);
     this.createUI();
   }
@@ -55,7 +62,7 @@ export class JoinView {
     // Join button
     this.joinBtn = this.createButton(centerX, centerY + 70, 'Join', () => {
       if (!this.isProcessing) {
-        this.emit('join');
+        this.callbacks.onJoin();
       }
     });
 
@@ -64,9 +71,7 @@ export class JoinView {
       centerX,
       centerY + 180,
       'Back',
-      () => {
-        this.emit('back');
-      },
+      this.callbacks.onBack,
       0x475569
     );
 
@@ -108,19 +113,18 @@ export class JoinView {
     });
   }
 
-  private emit(event: string, data?: unknown) {
-    this.scene.events.emit(`joinView:${event}`, data);
-  }
-
   // Public API
   show() {
-    this.container.setVisible(true);
-    this.roomCodeInput.setVisible(true);
+    this.setVisible(true);
   }
 
   hide() {
-    this.container.setVisible(false);
-    this.roomCodeInput.setVisible(false);
+    this.setVisible(false);
+  }
+
+  setVisible(visible: boolean) {
+    this.container.setVisible(visible);
+    this.roomCodeInput.setVisible(visible);
   }
 
   getRoomCode(): string {

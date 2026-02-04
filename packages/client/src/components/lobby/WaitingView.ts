@@ -2,6 +2,11 @@ import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
 import Button from '../Button';
 
+export interface WaitingViewCallbacks {
+  onReady: () => void;
+  onLeave: () => void;
+}
+
 /**
  * WaitingView - Displays the waiting room with player list and ready status
  */
@@ -13,9 +18,11 @@ export class WaitingView {
   private waitingText!: Phaser.GameObjects.Text;
   private readyBtn!: Phaser.GameObjects.Container;
   private statusText!: Phaser.GameObjects.Text;
+  private callbacks: WaitingViewCallbacks;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, callbacks: WaitingViewCallbacks) {
     this.scene = scene;
+    this.callbacks = callbacks;
     this.container = this.scene.add.container(0, 0);
     this.createUI();
   }
@@ -67,18 +74,19 @@ export class WaitingView {
       .setOrigin(0.5);
 
     // Ready button
-    this.readyBtn = this.createButton(centerX, centerY + 180, 'Ready', () => {
-      this.emit('ready');
-    });
+    this.readyBtn = this.createButton(
+      centerX,
+      centerY + 180,
+      'Ready',
+      this.callbacks.onReady
+    );
 
     // Leave button
     const leaveBtn = this.createButton(
       centerX,
       centerY + 280,
       'Leave Room',
-      () => {
-        this.emit('leave');
-      },
+      this.callbacks.onLeave,
       0xef4444
     );
 
@@ -123,17 +131,17 @@ export class WaitingView {
     });
   }
 
-  private emit(event: string, data?: unknown) {
-    this.scene.events.emit(`waitingView:${event}`, data);
-  }
-
   // Public API
   show() {
-    this.container.setVisible(true);
+    this.setVisible(true);
   }
 
   hide() {
-    this.container.setVisible(false);
+    this.setVisible(false);
+  }
+
+  setVisible(visible: boolean) {
+    this.container.setVisible(visible);
   }
 
   setRoomCode(code: string) {

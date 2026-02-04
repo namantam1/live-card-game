@@ -10,7 +10,7 @@ export class StorageManager {
    * @param key Storage key (will be prefixed)
    * @param value Value to store (will be JSON serialized)
    */
-  save(key: string, value: any): boolean {
+  save<T>(key: string, value: T): boolean {
     try {
       const serialized = JSON.stringify(value);
       localStorage.setItem(this.prefix + key, serialized);

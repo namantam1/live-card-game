@@ -1,13 +1,17 @@
 import Phaser from 'phaser';
+import { createActor } from 'xstate';
 import { ANIMATION, SERVER } from '../utils/constants';
 import NetworkManager from '../managers/NetworkManager';
 import NetworkIndicator from '../components/NetworkIndicator';
+import type { Quality } from '../components/NetworkIndicator';
 import Common from '../objects/game/Common';
 import { MenuView } from '../components/lobby/MenuView';
 import { JoinView } from '../components/lobby/JoinView';
 import { WaitingView } from '../components/lobby/WaitingView';
 import { storage } from '../managers/StorageManager';
 import { validatePlayerName, validateRoomCode } from '../utils/validation';
+import { lobbyMachine } from '../machines/lobbyMachine';
+import type { LobbyEvent } from '../machines/lobbyMachine';
 
 export default class LobbyScene extends Phaser.Scene {
   // Managers
@@ -19,14 +23,8 @@ export default class LobbyScene extends Phaser.Scene {
   private joinView!: JoinView;
   private waitingView!: WaitingView;
 
-  // Scene state
-  private currentView: 'menu' | 'join' | 'waiting' = 'menu';
-  private playerName: string = '';
-  private roomCode: string = '';
-  private isTransitioning: boolean = false;
-  private isCreatingRoom: boolean = false;
-  private isJoiningRoom: boolean = false;
-  private isReadying: boolean = false;
+  // State machine
+  private lobbyActor!: ReturnType<typeof createActor<typeof lobbyMachine>>;
 
   // Constants
   private readonly PLAYER_NAME_KEY = 'player_name';
@@ -36,26 +34,13 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   create() {
-    // Reset state
-    this.isTransitioning = false;
-
-    // Background
     Common.createBackground(this);
-
-    // Initialize managers
     this.initializeManagers();
-
-    // Create view components
     this.createViews();
-
-    // Setup event handlers
-    this.setupViewEventHandlers();
-
-    // Connect to server
+    this.lobbyActor = createActor(lobbyMachine);
+    this.setupStateMachine();
     this.connectToServer();
-
-    // Show initial view
-    this.showView('menu');
+    this.events.once('shutdown', this.shutdown, this);
   }
 
   private initializeManagers() {
@@ -68,13 +53,28 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private createViews() {
-    // Create all view components
-    this.menuView = new MenuView(this);
-    this.joinView = new JoinView(this);
-    this.waitingView = new WaitingView(this);
-
     // Load saved player name
     const savedName = storage.load<string>(this.PLAYER_NAME_KEY);
+
+    // Create menu view with callbacks
+    this.menuView = new MenuView(this, {
+      onCreateRoom: () => this.handleCreateRoom(),
+      onJoinRoom: () => this.handleJoinRoomClick(),
+      onBackToMenu: () => this.send({ type: 'BACK_TO_MENU' }),
+    });
+
+    // Create join view with callbacks
+    this.joinView = new JoinView(this, {
+      onJoin: () => this.handleJoinRoom(),
+      onBack: () => this.send({ type: 'SHOW_JOIN_VIEW' }),
+    });
+
+    // Create waiting view with callbacks
+    this.waitingView = new WaitingView(this, {
+      onReady: () => this.handleReady(),
+      onLeave: () => this.handleLeaveRoom(),
+    });
+
     if (savedName) {
       this.menuView.setPlayerName(savedName);
     }
@@ -85,94 +85,131 @@ export default class LobbyScene extends Phaser.Scene {
     this.waitingView.hide();
   }
 
-  private setupViewEventHandlers() {
-    // Menu view events
-    this.events.on('menuView:createRoom', this.handleCreateRoom, this);
-    this.events.on('menuView:joinRoom', this.handleJoinRoomClick, this);
-    this.events.on('menuView:backToMenu', this.handleBackToMainMenu, this);
+  private setupStateMachine() {
+    this.lobbyActor.subscribe((state) => {
+      console.log('State:', state.value);
+      this.updateUI(state.value as string, state.context);
+    });
 
-    // Join view events
-    this.events.on('joinView:join', this.handleJoinRoom, this);
-    this.events.on('joinView:back', () => this.showView('menu'), this);
+    this.lobbyActor.start();
+    this.send({ type: 'CONNECT' });
+  }
 
-    // Waiting view events
-    this.events.on('waitingView:ready', this.handleReady, this);
-    this.events.on('waitingView:leave', this.handleLeaveRoom, this);
+  private updateUI(
+    state: string,
+    context: { errorMessage: string; roomCode: string }
+  ) {
+    const views = { menu: false, join: false, waiting: false };
+
+    switch (state) {
+      case 'disconnected':
+      case 'connecting':
+      case 'menu':
+        views.menu = true;
+        if (context.errorMessage) {
+          this.menuView.setConnectionStatus(context.errorMessage, '#ef4444');
+        } else {
+          // Clear any previous status messages when returning to menu
+          this.menuView.setConnectionStatus('Connected', '#22c55e');
+        }
+        this.menuView.setButtonsEnabled(true);
+        break;
+
+      case 'joinView':
+        views.join = true;
+        if (context.errorMessage) {
+          this.joinView.showError(context.errorMessage);
+        } else {
+          this.joinView.clearError();
+        }
+        this.joinView.setButtonsEnabled(true);
+        break;
+
+      case 'creatingRoom':
+        views.menu = true;
+        this.menuView.setButtonsEnabled(false);
+        this.menuView.setConnectionStatus('Creating room...', '#f59e0b');
+        break;
+
+      case 'joiningRoom':
+        views.join = true;
+        this.joinView.setButtonsEnabled(false);
+        this.joinView.showError('Joining room...', '#f59e0b');
+        break;
+
+      case 'waiting':
+        views.waiting = true;
+        this.waitingView.setRoomCode(context.roomCode);
+        this.updatePlayersList();
+        this.menuView.setButtonsEnabled(true);
+        this.joinView.setButtonsEnabled(true);
+        break;
+
+      case 'readying':
+        views.waiting = true;
+        this.waitingView.setWaitingMessage('Sending ready status...');
+        break;
+
+      case 'transitioning':
+        this.startGame();
+        return;
+
+      case 'exiting':
+        this.scene.start('MenuScene');
+        return;
+    }
+
+    // Update view visibility
+    this.menuView.setVisible(views.menu);
+    this.joinView.setVisible(views.join);
+    this.waitingView.setVisible(views.waiting);
+  }
+
+  private send(event: LobbyEvent) {
+    this.lobbyActor.send(event);
   }
 
   private setupNetworkListeners() {
-    // Connection quality changes
-    this.networkManager.on('connectionQualityChange', ({ quality }: any) => {
-      if (this.networkIndicator) {
-        this.networkIndicator.updateQuality(quality);
+    this.networkManager.on(
+      'connectionQualityChange',
+      ({ quality }: { quality: Quality }) => {
+        this.networkIndicator?.updateQuality(quality);
+      }
+    );
+
+    this.networkManager.on('seated', (data: { roomCode: string }) => {
+      const state = this.lobbyActor.getSnapshot().value;
+      if (state === 'creatingRoom') {
+        this.send({ type: 'ROOM_CREATED', roomCode: data.roomCode });
+      } else if (state === 'joiningRoom') {
+        this.send({ type: 'ROOM_JOINED', roomCode: data.roomCode });
       }
     });
 
-    // Room created/joined - receive seat and room code
-    this.networkManager.on('seated', (data: any) => {
-      this.roomCode = data.roomCode;
-      this.waitingView.setRoomCode(this.roomCode);
-    });
+    this.networkManager.on('playerJoined', () => this.updatePlayersList());
+    this.networkManager.on('playerRemoved', () => this.updatePlayersList());
 
-    // Player joined
-    this.networkManager.on('playerJoined', () => {
-      this.updatePlayersList();
-    });
-
-    // Player left
-    this.networkManager.on('playerRemoved', () => {
-      this.updatePlayersList();
-    });
-
-    // Player ready status changed
     this.networkManager.on('playerReady', () => {
       this.updatePlayersList();
+      if (this.lobbyActor.getSnapshot().value === 'readying') {
+        this.send({ type: 'READY_SENT' });
+      }
     });
 
-    // Phase change - when game starts
-    this.networkManager.on('phaseChange', (data: any) => {
+    this.networkManager.on('phaseChange', (data: { phase: string }) => {
       if (data.phase === 'dealing' || data.phase === 'bidding') {
-        this.startGame();
+        this.send({ type: 'START_GAME' });
       }
     });
 
-    // Error handling
-    this.networkManager.on('error', (data: any) => {
-      console.error('Network error:', data);
-      if (this.currentView === 'join') {
-        this.joinView.showError('Error: ' + data.message);
+    this.networkManager.on('error', (data: { message: string }) => {
+      const state = this.lobbyActor.getSnapshot().value;
+      if (state === 'joiningRoom' || state === 'creatingRoom') {
+        this.send({ type: 'ROOM_ERROR', error: data.message });
       }
     });
 
-    // Room left
-    this.networkManager.on('roomLeft', () => {
-      this.showView('menu');
-    });
-  }
-
-  private showView(view: 'menu' | 'join' | 'waiting') {
-    // Hide all views
-    this.menuView.hide();
-    this.joinView.hide();
-    this.waitingView.hide();
-
-    // Clear errors
-    this.joinView.clearError();
-
-    // Show requested view
-    this.currentView = view;
-    switch (view) {
-      case 'menu':
-        this.menuView.show();
-        break;
-      case 'join':
-        this.joinView.show();
-        break;
-      case 'waiting':
-        this.waitingView.show();
-        this.updatePlayersList();
-        break;
-    }
+    this.networkManager.on('roomLeft', () => this.send({ type: 'ROOM_LEFT' }));
   }
 
   private async connectToServer() {
@@ -181,14 +218,18 @@ export default class LobbyScene extends Phaser.Scene {
       this.menuView.setConnectionStatus('Connected', '#22c55e');
       this.networkIndicator.updateQuality('good');
       this.setupNetworkListeners();
+      this.send({ type: 'CONNECTION_SUCCESS' });
     } else {
       this.menuView.setConnectionStatus(
         'Connection failed. Retry...',
         '#ef4444'
       );
       this.networkIndicator.updateQuality('offline');
-      // Retry after 3 seconds
-      this.time.delayedCall(3000, () => this.connectToServer());
+      this.send({ type: 'CONNECTION_FAILED' });
+      this.time.delayedCall(3000, () => {
+        this.send({ type: 'CONNECT' });
+        this.connectToServer();
+      });
     }
   }
 
@@ -198,22 +239,13 @@ export default class LobbyScene extends Phaser.Scene {
       this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
       return;
     }
-    this.showView('join');
-  }
-
-  private handleBackToMainMenu() {
-    this.scene.start('MenuScene');
+    this.send({ type: 'JOIN_ROOM_CLICK', playerName: nameResult.value! });
   }
 
   private async handleCreateRoom() {
-    // Prevent duplicate requests
-    if (this.isCreatingRoom) {
-      return;
-    }
+    if (this.lobbyActor.getSnapshot().value === 'creatingRoom') return;
 
     const nameResult = validatePlayerName(this.menuView.getPlayerName());
-
-    // Validate name
     if (!nameResult.valid) {
       this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
       return;
@@ -224,44 +256,33 @@ export default class LobbyScene extends Phaser.Scene {
       return;
     }
 
-    // Set processing state
-    this.isCreatingRoom = true;
-    this.menuView.setButtonsEnabled(false);
-    this.menuView.setConnectionStatus('Creating room...', '#f59e0b');
+    this.send({ type: 'CREATE_ROOM', playerName: nameResult.value! });
 
     try {
       const room = await this.networkManager.createRoom(nameResult.value!);
-
       if (room) {
-        this.playerName = nameResult.value!;
-        storage.save(this.PLAYER_NAME_KEY, this.playerName);
-        this.showView('waiting');
+        storage.save(this.PLAYER_NAME_KEY, nameResult.value!);
+        // Room code will be sent via 'seated' event from server
       } else {
-        this.menuView.setConnectionStatus('Failed to create room', '#ef4444');
+        this.send({ type: 'ROOM_ERROR', error: 'Failed to create room' });
       }
-    } finally {
-      // Reset processing state
-      this.isCreatingRoom = false;
-      this.menuView.setButtonsEnabled(true);
+    } catch (error) {
+      const errorMsg = (error as Error).message || 'Failed to create room';
+      this.send({ type: 'ROOM_ERROR', error: errorMsg });
     }
   }
 
   private async handleJoinRoom() {
-    // Prevent duplicate requests
-    if (this.isJoiningRoom) {
-      return;
-    }
+    if (this.lobbyActor.getSnapshot().value === 'joiningRoom') return;
 
     const nameResult = validatePlayerName(this.menuView.getPlayerName());
     const codeResult = validateRoomCode(this.joinView.getRoomCode());
 
-    // Validate name
     if (!nameResult.valid) {
       this.joinView.showError(nameResult.error!);
       return;
     }
 
-    // Validate room code
     if (!codeResult.valid) {
       this.joinView.showError(codeResult.error!);
       return;
@@ -272,60 +293,47 @@ export default class LobbyScene extends Phaser.Scene {
       return;
     }
 
-    // Set processing state
-    this.isJoiningRoom = true;
-    this.joinView.setButtonsEnabled(false);
-    this.joinView.showError('Joining room...', '#f59e0b');
+    this.send({
+      type: 'JOIN_ROOM',
+      playerName: nameResult.value!,
+      roomCode: codeResult.value!,
+    });
+
+    storage.save(this.PLAYER_NAME_KEY, nameResult.value!);
 
     try {
-      const room = await this.networkManager.joinRoom(
-        codeResult.value!,
-        nameResult.value!
-      );
-
-      if (room) {
-        this.playerName = nameResult.value!;
-        storage.save(this.PLAYER_NAME_KEY, this.playerName);
-        this.roomCode = codeResult.value!;
-        this.showView('waiting');
-      }
+      await this.networkManager.joinRoom(codeResult.value!, nameResult.value!);
     } catch (error) {
-      console.error('Failed to join room:', error);
-      const errorMsg = (error as Error).message || 'Room not found or full';
-      this.joinView.showError(errorMsg);
-    } finally {
-      // Reset processing state
-      this.isJoiningRoom = false;
-      this.joinView.setButtonsEnabled(true);
+      const errorMsg =
+        'Error: ' + (error as Error).message || 'Room not found or full';
+      console.log('Join room error:', errorMsg);
+      this.send({ type: 'ROOM_ERROR', error: errorMsg });
     }
   }
 
   private handleReady() {
-    // Prevent spam clicking
-    if (this.isReadying) {
-      return;
-    }
+    if (this.lobbyActor.getSnapshot().value === 'readying') return;
 
-    this.isReadying = true;
+    this.send({ type: 'READY' });
     this.networkManager.sendReady();
-    // Update text to show action is pending
-    this.waitingView.setWaitingMessage('Sending ready status...');
 
-    // Reset after 2 seconds (server should respond before this)
     this.time.delayedCall(2000, () => {
-      this.isReadying = false;
+      if (this.lobbyActor.getSnapshot().value === 'readying') {
+        this.send({ type: 'READY_SENT' });
+      }
     });
   }
 
   private async handleLeaveRoom() {
+    this.send({ type: 'LEAVE_ROOM' });
+
     try {
       await this.networkManager.leaveRoom();
-      // Reset input fields
       this.joinView.clearRoomCode();
-      this.showView('menu');
     } catch (error) {
       console.error('Error leaving room:', error);
-      this.showView('menu');
+    } finally {
+      this.send({ type: 'ROOM_LEFT' });
     }
   }
 
@@ -336,10 +344,6 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private startGame() {
-    // Prevent multiple calls
-    if (this.isTransitioning) return;
-    this.isTransitioning = true;
-
     // Transition to GameScene with network manager
     this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
     this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -351,29 +355,10 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   shutdown() {
-    // Remove event listeners
-    this.events.off('menuView:createRoom', this.handleCreateRoom, this);
-    this.events.off('menuView:joinRoom', this.handleJoinRoomClick, this);
-    this.events.off('menuView:backToMenu', this.handleBackToMainMenu, this);
-    this.events.off('joinView:join', this.handleJoinRoom, this);
-    this.events.off('joinView:back');
-    this.events.off('waitingView:ready', this.handleReady, this);
-    this.events.off('waitingView:leave', this.handleLeaveRoom, this);
-
-    // Clean up view components
-    if (this.menuView) {
-      this.menuView.destroy();
-    }
-    if (this.joinView) {
-      this.joinView.destroy();
-    }
-    if (this.waitingView) {
-      this.waitingView.destroy();
-    }
-
-    // Clean up network indicator
-    if (this.networkIndicator) {
-      this.networkIndicator.destroy();
-    }
+    this.lobbyActor.stop();
+    this.menuView?.destroy();
+    this.joinView?.destroy();
+    this.waitingView?.destroy();
+    this.networkIndicator?.destroy();
   }
 }
