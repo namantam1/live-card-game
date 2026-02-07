@@ -8,6 +8,7 @@ import Common from '../objects/game/Common';
 import GameModeFactory from '../modes/GameModeFactory';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS } from '../utils/constants';
+import PresenceManager from '../managers/PresenceManager';
 
 export default class GameScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -34,6 +35,10 @@ export default class GameScene extends Phaser.Scene {
   create() {
     // Fade in
     this.cameras.main.fadeIn(500);
+
+    PresenceManager.getInstance()
+      .setInviteHandlingEnabled(false)
+      .updateStatus(true);
 
     // Initialize managers FIRST (before UI that depends on them)
     this.audioManager = new AudioManager(this);

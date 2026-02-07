@@ -11,6 +11,8 @@ import TrickArea from '../objects/TrickArea';
 import BootScene from './BootScene';
 import ReactionPanel from '../components/ReactionPanel';
 import Button from '../components/Button';
+import { OnlineUsersPanel } from '../components/lobby/OnlineUsersPanel';
+import { InviteModal } from '../components/InviteModal';
 
 const CARD: CardData = createDeck()[0];
 
@@ -139,36 +141,36 @@ export default class DebugScene extends Phaser.Scene {
     //   faceDown: false,
     // });
 
-    new TrickArea(this);
-    const player = new Player(this, 0, 'Alice', '😀', true, (data: CardData) =>
-      console.log(data)
-    );
-    const cards = shuffleDeck(createDeck());
-    player.setCards(cards.slice(0, 13), false).then(() => {
-      const currentTrick = cards.slice(13, 16).map((card, i) => ({
-        playerIndex: i,
-        card,
-      }));
-      player.updatePlayableCards(SUITS[2], currentTrick);
-    });
-    // create other players
-    for (let i = 1; i < 4; i++) {
-      const otherPlayer = new Player(this, i, `Player ${i + 1}`, '🤖', false);
-      otherPlayer.setCards(cards.slice(0, 13), false);
-    }
+    // new TrickArea(this);
+    // const player = new Player(this, 0, 'Alice', '😀', true, (data: CardData) =>
+    //   console.log(data)
+    // );
+    // const cards = shuffleDeck(createDeck());
+    // player.setCards(cards.slice(0, 13), false).then(() => {
+    //   const currentTrick = cards.slice(13, 16).map((card, i) => ({
+    //     playerIndex: i,
+    //     card,
+    //   }));
+    //   player.updatePlayableCards(SUITS[2], currentTrick);
+    // });
+    // // create other players
+    // for (let i = 1; i < 4; i++) {
+    //   const otherPlayer = new Player(this, i, `Player ${i + 1}`, '🤖', false);
+    //   otherPlayer.setCards(cards.slice(0, 13), false);
+    // }
 
     // Create reaction panel (bottom center of screen)
-    const reactionPanel = new ReactionPanel(this, (type: string) => {}, {
-      position: {
-        x: this.cameras.main.centerX,
-        y: this.cameras.main.centerY - 180,
-      },
-    });
+    // const reactionPanel = new ReactionPanel(this, (type: string) => {}, {
+    //   position: {
+    //     x: this.cameras.main.centerX,
+    //     y: this.cameras.main.centerY - 180,
+    //   },
+    // });
 
-    // Create reaction button to toggle panel (bottom right)
-    Button.createReactionbutton(this, width - 50, 150, '😊', () =>
-      reactionPanel.toggle()
-    );
+    // // Create reaction button to toggle panel (bottom right)
+    // Button.createReactionbutton(this, width - 50, 150, '😊', () =>
+    //   reactionPanel.toggle()
+    // );
     // const reactionButton = this.add
     //   .text(this.cameras.main.width - 100, 120, '😊', {
     //     fontSize: '80px',
@@ -178,5 +180,23 @@ export default class DebugScene extends Phaser.Scene {
     //   .on('pointerdown', () => reactionPanel?.toggle())
     //   .on('pointerover', () => reactionButton?.setScale(1.1))
     //   .on('pointerout', () => reactionButton?.setScale(1));
+
+    // new OnlineUsersPanel(this, {
+    //   onInviteUser: (userId: string) => {
+    //     console.log('Invite user:', userId);
+    //   },
+    // });
+
+    // new InviteModal(this, {
+    //   onAccept: () => {
+    //     console.log('Accepted invite to room');
+    //   },
+    //   onDecline: () => {
+    //     console.log('Declined invite');
+    //   },
+    //   onTimeout: () => {
+    //     console.log('Invite timed out');
+    //   },
+    // }).show('Alice', 'BBQQ', 5);
   }
 }

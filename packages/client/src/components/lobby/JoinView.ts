@@ -131,6 +131,10 @@ export class JoinView {
     return this.roomCodeInput.text.trim().toUpperCase();
   }
 
+  setRoomCode(code: string) {
+    this.roomCodeInput.setText(code.toUpperCase());
+  }
+
   clearRoomCode() {
     this.roomCodeInput.setText('');
   }

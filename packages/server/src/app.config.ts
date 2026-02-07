@@ -3,6 +3,7 @@ import { monitor, playground } from 'colyseus';
 import type { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { CallBreakRoom } from './rooms/CallBreakRoom.js';
+import { PresenceRoom } from './rooms/PresenceRoom.js';
 
 export default config({
   initializeGameServer: (gameServer) => {
@@ -10,6 +11,7 @@ export default config({
      * Define your room handlers:
      */
     gameServer.define('call_break', CallBreakRoom).filterBy(['roomCode']);
+    gameServer.define('presence', PresenceRoom);
   },
 
   initializeExpress: (app: Application) => {

@@ -3,8 +3,12 @@ import { COLORS, ANIMATION } from '../utils/constants';
 import { getFontSize } from '../utils/uiConfig';
 import Button from '../components/Button';
 import Common from '../objects/game/Common';
+import PresenceManager from '../managers/PresenceManager';
+import type { InviteData } from '../type';
 
 export default class MenuScene extends Phaser.Scene {
+  private presenceManager!: PresenceManager;
+
   constructor() {
     super({ key: 'MenuScene' });
   }
@@ -45,6 +49,16 @@ export default class MenuScene extends Phaser.Scene {
 
     // Footer with credit and version
     this.createFooter(width, height);
+
+    this.presenceManager =
+      PresenceManager.getInstance().setInviteHandlingEnabled(true);
+
+    // Initialize invite UI handling (auto-connects if player name is saved)
+    this.presenceManager.initializeInviteUI(this, (invite: InviteData) => {
+      this.scene.start('LobbyScene', { invite });
+    });
+
+    this.events.once('shutdown', this.shutdown, this);
   }
 
   createFooter(width: number, height: number) {
@@ -81,7 +95,7 @@ export default class MenuScene extends Phaser.Scene {
     this.sound.stopAll();
     this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start(screenKey);
+      this.scene.start(screenKey, {});
     });
   }
 
@@ -139,5 +153,10 @@ export default class MenuScene extends Phaser.Scene {
       hoverScale: 1.05,
       pressScale: 0.95,
     });
+  }
+
+  shutdown() {
+    this.presenceManager.cleanupInviteUI();
+    this.presenceManager.setInviteHandlingEnabled(false);
   }
 }

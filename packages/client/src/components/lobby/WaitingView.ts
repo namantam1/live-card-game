@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
 import Button from '../Button';
+import { OnlineUsersPanel } from './OnlineUsersPanel';
 
 export interface WaitingViewCallbacks {
   onReady: () => void;
   onLeave: () => void;
+  onInviteUser: (userId: string) => void;
 }
 
 /**
@@ -15,10 +17,12 @@ export class WaitingView {
   public container: Phaser.GameObjects.Container;
   private roomCodeDisplay!: Phaser.GameObjects.Text;
   private playersListContainer!: Phaser.GameObjects.Container;
+  private onlineUsersPanel!: OnlineUsersPanel;
   private waitingText!: Phaser.GameObjects.Text;
   private readyBtn!: Phaser.GameObjects.Container;
   private statusText!: Phaser.GameObjects.Text;
   private callbacks: WaitingViewCallbacks;
+  private pendingInvitees: Set<string> = new Set();
 
   constructor(scene: Phaser.Scene, callbacks: WaitingViewCallbacks) {
     this.scene = scene;
@@ -63,6 +67,11 @@ export class WaitingView {
 
     // Players list container
     this.playersListContainer = this.scene.add.container(centerX, centerY);
+
+    // Online users panel (positioned in bottom-right by default)
+    this.onlineUsersPanel = new OnlineUsersPanel(this.scene, {
+      onInviteUser: this.callbacks.onInviteUser,
+    });
 
     // Waiting text
     this.waitingText = this.scene.add
@@ -109,6 +118,9 @@ export class WaitingView {
       leaveBtn,
       this.statusText,
     ]);
+
+    // Add online users panel (has its own positioning)
+    this.container.add(this.onlineUsersPanel.container);
   }
 
   private createButton(
@@ -205,6 +217,35 @@ export class WaitingView {
     }
   }
 
+  updateOnlineUsers(
+    users: Array<{
+      id: string;
+      name: string;
+      inGame: boolean;
+    }>,
+    localPlayerId: string,
+    canInvite: boolean
+  ) {
+    this.onlineUsersPanel.updateUsers(
+      users,
+      localPlayerId,
+      canInvite,
+      this.pendingInvitees
+    );
+  }
+
+  addPendingInvitee(userId: string) {
+    this.pendingInvitees.add(userId);
+  }
+
+  removePendingInvitee(userId: string) {
+    this.pendingInvitees.delete(userId);
+  }
+
+  clearPendingInvitees() {
+    this.pendingInvitees.clear();
+  }
+
   setWaitingMessage(message: string) {
     this.statusText.setText(message);
   }
@@ -214,6 +255,7 @@ export class WaitingView {
   }
 
   destroy() {
+    this.onlineUsersPanel.destroy();
     this.container.destroy();
   }
 }

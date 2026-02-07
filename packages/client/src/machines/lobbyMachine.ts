@@ -5,6 +5,7 @@ export type LobbyContext = {
   roomCode: string;
   errorMessage: string;
   connectionStatus: string;
+  isInviteJoin: boolean;
 };
 
 export type LobbyEvent =
@@ -13,7 +14,12 @@ export type LobbyEvent =
   | { type: 'CONNECTION_FAILED' }
   | { type: 'CREATE_ROOM'; playerName: string }
   | { type: 'JOIN_ROOM_CLICK'; playerName: string }
-  | { type: 'JOIN_ROOM'; playerName: string; roomCode: string }
+  | {
+      type: 'JOIN_ROOM';
+      playerName: string;
+      roomCode: string;
+      isInvite?: boolean;
+    }
   | { type: 'ROOM_CREATED'; roomCode: string }
   | { type: 'ROOM_JOINED'; roomCode: string }
   | { type: 'ROOM_ERROR'; error: string }
@@ -37,6 +43,7 @@ export const lobbyMachine = createMachine({
     roomCode: '',
     errorMessage: '',
     connectionStatus: 'Disconnected',
+    isInviteJoin: false,
   },
   states: {
     disconnected: {
@@ -87,6 +94,7 @@ export const lobbyMachine = createMachine({
             playerName: ({ event }) => event.playerName,
             roomCode: ({ event }) => event.roomCode,
             errorMessage: '',
+            isInviteJoin: ({ event }) => event.isInvite || false,
           }),
         },
         SHOW_JOIN_VIEW: 'menu',
@@ -114,12 +122,14 @@ export const lobbyMachine = createMachine({
           target: 'waiting',
           actions: assign({
             roomCode: ({ event }) => event.roomCode,
+            isInviteJoin: false,
           }),
         },
         ROOM_ERROR: {
           target: 'joinView',
           actions: assign({
             errorMessage: ({ event }) => event.error,
+            isInviteJoin: false,
           }),
         },
       },
