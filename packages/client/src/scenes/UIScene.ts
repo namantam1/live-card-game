@@ -10,9 +10,11 @@ import Common from '../objects/game/Common';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS, UI_TIMING } from '../utils/constants';
 import ReactionPanel from '../components/ReactionPanel';
-import ChatPanel from '../components/ChatPanel';
+import QuickChatPanel from '../components/QuickChatPanel';
+import ChatToast from '../components/ChatToast';
 import Button from '../components/Button';
 import type { ChatMessage } from '@call-break/shared';
+import type { ReactionData } from '../type';
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -186,6 +188,10 @@ export default class UIScene extends Phaser.Scene {
   }
 
   private setupReactionUI(): void {
+    const { width, height } = this.cameras.main;
+    const rightEdge = width - 50;
+    const startY = height * 0.3; // Position at 30% from top, away from bottom cards
+
     const reactionPanel = new ReactionPanel(
       this,
       (type: string) => this.gameMode.sendReaction(type),
@@ -196,41 +202,61 @@ export default class UIScene extends Phaser.Scene {
         },
       }
     );
-    Button.createReactionbutton(
-      this,
-      this.cameras.main.width - 50,
-      150,
-      '😊',
-      () => reactionPanel.toggle()
+
+    // Reaction button on right edge
+    Button.createReactionbutton(this, rightEdge, startY, '😊', () =>
+      reactionPanel.toggle()
     );
 
-    // Setup chat UI for multiplayer mode only
+    // Setup reaction event listener for multiplayer mode only
     if (this.isMultiplayer()) {
-      this.setupChatUI();
+      this.setupReactionListener();
+      this.setupChatUI(rightEdge, startY);
     }
   }
 
-  private setupChatUI(): void {
-    const chatPanel = new ChatPanel(this, {
+  private setupReactionListener(): void {
+    // Listen for incoming reactions and show them on the player (same pattern as chat)
+    this.gameMode.on(EVENTS.REACTION, (data: ReactionData) => {
+      const player = this.gameScene.players.find((p) => {
+        if (p.networkId) {
+          return p.networkId === data.playerId;
+        }
+        return p.absoluteSeatIndex === data.seatIndex;
+      });
+
+      if (player) {
+        player.showReaction(data.type);
+      }
+    });
+  }
+
+  private setupChatUI(rightEdge: number, startY: number): void {
+    const { width } = this.cameras.main;
+
+    // Get players from game scene
+    const players = this.gameScene.players;
+
+    // Create chat toast system for displaying messages near players
+    const chatToast = new ChatToast(this, players);
+
+    // Create quick chat panel
+    const quickChatPanel = new QuickChatPanel(this, {
       position: {
-        x: 20,
-        y: this.cameras.main.height - 300,
+        x: width - 390, // Position to the left of the button
+        y: startY + 120, // Below the chat button
       },
       onSendMessage: (message: string) => this.gameMode.sendChat(message),
     });
 
-    // Chat toggle button
-    Button.createReactionbutton(
-      this,
-      this.cameras.main.width - 50,
-      230,
-      '💬',
-      () => chatPanel.toggle()
+    // Chat toggle button (positioned below reaction button)
+    Button.createReactionbutton(this, rightEdge, startY + 80, '💬', () =>
+      quickChatPanel.toggle()
     );
 
-    // Listen for incoming chat messages
+    // Listen for incoming chat messages and show as speech bubbles
     this.gameMode.on(EVENTS.CHAT_MESSAGE, (data: ChatMessage) => {
-      chatPanel.addMessage(data);
+      chatToast.showMessage(data);
     });
   }
 }

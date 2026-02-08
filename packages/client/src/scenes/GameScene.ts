@@ -91,7 +91,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Create network indicator in top-right corner, to the left of settings icon
     // Hidden by default, will be shown when connection events are received
-    this.networkIndicator = new NetworkIndicator(this, width - 150, 50);
+    this.networkIndicator = new NetworkIndicator(this, width - 120, 30);
     this.networkIndicator.container.setVisible(false);
 
     // Create reconnection overlay (hidden by default)

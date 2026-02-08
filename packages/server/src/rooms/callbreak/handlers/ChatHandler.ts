@@ -62,7 +62,7 @@ export class ChatHandler extends BaseHandler {
     };
 
     // Broadcast to all players
-    this.broadcast('chatMessage', chatMessage);
+    this.broadcast('chatMessage', chatMessage, { except: client });
 
     console.log(
       `[Chat] ${player.name}: ${sanitizedMessage.substring(0, 50)}${sanitizedMessage.length > 50 ? '...' : ''}`
@@ -80,22 +80,5 @@ export class ChatHandler extends BaseHandler {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;');
-  }
-
-  /**
-   * Broadcast a system message (e.g., "Player joined")
-   */
-  broadcastSystemMessage(message: string): void {
-    const systemMessage: ChatMessage = {
-      id: `system_${Date.now()}`,
-      playerId: 'system',
-      playerName: 'System',
-      seatIndex: -1,
-      message,
-      timestamp: Date.now(),
-      isBot: false,
-    };
-
-    this.broadcast('chatMessage', systemMessage);
   }
 }

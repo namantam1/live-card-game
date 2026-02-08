@@ -87,8 +87,9 @@ export const EVENTS = {
   BID_PLACED: 'bidPlayed',
   TURN_CHANGED: 'turnChanged',
   PHASE_CHANGED: 'phaseChanged',
-  // Chat events (multiplayer only)
+  // Chat & Reaction events (multiplayer only)
   CHAT_MESSAGE: 'chatMessage',
+  REACTION: 'reaction',
   // Connection events (multiplayer only, ignored by solo mode)
   CONNECTION_QUALITY_CHANGED: 'connectionQualityChanged',
   RECONNECTING: 'reconnecting',

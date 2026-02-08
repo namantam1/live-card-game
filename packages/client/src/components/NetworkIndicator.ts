@@ -2,7 +2,7 @@ import Phaser, { Scene } from 'phaser';
 
 export type Quality = 'good' | 'fair' | 'poor' | 'offline';
 
-const size = 40;
+const size = 32;
 
 export default class NetworkIndicator {
   currentQuality: Quality;

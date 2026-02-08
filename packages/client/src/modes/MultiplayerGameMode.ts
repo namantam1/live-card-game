@@ -7,7 +7,6 @@ import type {
   CardData,
   CardSchema,
   PlayerSchema,
-  ReactionData,
   TrickEntrySchema,
 } from '../type';
 import { EVENTS } from '../utils/constants';
@@ -204,16 +203,8 @@ export default class MultiplayerGameMode extends GameModeBase {
   }
 
   override sendReaction(reactionType: string): void {
-    // Send to server (will broadcast to others)
+    // Send to server (will broadcast to others only, sender won't see their own reaction)
     this.networkManager.sendReaction(reactionType);
-
-    // Show reaction locally for immediate feedback
-    const localPlayer = this.players.find(
-      (p) => p.networkId === this.networkManager.playerId
-    );
-    if (localPlayer) {
-      localPlayer.showReaction(reactionType);
-    }
   }
 
   override sendChat(message: string): void {
@@ -238,13 +229,8 @@ export default class MultiplayerGameMode extends GameModeBase {
    */
   private setupNetworkManagerListeners(): void {
     this.networkManager.on('message:playerReaction', (data?: unknown) => {
-      const reactionData = data as ReactionData;
-      const player = this.players.find(
-        (p) => p.networkId === reactionData.playerId
-      );
-      if (player) {
-        player.showReaction(reactionData.type);
-      }
+      // Forward reaction events to UIScene (same pattern as chat)
+      this.emit(EVENTS.REACTION, data);
     });
 
     this.networkManager.on('message:chatMessage', (data?: unknown) => {

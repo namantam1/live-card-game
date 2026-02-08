@@ -1,8 +1,9 @@
 import { Scene } from 'phaser';
 
-/**
- * Utility class for displaying animated reaction emojis
- */
+const CONFIGS = {
+  REACTION_DURATION: 5000,
+};
+
 export default class ReactionAnimation {
   /**
    * Display an animated reaction emoji that floats up and fades out
@@ -41,8 +42,8 @@ export default class ReactionAnimation {
       targets: [emojiText, nameText].filter(Boolean),
       y: y - 100,
       alpha: 0,
-      duration: 2500,
-      ease: 'Power2',
+      duration: CONFIGS.REACTION_DURATION,
+      ease: 'Power3',
       onComplete: () => {
         emojiText.destroy();
         nameText?.destroy();
