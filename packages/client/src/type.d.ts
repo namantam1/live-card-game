@@ -91,6 +91,7 @@ export interface PlayerData {
 
 // Re-export from shared package
 export type {
+  ChatMessage,
   OnlineUserData,
   OnlineUserSchema,
   IPresenceState,

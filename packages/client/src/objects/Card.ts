@@ -64,7 +64,6 @@ export default class Card {
     if (playable && !this.isFaceDown) {
       this.container.setInteractive({ useHandCursor: true });
       this.setupInteraction();
-      this.container.setAlpha(1);
 
       // Auto-popout playable cards (lift them up)
       if (!wasPlayable && !skipAnimation) {
@@ -97,11 +96,6 @@ export default class Card {
           duration: 150,
           ease: 'Quad.easeOut',
         });
-      }
-
-      if (!this.isFaceDown) {
-        // Use higher alpha so cards are still clearly visible
-        this.container.setAlpha(playable ? 1 : 0.85);
       }
     }
   }

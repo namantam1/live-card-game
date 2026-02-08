@@ -40,3 +40,13 @@ export interface ReactionData {
   type: ReactionType;
   timestamp: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  seatIndex: number;
+  message: string;
+  timestamp: number;
+  isBot?: boolean;
+}

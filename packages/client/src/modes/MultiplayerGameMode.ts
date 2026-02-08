@@ -172,6 +172,11 @@ export default class MultiplayerGameMode extends GameModeBase {
     }
   }
 
+  override sendChat(message: string): void {
+    // Send to server (will broadcast to all including self)
+    this.networkManager.sendChat(message);
+  }
+
   /**
    * Setup network event listeners and forward to IGameMode event system
    * Uses Phaser's EventEmitter for robust event handling

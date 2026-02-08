@@ -61,13 +61,20 @@ export default class Common {
     });
   }
 
+  static createGameBackground(scene: Scene): void {
+    const { width, height } = scene.cameras.main;
+    const bg = scene.add.image(width / 2, height / 2, 'bg');
+    const scaleFactor = Math.max(width / bg.width, height / bg.height);
+    bg.setScale(scaleFactor);
+  }
+
   static createTable(scene: Scene): void {
     const { width, height } = scene.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
 
     // use image asset for table background if available
-    const tableBg = scene.add.image(centerX, centerY, 'table-bg');
+    const tableBg = scene.add.image(centerX, centerY, 'table');
     const scaleFactor = Math.min(
       (width * 0.85) / tableBg.width,
       (height * 0.85) / tableBg.height

@@ -4,6 +4,8 @@ import type Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
 import type { CardData } from '../type';
 import { type GameEvent } from '../utils/constants';
+import type AudioManager from '../managers/AudioManager';
+import type NetworkManager from '../managers/NetworkManager';
 
 export interface PlayerData {
   name: string;
@@ -17,13 +19,11 @@ export interface PlayerData {
   id?: string;
 }
 
-export type EventCallback = (data?: any) => void;
-
 export interface GameModeConfig {
   scene: Scene;
   trickArea: TrickArea;
-  audioManager?: any;
-  networkManager?: any;
+  audioManager?: AudioManager;
+  networkManager?: NetworkManager;
 }
 
 /**
@@ -201,9 +201,14 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
     console.warn(`${this.constructor.name}: returnToMenu() not overridden`);
   }
 
-  sendReaction(reactionType: string): void {
+  sendReaction(_reactionType: string): void {
     console.error(`${this.constructor.name}: sendReaction() not implemented`);
     throw new Error('sendReaction() must be implemented');
+  }
+
+  sendChat(_message: string): void {
+    console.error(`${this.constructor.name}: sendChat() not implemented`);
+    throw new Error('sendChat() must be implemented');
   }
 
   // Event System inherited from Phaser.Events.EventEmitter

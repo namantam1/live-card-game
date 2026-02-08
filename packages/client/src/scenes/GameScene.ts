@@ -47,7 +47,7 @@ export default class GameScene extends Phaser.Scene {
     this.audioManager.startBackgroundMusic();
 
     // Create background
-    Common.createBackground(this);
+    Common.createGameBackground(this);
 
     // Create table
     Common.createTable(this);

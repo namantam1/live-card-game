@@ -2,6 +2,7 @@ import { Client, Room, getStateCallbacks } from '@colyseus/sdk';
 import type {
   CardData,
   CardSchema,
+  ChatMessage,
   ConnectionQuality,
   PlayerData,
   PlayerSchema,
@@ -170,6 +171,20 @@ export default class NetworkManager {
         `NetworkManager: Reaction from ${data.playerName}: ${data.type}`
       );
       this.emit('playerReaction', data);
+    });
+
+    // Handle chat messages
+    this.room.onMessage('chatMessage', (data: ChatMessage) => {
+      console.log(
+        `NetworkManager: Chat from ${data.playerName}: ${data.message}`
+      );
+      this.emit('chatMessage', data);
+    });
+
+    // Handle chat errors
+    this.room.onMessage('chatError', (data: { error: string }) => {
+      console.warn(`NetworkManager: Chat error - ${data.error}`);
+      this.emit('chatError', data);
     });
 
     // State change listeners using $() proxy
@@ -458,6 +473,19 @@ export default class NetworkManager {
     }
     this.room.send('reaction', { type: reactionType });
     console.log(`NetworkManager: Sent reaction ${reactionType}`);
+  }
+
+  sendChat(message: string): void {
+    if (!this.room) {
+      console.warn('NetworkManager: Cannot send chat - not in a room');
+      return;
+    }
+    if (!message || message.trim().length === 0) {
+      console.warn('NetworkManager: Cannot send empty chat message');
+      return;
+    }
+    this.room.send('chat', { message: message.trim() });
+    console.log(`NetworkManager: Sent chat message`);
   }
 
   async leaveRoom(): Promise<void> {

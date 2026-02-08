@@ -72,7 +72,8 @@ export default class BootScene extends Phaser.Scene {
       height: CARD_CONFIG.HEIGHT,
     });
 
-    scene.load.image('table-bg', 'assets/table-bg.webp');
+    scene.load.image('table', 'assets/table-bg.webp');
+    scene.load.image('bg', 'assets/background.jpg');
 
     // Audio (optional - check if exists)
     scene.load.audio('bgm', 'audio/bgm.mp3').on('loaderror', () => {

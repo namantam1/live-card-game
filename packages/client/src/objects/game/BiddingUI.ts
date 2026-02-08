@@ -141,7 +141,7 @@ export default class BiddingUI {
       // Draw animated highlight border
       const border = this.highlightBorders[buttonIndex];
       border.clear();
-      border.lineStyle(4, COLORS.SECONDARY, 1); // Green border, 4px thick
+      border.lineStyle(4, COLORS.WARNING, 1); // Green border, 4px thick
       border.strokeRoundedRect(
         x - config.buttonWidth / 2 - 4,
         10 - config.buttonHeight / 2 - 4,

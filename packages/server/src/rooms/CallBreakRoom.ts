@@ -1,4 +1,4 @@
-import { Room, type Client, CloseCode } from 'colyseus';
+import { Room, type Client } from 'colyseus';
 import {
   GameState,
   Player,
@@ -9,15 +9,14 @@ import {
   calculateScore,
   getDealtCards,
 } from './GameState.js';
+import { calculateBid, type Suit, chooseBotCard } from '@call-break/shared';
 import {
-  calculateBid,
-  type ReactionType,
-  type Suit,
-  chooseBotCard,
-  decideBotReaction,
-} from '@call-break/shared';
+  ChatHandler,
+  ReactionHandler,
+  ConnectionHandler,
+} from './handlers/index.js';
+import { EMOJIS } from './handlers/ConnectionHandler.js';
 
-const EMOJIS = ['😎', '🤖', '🦊', '🐱'];
 const BOT_NAMES = ['Bot Alice', 'Bot Bob', 'Bot Charlie'];
 const CARDS_PER_PLAYER = 13;
 const NUM_PLAYERS = 4;
@@ -36,13 +35,14 @@ interface PlayCardData {
   cardId: string;
 }
 
-interface ReactionData {
-  type: ReactionType;
-}
-
 export class CallBreakRoom extends Room {
   maxClients = 4;
   state = new GameState();
+
+  // Handlers for organizing domain-specific logic
+  private chatHandler!: ChatHandler;
+  private reactionHandler!: ReactionHandler;
+  private connectionHandler!: ConnectionHandler;
 
   onCreate(_options: JoinOptions): void {
     // Generate room code (with low collision probability)
@@ -53,7 +53,17 @@ export class CallBreakRoom extends Room {
 
     console.log(`Room created: ${this.state.roomCode}`);
 
-    // Handle messages
+    // Initialize handlers
+    this.chatHandler = new ChatHandler(this);
+    this.reactionHandler = new ReactionHandler(this);
+    this.connectionHandler = new ConnectionHandler(this);
+
+    // Register handler messages
+    this.chatHandler.registerMessages();
+    this.reactionHandler.registerMessages();
+    this.connectionHandler.registerMessages();
+
+    // Handle game messages
     this.onMessage('ready', (client) => this.handleReady(client));
     this.onMessage('bid', (client, data: BidData) =>
       this.handleBid(client, data)
@@ -64,9 +74,6 @@ export class CallBreakRoom extends Room {
     this.onMessage('nextRound', (client) => this.handleNextRound(client));
     // TODO: This restart doesn;t make any sense in multiplayer, Do cleanup
     this.onMessage('restart', (client) => this.handleRestart(client));
-    this.onMessage('reaction', (client, data: ReactionData) =>
-      this.handleReaction(client, data)
-    );
   }
 
   generateRoomCode(): string {
@@ -81,121 +88,11 @@ export class CallBreakRoom extends Room {
   }
 
   onJoin(client: Client, options: JoinOptions): void {
-    // Validate room code if provided (for join attempts, not create)
-    if (options.roomCode && options.roomCode !== this.state.roomCode) {
-      throw new Error(
-        `Invalid room code. Room code is ${this.state.roomCode}, but got ${options.roomCode}`
-      );
-    }
-
-    // Check if room is full (defensive check, Colyseus should handle this)
-    if (this.state.players.size >= this.maxClients) {
-      throw new Error('Room is full');
-    }
-
-    // Validate player name
-    const name =
-      options.name?.trim() || `Player ${this.state.players.size + 1}`;
-    if (name.length === 0) {
-      throw new Error('Player name cannot be empty');
-    }
-    if (name.length > 20) {
-      throw new Error('Player name too long (max 20 characters)');
-    }
-
-    const seatIndex = this.state.players.size;
-
-    const player = new Player();
-    player.id = client.sessionId;
-    player.name = name;
-    player.emoji = EMOJIS[seatIndex];
-    player.seatIndex = seatIndex;
-
-    this.state.players.set(client.sessionId, player);
-    this.state.playerOrder.push(client.sessionId);
-
-    console.log(
-      `${name} joined room ${this.state.roomCode} (seat ${seatIndex})`
-    );
-
-    // Notify client of their seat
-    client.send('seated', { seatIndex, roomCode: this.state.roomCode });
+    this.connectionHandler.handleJoin(client, options);
   }
 
   async onLeave(client: Client, code: number): Promise<void> {
-    const consented = code === CloseCode.CONSENTED;
-    const player = this.state.players.get(client.sessionId);
-    if (player) {
-      player.isConnected = false;
-      console.log(
-        `${player.name} disconnected (code: ${code}, consented: ${consented})`
-      );
-
-      // If player intentionally left (consented), remove them immediately
-      if (consented) {
-        console.log(`${player.name} left intentionally`);
-        this.state.players.delete(client.sessionId);
-        const orderIndex = this.state.playerOrder.indexOf(client.sessionId);
-        if (orderIndex !== -1) {
-          this.state.playerOrder.splice(orderIndex, 1);
-        }
-        if (this.state.phase !== 'waiting') {
-          this.broadcast('playerLeft', { name: player.name });
-        }
-
-        // If we're in active gameplay and all human players left, end the room
-        const remainingHumans = Array.from(this.state.players.values()).filter(
-          (p) => !p.isBot
-        );
-        if (remainingHumans.length === 0 && this.state.phase !== 'waiting') {
-          console.log('All human players left, ending room');
-          await this.disconnect();
-        }
-        return;
-      }
-
-      try {
-        // Allow reconnection within 60 seconds for unintentional disconnects
-        console.log(
-          `${player.name} disconnected unexpectedly. Allowing 60s for reconnection...`
-        );
-        await this.allowReconnection(client, 60);
-
-        player.isConnected = true;
-        console.log(`${player.name} reconnected successfully`);
-
-        // Notify player they've reconnected
-        client.send('reconnected', {
-          message: 'Successfully reconnected',
-          roomCode: this.state.roomCode,
-        });
-
-        // Broadcast to other players
-        this.broadcast(
-          'playerReconnected',
-          {
-            playerId: client.sessionId,
-            name: player.name,
-          },
-          { except: client }
-        );
-      } catch (e) {
-        // Player didn't reconnect, handle game state
-        console.warn(`${player.name} failed to reconnect within timeout: ${e}`);
-        if (this.state.phase !== 'waiting') {
-          this.broadcast('playerLeft', { name: player.name });
-        }
-
-        // If all human players are gone, end the room
-        const remainingHumans = Array.from(this.state.players.values()).filter(
-          (p) => !p.isBot && p.isConnected
-        );
-        if (remainingHumans.length === 0) {
-          console.log('All human players disconnected, ending room');
-          await this.disconnect();
-        }
-      }
-    }
+    await this.connectionHandler.handleLeave(client, code);
   }
 
   handleReady(client: Client): void {
@@ -443,7 +340,7 @@ export class CallBreakRoom extends Room {
 
     // Trigger bot reactions after trick
     this.clock.setTimeout(() => {
-      this.triggerBotTrickReactions(winnerId);
+      this.reactionHandler.triggerBotTrickReactions(winnerId);
     }, 300);
 
     // Wait, then clear trick and continue
@@ -526,7 +423,7 @@ export class CallBreakRoom extends Room {
 
     // Trigger bot reactions at round end
     this.clock.setTimeout(() => {
-      this.triggerBotRoundEndReactions();
+      this.reactionHandler.triggerBotRoundEndReactions();
     }, 300);
 
     console.log('Round complete!');
@@ -648,93 +545,5 @@ export class CallBreakRoom extends Room {
       `${bot.name} (bot) playing ${cardToPlay.rank} of ${cardToPlay.suit}`
     );
     this.playCard(botId, cardToPlay.id);
-  }
-
-  private handleReaction(client: Client, data: ReactionData): void {
-    const player = this.state.players.get(client.sessionId);
-    if (!player) {
-      console.warn('Reaction from unknown player:', client.sessionId);
-      return;
-    }
-
-    // Broadcast reaction to all other players
-    this.broadcast(
-      'playerReaction',
-      {
-        playerId: client.sessionId,
-        playerName: player.name,
-        seatIndex: player.seatIndex,
-        type: data.type,
-        timestamp: Date.now(),
-      },
-      { except: client }
-    );
-
-    console.log(
-      `${player.name} sent reaction: ${data.type} in room ${this.state.roomCode}`
-    );
-  }
-
-  /**
-   * Trigger bot reactions after a trick is completed
-   */
-  private triggerBotTrickReactions(winnerId: string): void {
-    this.state.players.forEach((player, playerId) => {
-      if (!player.isBot) return;
-
-      const wonTrick = playerId === winnerId;
-      const reaction = decideBotReaction({
-        event: wonTrick ? 'trickWon' : 'trickLost',
-        botTricksWon: player.tricksWon,
-        botBid: player.bid,
-        trumpSuit: this.state.trumpSuit as Suit,
-      });
-
-      if (reaction) {
-        // Stagger bot reactions for realism
-        const delay = player.seatIndex * 200;
-        this.clock.setTimeout(() => {
-          this.broadcast('playerReaction', {
-            playerId: playerId,
-            playerName: player.name,
-            seatIndex: player.seatIndex,
-            type: reaction,
-            timestamp: Date.now(),
-          });
-          console.log(`${player.name} (bot) reacted: ${reaction}`);
-        }, delay);
-      }
-    });
-  }
-
-  /**
-   * Trigger bot reactions at the end of a round
-   */
-  private triggerBotRoundEndReactions(): void {
-    this.state.players.forEach((player) => {
-      if (!player.isBot) return;
-
-      const reaction = decideBotReaction({
-        event: 'roundEnd',
-        botTricksWon: player.tricksWon,
-        botBid: player.bid,
-        trumpSuit: this.state.trumpSuit as Suit,
-      });
-
-      if (reaction) {
-        // Stagger bot reactions for realism
-        const delay = player.seatIndex * 300;
-        this.clock.setTimeout(() => {
-          this.broadcast('playerReaction', {
-            playerId: player.id,
-            playerName: player.name,
-            seatIndex: player.seatIndex,
-            type: reaction,
-            timestamp: Date.now(),
-          });
-          console.log(`${player.name} (bot) reacted at round end: ${reaction}`);
-        }, delay);
-      }
-    });
   }
 }

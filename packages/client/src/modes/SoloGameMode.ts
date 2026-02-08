@@ -127,6 +127,11 @@ export default class SoloGameMode extends GameModeBase {
     }
   }
 
+  override sendChat(_message: string): void {
+    // In solo mode, chat is not supported (no other players)
+    console.log('SoloGameMode: Chat not available in solo mode');
+  }
+
   /**
    * Forward events from GameManager to IGameMode event system
    * This translates GameManager events to the unified IGameMode event API
