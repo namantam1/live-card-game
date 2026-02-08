@@ -226,12 +226,18 @@ export default class MultiplayerGameMode extends GameModeBase {
    * This class handles ALL game logic interpretation
    */
   private setupNetworkListeners(): void {
-    const room = this.networkManager.getRoom();
-    if (!room) return;
+    // Setup NetworkManager event listeners (these persist across reconnection)
+    this.setupNetworkManagerListeners();
 
-    // Get state callbacks proxy (Colyseus 0.17.x recommended pattern)
-    const $ = getStateCallbacks(room);
+    // Setup Colyseus room state listeners (need to be re-attached on reconnection)
+    this.setupRoomStateListeners();
+  }
 
+  /**
+   * Setup NetworkManager event listeners
+   * These listeners are attached to NetworkManager/RoomManager and persist across reconnection
+   */
+  private setupNetworkManagerListeners(): void {
     // Listen to room messages (non-game-logic events)
     this.networkManager.on('message:seated', (_data?: unknown) => {
       // These are handled by RoomManager already
@@ -264,6 +270,60 @@ export default class MultiplayerGameMode extends GameModeBase {
       const errorData = data as { error: string };
       console.warn(`MultiplayerGameMode: Chat error - ${errorData.error}`);
     });
+
+    // Connection quality changes
+    this.networkManager.on(
+      'connectionQualityChange',
+      ({ quality, connected }: any) => {
+        this.emit(EVENTS.CONNECTION_QUALITY_CHANGED, { quality, connected });
+      }
+    );
+
+    // Reconnection events
+    this.networkManager.on('reconnecting', ({ attempt }: any) => {
+      this.emit(EVENTS.RECONNECTING, { attempt });
+    });
+
+    this.networkManager.on('reconnected', ({ message }: any) => {
+      this.emit(EVENTS.RECONNECTED, { message });
+
+      // CRITICAL: Re-attach room state listeners to the new room object
+      this.setupRoomStateListeners();
+
+      // Re-sync state after reconnection
+      this.syncHandFromServer();
+    });
+
+    this.networkManager.on('reconnectionFailed', ({ message }: any) => {
+      this.emit(EVENTS.RECONNECTION_FAILED, { message });
+    });
+
+    // Room errors
+    this.networkManager.on('error', (data: any) => {
+      this.emit(EVENTS.CONNECTION_ERROR, {
+        message: data.message || 'Unknown error',
+        code: data.code,
+      });
+    });
+  }
+
+  /**
+   * Setup Colyseus room state listeners
+   * These listeners are attached to the specific room object and must be re-attached after reconnection
+   */
+  private setupRoomStateListeners(): void {
+    const room = this.networkManager.getRoom();
+    if (!room) {
+      console.warn(
+        'MultiplayerGameMode: Cannot setup room state listeners - no room available'
+      );
+      return;
+    }
+
+    console.log('MultiplayerGameMode: Setting up room state listeners');
+
+    // Get state callbacks proxy (Colyseus 0.17.x recommended pattern)
+    const $ = getStateCallbacks(room);
 
     // ===== Game State Listeners (using Colyseus $ proxy) =====
 
@@ -501,37 +561,6 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     $(room.state).currentTrick.onRemove(() => {
       this.trickArea.clear();
-    });
-
-    // Connection quality changes
-    this.networkManager.on(
-      'connectionQualityChange',
-      ({ quality, connected }: any) => {
-        this.emit(EVENTS.CONNECTION_QUALITY_CHANGED, { quality, connected });
-      }
-    );
-
-    // Reconnection events
-    this.networkManager.on('reconnecting', ({ attempt }: any) => {
-      this.emit(EVENTS.RECONNECTING, { attempt });
-    });
-
-    this.networkManager.on('reconnected', ({ message }: any) => {
-      this.emit(EVENTS.RECONNECTED, { message });
-      // Re-sync state after reconnection
-      this.syncHandFromServer();
-    });
-
-    this.networkManager.on('reconnectionFailed', ({ message }: any) => {
-      this.emit(EVENTS.RECONNECTION_FAILED, { message });
-    });
-
-    // Room errors
-    this.networkManager.on('error', (data: any) => {
-      this.emit(EVENTS.CONNECTION_ERROR, {
-        message: data.message || 'Unknown error',
-        code: data.code,
-      });
     });
   }
 
