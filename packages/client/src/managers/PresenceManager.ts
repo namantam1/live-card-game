@@ -1,21 +1,25 @@
+import Phaser from 'phaser';
 import { Client, Room, getStateCallbacks } from '@colyseus/sdk';
-import type { InviteData, InviteResponseStatus, OnlineUserData } from '../type';
+import type {
+  InviteData,
+  InviteResponseStatus,
+  OnlineUserData,
+  OnlineUserSchema,
+  IPresenceState,
+} from '@call-break/shared';
 import { InviteModal } from '../components/InviteModal';
 import { storage } from './StorageManager';
 import { SERVER } from '../utils/constants';
-import type Phaser from 'phaser';
 
-type EventCallback = (data?: any) => void;
 type InviteAcceptCallback = (invite: InviteData) => void;
 
 const PLAYER_NAME_KEY = 'player_name';
 
-export default class PresenceManager {
+export default class PresenceManager extends Phaser.Events.EventEmitter {
   private static instance: PresenceManager | null = null;
   private client: Client | null = null;
-  private room: Room | null = null;
+  private room: Room<IPresenceState> | null = null;
   private connected = false;
-  private listeners: Map<string, Set<EventCallback>> = new Map();
   private onlineUsers: Map<string, OnlineUserData> = new Map();
   private inviteHandlingEnabled = true;
 
@@ -24,6 +28,10 @@ export default class PresenceManager {
   private inviteModal: InviteModal | null = null;
   private inviteAcceptCallback: InviteAcceptCallback | null = null;
   private activeInvite: InviteData | null = null;
+
+  private constructor() {
+    super();
+  }
 
   static getInstance(): PresenceManager {
     if (!PresenceManager.instance) {
@@ -63,8 +71,6 @@ export default class PresenceManager {
   /**
    * Ensure presence connection is established
    * Reads player name from storage and uses default server URL
-   * @param playerName - Optional player name (if not provided, reads from storage)
-   * @returns Promise<boolean> indicating success
    */
   async ensureConnected(playerName?: string): Promise<boolean> {
     const name = playerName || storage.load<string>(PLAYER_NAME_KEY);
@@ -111,8 +117,6 @@ export default class PresenceManager {
   /**
    * Initialize invite UI handling for a scene
    * Automatically connects using saved player name if available
-   * @param scene - The Phaser scene to show invite modals in
-   * @param onAccept - Callback when user accepts an invite
    */
   async initializeInviteUI(
     scene: Phaser.Scene,
@@ -137,9 +141,6 @@ export default class PresenceManager {
     }
   }
 
-  /**
-   * Clean up invite UI handling (call in scene shutdown)
-   */
   cleanupInviteUI(): void {
     if (this.inviteModal) {
       this.inviteModal.destroy();
@@ -150,9 +151,6 @@ export default class PresenceManager {
     this.activeInvite = null;
   }
 
-  /**
-   * Show invite modal to user
-   */
   private showInviteModal(invite: InviteData): void {
     if (!this.inviteScene || !this.inviteModal) {
       console.warn(
@@ -174,9 +172,6 @@ export default class PresenceManager {
     });
   }
 
-  /**
-   * Handle invite acceptance
-   */
   private handleInviteAccept(): void {
     if (!this.activeInvite || !this.inviteAcceptCallback) return;
 
@@ -190,9 +185,6 @@ export default class PresenceManager {
     this.inviteAcceptCallback(invite);
   }
 
-  /**
-   * Handle invite decline or timeout
-   */
   private handleInviteDecline(reason: 'declined' | 'timeout'): void {
     if (!this.activeInvite) return;
 
@@ -208,33 +200,37 @@ export default class PresenceManager {
     if (!this.room) return;
     const $ = getStateCallbacks(this.room);
 
-    $(this.room.state).users.onAdd((user: any, sessionId: string) => {
-      this.onlineUsers.set(sessionId, {
-        id: sessionId,
-        name: user.name,
-        inGame: user.inGame,
-      });
-      this.emit('usersUpdated', this.getOnlineUsers());
-
-      $(user).listen('name', (value: string) => {
-        const existing = this.onlineUsers.get(sessionId);
-        if (!existing) return;
-        existing.name = value;
+    $(this.room.state).users.onAdd(
+      (user: OnlineUserSchema, sessionId: string) => {
+        this.onlineUsers.set(sessionId, {
+          id: sessionId,
+          name: user.name,
+          inGame: user.inGame,
+        });
         this.emit('usersUpdated', this.getOnlineUsers());
-      });
 
-      $(user).listen('inGame', (value: boolean) => {
-        const existing = this.onlineUsers.get(sessionId);
-        if (!existing) return;
-        existing.inGame = value;
+        $(user).listen('name', (value: string) => {
+          const existing = this.onlineUsers.get(sessionId);
+          if (!existing) return;
+          existing.name = value;
+          this.emit('usersUpdated', this.getOnlineUsers());
+        });
+
+        $(user).listen('inGame', (value: boolean) => {
+          const existing = this.onlineUsers.get(sessionId);
+          if (!existing) return;
+          existing.inGame = value;
+          this.emit('usersUpdated', this.getOnlineUsers());
+        });
+      }
+    );
+
+    $(this.room.state).users.onRemove(
+      (_user: OnlineUserSchema, sessionId: string) => {
+        this.onlineUsers.delete(sessionId);
         this.emit('usersUpdated', this.getOnlineUsers());
-      });
-    });
-
-    $(this.room.state).users.onRemove((_user: any, sessionId: string) => {
-      this.onlineUsers.delete(sessionId);
-      this.emit('usersUpdated', this.getOnlineUsers());
-    });
+      }
+    );
 
     this.room.onMessage('invite', (data: InviteData) => {
       if (!this.inviteHandlingEnabled) {
@@ -269,30 +265,5 @@ export default class PresenceManager {
       this.onlineUsers.clear();
       this.emit('usersUpdated', []);
     });
-  }
-
-  on(event: string, callback: EventCallback): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)!.add(callback);
-  }
-
-  off(event: string, callback: EventCallback): void {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event)!.delete(callback);
-    }
-  }
-
-  private emit(event: string, data?: any): void {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event)!.forEach((callback: EventCallback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`PresenceManager: Error in ${event} listener`, error);
-        }
-      });
-    }
   }
 }

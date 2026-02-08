@@ -9,9 +9,6 @@ export interface WaitingViewCallbacks {
   onInviteUser: (userId: string) => void;
 }
 
-/**
- * WaitingView - Displays the waiting room with player list and ready status
- */
 export class WaitingView {
   private scene: Phaser.Scene;
   public container: Phaser.GameObjects.Container;
@@ -143,15 +140,6 @@ export class WaitingView {
     });
   }
 
-  // Public API
-  show() {
-    this.setVisible(true);
-  }
-
-  hide() {
-    this.setVisible(false);
-  }
-
   setVisible(visible: boolean) {
     this.container.setVisible(visible);
   }
@@ -248,10 +236,6 @@ export class WaitingView {
 
   setWaitingMessage(message: string) {
     this.statusText.setText(message);
-  }
-
-  clearStatus() {
-    this.statusText.setText('');
   }
 
   destroy() {

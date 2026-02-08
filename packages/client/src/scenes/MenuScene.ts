@@ -54,9 +54,13 @@ export default class MenuScene extends Phaser.Scene {
       PresenceManager.getInstance().setInviteHandlingEnabled(true);
 
     // Initialize invite UI handling (auto-connects if player name is saved)
-    this.presenceManager.initializeInviteUI(this, (invite: InviteData) => {
-      this.scene.start('LobbyScene', { invite });
-    });
+    this.presenceManager
+      .initializeInviteUI(this, (invite: InviteData) => {
+        this.scene.start('LobbyScene', { invite });
+      })
+      .then(() => {
+        this.presenceManager.updateStatus(false);
+      });
 
     this.events.once('shutdown', this.shutdown, this);
   }

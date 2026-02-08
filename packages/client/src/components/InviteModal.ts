@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Button from './Button';
+import { Timer } from './Timer';
 
 export interface InviteModalCallbacks {
   onAccept: () => void;
@@ -14,424 +15,248 @@ export interface InviteModalOptions {
   callbacks: InviteModalCallbacks;
 }
 
-/**
- * InviteModal - An instance-based modal for showing game invites
- * Each scene should have its own instance to avoid lifecycle issues
- */
+const CONFIG = {
+  modal: { width: 350, height: 150, padding: 24, borderRadius: 20 },
+  colors: {
+    bg: { top: 0x1e293b, bottom: 0x0f172a },
+    accent: 0x818cf8,
+    success: 0x22c55e,
+    danger: 0xf43f5e,
+    text: '#f1f5f9',
+  },
+  animation: { duration: 400, backdropFade: 200 },
+} as const;
+
 export class InviteModal {
   private scene: Phaser.Scene;
   private callbacks?: InviteModalCallbacks;
   private container?: Phaser.GameObjects.Container;
-  private modalBg?: Phaser.GameObjects.Graphics;
-  private glowEffect?: Phaser.GameObjects.Graphics;
-  private timerText?: Phaser.GameObjects.Text;
+  private backdrop?: Phaser.GameObjects.Rectangle;
   private dynamicContent: Phaser.GameObjects.GameObject[] = [];
-  private countdownEvent?: Phaser.Time.TimerEvent;
-  private remainingSeconds = 0;
   private totalSeconds = 0;
-  private isShowing = false;
-  private isDestroyed = false;
-
-  // Modern design dimensions
-  private readonly modalWidth = 380;
-  private readonly modalHeight = 120;
-  private readonly padding = 20;
-
-  // Colors
-  private readonly colors = {
-    bg: 0x0f172a,
-    accent: 0x6366f1,
-    success: 0x10b981,
-    danger: 0xef4444,
-    text: '#ffffff',
-  };
+  private isActive = false;
+  private timer?: Timer;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.createUI();
-    this.positionOffScreen();
   }
 
-  /**
-   * Check if the scene has the basic properties needed for UI creation
-   */
-  private canCreateUI(): boolean {
-    return (
-      !!this.scene &&
-      !!this.scene.add &&
-      !!this.scene.cameras &&
-      !!this.scene.cameras.main
-    );
+  private isValid(): boolean {
+    return this.scene?.sys?.isActive() && !!this.scene.cameras?.main;
   }
 
-  /**
-   * Check if the scene is still valid and active (for runtime operations)
-   */
-  private isSceneValid(): boolean {
-    return (
-      !!this.scene &&
-      !!this.scene.sys &&
-      this.scene.sys.isActive() &&
-      !!this.scene.cameras &&
-      !!this.scene.cameras.main
-    );
-  }
-
-  /**
-   * Show the invite modal with the given options
-   */
   public show(options: InviteModalOptions): void {
-    if (!this.isSceneValid()) {
-      console.warn('InviteModal: Cannot show modal - scene is not valid');
-      return;
-    }
+    if (!this.isValid()) return;
+    if (this.isActive) this.hide();
 
-    const { inviterName, roomCode, timeoutSeconds, callbacks } = options;
+    this.callbacks = options.callbacks;
+    this.totalSeconds = options.timeoutSeconds;
+    this.isActive = true;
 
-    // If already showing, hide first then show
-    if (this.isShowing) {
-      this.forceHide();
-    }
-
-    this.callbacks = callbacks;
-    this.showInternal(inviterName, roomCode, timeoutSeconds);
+    this.createModal(options.inviterName, options.roomCode);
+    this.animateIn();
+    this.timer?.start();
   }
 
-  private createUI() {
-    if (!this.canCreateUI()) {
-      console.warn('InviteModal: Cannot create UI - scene is not valid');
-      return;
-    }
-
-    this.container = this.scene.add.container(0, 0);
-    this.container.setDepth(10000); // Ensure it's on top
-
-    // Glow effect
-    this.glowEffect = this.scene.add.graphics();
-
-    // Main background
-    this.modalBg = this.scene.add.graphics();
-
-    // Timer text (positioned in bottom area)
-    this.timerText = this.scene.add
-      .text(0, this.modalHeight / 2 - 50, '', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '20px',
-        fontStyle: 'bold',
-        color: this.colors.text,
-      })
-      .setOrigin(0.5);
-
-    // Add to container
-    this.container.add([this.glowEffect, this.modalBg, this.timerText]);
-  }
-
-  private positionOffScreen() {
-    if (!this.canCreateUI() || !this.container) {
-      return;
-    }
-
+  private createModal(inviterName: string, roomCode: string): void {
     const { width, height } = this.scene.cameras.main;
-    // Position off-screen to the right
-    this.container.setPosition(
-      width + this.modalWidth,
-      height - this.modalHeight - this.padding
-    );
-  }
+    const { modal, colors } = CONFIG;
 
-  private showInternal(
-    inviterName: string,
-    roomCode: string,
-    timeoutSeconds: number
-  ) {
-    if (!this.isSceneValid() || !this.container) {
-      console.warn('InviteModal: Cannot show - scene or container invalid');
-      return;
-    }
+    // Subtle backdrop (optional for notifications)
+    this.backdrop = this.scene.add
+      .rectangle(width / 2, height / 2, width, height, 0x000000, 0.3)
+      .setOrigin(0.5)
+      .setDepth(9998)
+      .setInteractive()
+      .setAlpha(0);
 
-    // Reset flags to allow showing again
-    if (this.isDestroyed) {
-      this.isDestroyed = false;
-      this.container.setAlpha(1);
-      this.container.setScale(1);
-    }
+    // Container positioned off-screen to the right
+    const startY = height - modal.height / 2 - modal.padding;
 
-    this.isShowing = true;
-    this.totalSeconds = timeoutSeconds;
-    this.remainingSeconds = timeoutSeconds;
+    this.container = this.scene.add
+      .container(width + modal.width, startY)
+      .setDepth(9999)
+      .setAlpha(1);
 
-    // Clear any previous dynamic content
-    this.clearDynamicContent();
+    // Shadow layer
+    const shadow = this.scene.add
+      .graphics()
+      .fillStyle(0x000000, 0.3)
+      .fillRoundedRect(
+        -modal.width / 2 + 4,
+        -modal.height / 2 + 8,
+        modal.width,
+        modal.height,
+        modal.borderRadius
+      );
 
-    // Render modal content
-    this.renderModalContent(inviterName, roomCode);
-
-    // Animate slide in from bottom-right
-    const { width, height } = this.scene.cameras.main;
-    const targetX = width - this.modalWidth / 2 - this.padding;
-    const targetY = height - this.modalHeight / 2 - this.padding;
-
-    this.scene.tweens.add({
-      targets: this.container,
-      x: targetX,
-      y: targetY,
-      duration: 500,
-      ease: 'Back.easeOut',
-    });
-
-    // Start countdown
-    this.startCountdown();
-  }
-
-  private forceHide() {
-    this.stopCountdown();
-    this.isShowing = false;
-    this.clearDynamicContent();
-
-    // Only reposition if scene is valid
-    if (this.isSceneValid()) {
-      this.positionOffScreen();
-    }
-  }
-
-  private clearDynamicContent() {
-    // Destroy only dynamic content, keep the persistent graphics
-    this.dynamicContent.forEach((obj) => {
-      if (obj && obj.scene) {
-        obj.destroy();
-      }
-    });
-    this.dynamicContent = [];
-  }
-
-  private renderModalContent(inviterName: string, roomCode: string) {
-    if (!this.isSceneValid() || !this.glowEffect || !this.modalBg) {
-      return;
-    }
-
-    // Draw glow effect
-    this.glowEffect.clear();
-    this.glowEffect.fillStyle(this.colors.accent, 0.2);
-    this.glowEffect.fillRoundedRect(
-      -this.modalWidth / 2 - 6,
-      -this.modalHeight / 2 - 6,
-      this.modalWidth + 12,
-      this.modalHeight + 12,
-      20
-    );
-
-    // Draw main background with glassmorphism
-    this.modalBg.clear();
-    this.modalBg.fillGradientStyle(
-      this.colors.bg,
-      this.colors.bg,
-      0x1e293b,
-      0x1e293b,
+    // Main background with gradient
+    const bg = this.scene.add.graphics();
+    bg.fillGradientStyle(
+      colors.bg.top,
+      colors.bg.top,
+      colors.bg.bottom,
+      colors.bg.bottom,
+      1,
+      1,
       0.98,
-      0.98,
-      0.95,
-      0.95
+      0.98
     );
-    this.modalBg.fillRoundedRect(
-      -this.modalWidth / 2,
-      -this.modalHeight / 2,
-      this.modalWidth,
-      this.modalHeight,
-      16
+    bg.fillRoundedRect(
+      -modal.width / 2,
+      -modal.height / 2,
+      modal.width,
+      modal.height,
+      modal.borderRadius
     );
 
-    // Border with gradient
-    this.modalBg.lineStyle(2, this.colors.accent, 0.6);
-    this.modalBg.strokeRoundedRect(
-      -this.modalWidth / 2,
-      -this.modalHeight / 2,
-      this.modalWidth,
-      this.modalHeight,
-      16
+    // Border glow
+    bg.lineStyle(3, colors.accent, 0.4);
+    bg.strokeRoundedRect(
+      -modal.width / 2,
+      -modal.height / 2,
+      modal.width,
+      modal.height,
+      modal.borderRadius
     );
 
     // Message
     const message = this.scene.add
-      .text(
-        0,
-        -this.modalHeight / 2 + 35,
-        `📨 ${inviterName} invites you to join to \nroom: ${roomCode}`,
-        {
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '22px',
-          color: '#e2e8f0',
-          align: 'center',
-        }
-      )
+      .text(0, -30, `${inviterName} invited you to \nroom: ${roomCode}`, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: colors.text,
+        align: 'center',
+      })
       .setOrigin(0.5);
 
-    // Action buttons
-    const acceptBtn = this.createActionButton(
-      -90,
-      this.modalHeight / 2 - 35,
-      '✓ Accept',
-      this.colors.success,
-      () => this.handleAccept()
-    );
+    // Timer with circular progress
+    this.timer = new Timer(this.scene, {
+      y: 40,
+      totalSeconds: this.totalSeconds,
+      timeoutCallback: () => this.handleResponse('timeout'),
+    });
 
-    const declineBtn = this.createActionButton(
-      90,
-      this.modalHeight / 2 - 35,
-      '✕ Decline',
-      this.colors.danger,
-      () => this.handleDecline()
-    );
+    // Buttons
+    const acceptBtn = Button.create(this.scene, -100, modal.height / 2 - 36, {
+      width: 120,
+      height: 60,
+      text: 'Accept',
+      onClick: () => this.handleResponse('accept'),
+      bgColor: colors.success,
+      fontSize: '20px',
+    });
 
-    // Initial timer display
-    this.updateTimerDisplay();
+    const declineBtn = Button.create(this.scene, 100, modal.height / 2 - 36, {
+      width: 120,
+      height: 60,
+      text: 'Decline',
+      onClick: () => this.handleResponse('decline'),
+      bgColor: colors.danger,
+      fontSize: '20px',
+    });
 
-    // Add all elements to container
-    if (this.container) {
-      this.container.add([message, acceptBtn, declineBtn]);
-    }
+    this.container.add([
+      shadow,
+      bg,
+      message,
+      this.timer.getContainer(),
+      acceptBtn,
+      declineBtn,
+    ]);
 
-    // Track dynamic content for cleanup
-    this.dynamicContent = [message, acceptBtn, declineBtn];
+    this.dynamicContent = [
+      this.backdrop,
+      this.container,
+      shadow,
+      bg,
+      message,
+      acceptBtn,
+      declineBtn,
+    ];
   }
 
-  private createActionButton(
-    x: number,
-    y: number,
-    text: string,
-    color: number,
-    onClick: () => void
-  ): Phaser.GameObjects.Container {
-    return Button.create(this.scene, x, y, {
-      width: 100,
-      height: 35,
-      text,
-      onClick,
-      bgColor: color,
-      fontSize: '16px',
+  private handleResponse(type: 'accept' | 'decline' | 'timeout'): void {
+    if (!this.isActive || !this.callbacks) return;
+
+    this.timer?.stop();
+    this.animateOut(() => {
+      if (type === 'accept') this.callbacks!.onAccept();
+      else if (type === 'decline') this.callbacks!.onDecline();
+      else this.callbacks!.onTimeout();
     });
   }
 
-  private updateTimerDisplay() {
-    if (!this.timerText) return;
-
-    const progress = this.remainingSeconds / this.totalSeconds;
-    const secondsLeft = Math.ceil(this.remainingSeconds);
-
-    // Color changes based on time remaining
-    let textColor = '#60a5fa'; // Blue
-    if (progress < 0.3) {
-      textColor = '#ef4444'; // Red
-    } else if (progress < 0.6) {
-      textColor = '#fbbf24'; // Yellow
-    }
-
-    this.timerText.setText(`${secondsLeft}s`);
-    this.timerText.setColor(textColor);
-  }
-
-  private handleAccept() {
-    if (this.isDestroyed || !this.callbacks) return;
-
-    this.stopCountdown();
-    this.animateDestroy(() => {
-      this.callbacks!.onAccept();
-    });
-  }
-
-  private handleDecline() {
-    if (this.isDestroyed || !this.callbacks) return;
-
-    this.stopCountdown();
-    this.animateDestroy(() => {
-      this.callbacks!.onDecline();
-    });
-  }
-
-  private handleTimeout() {
-    if (this.isDestroyed || !this.callbacks) return;
-
-    this.animateDestroy(() => {
-      this.callbacks!.onTimeout();
-    });
-  }
-
-  private startCountdown() {
-    if (!this.isSceneValid()) return;
-
-    this.stopCountdown();
-
-    // Initial timer display
-    this.updateTimerDisplay();
-
-    this.countdownEvent = this.scene.time.addEvent({
-      delay: 100, // Update frequently for smooth timer
-      loop: true,
-      callback: () => {
-        this.remainingSeconds -= 0.1;
-        if (this.remainingSeconds <= 0) {
-          this.handleTimeout();
-          return;
-        }
-        this.updateTimerDisplay();
-      },
-    });
-  }
-
-  private stopCountdown() {
-    if (this.countdownEvent) {
-      this.countdownEvent.remove(false);
-      this.countdownEvent = undefined;
-    }
-  }
-
-  private animateDestroy(callback: () => void) {
-    if (this.isDestroyed || !this.isSceneValid() || !this.container) {
-      return;
-    }
-
-    this.isDestroyed = true;
-    this.isShowing = false;
+  private animateIn(): void {
+    if (!this.isValid() || !this.container || !this.backdrop) return;
 
     const { width } = this.scene.cameras.main;
+    const { modal } = CONFIG;
+    const targetX = width - modal.width / 2 - modal.padding;
 
-    // Slide out and fade
+    // Subtle backdrop fade
+    this.scene.tweens.add({
+      targets: this.backdrop,
+      alpha: 1,
+      duration: CONFIG.animation.backdropFade,
+      ease: 'Sine.easeOut',
+    });
+
+    // Slide in from right
     this.scene.tweens.add({
       targets: this.container,
-      x: width + this.modalWidth,
+      x: targetX,
+      duration: CONFIG.animation.duration,
+      ease: 'Back.easeOut',
+    });
+  }
+
+  private animateOut(callback: () => void): void {
+    if (!this.isValid() || !this.container || !this.backdrop) return;
+
+    this.isActive = false;
+    const { width } = this.scene.cameras.main;
+    const { modal } = CONFIG;
+
+    this.scene.tweens.add({
+      targets: this.backdrop,
       alpha: 0,
-      scaleX: 0.8,
-      scaleY: 0.8,
-      duration: 300,
+      duration: CONFIG.animation.backdropFade,
+      ease: 'Sine.easeIn',
+    });
+
+    // Slide out to the right
+    this.scene.tweens.add({
+      targets: this.container,
+      x: width + modal.width,
+      alpha: 0,
+      duration: CONFIG.animation.duration - 100,
       ease: 'Back.easeIn',
       onComplete: () => {
-        this.clearDynamicContent();
+        this.cleanup();
         callback();
-        // Reset for potential reuse
-        if (this.container) {
-          this.isDestroyed = false;
-          this.container.setAlpha(1);
-          this.container.setScale(1);
-        }
       },
     });
   }
 
-  /**
-   * Destroy the modal and clean up all resources
-   * Call this when the scene is shutting down
-   */
-  public destroy() {
-    this.stopCountdown();
-    this.clearDynamicContent();
+  private hide(): void {
+    this.timer?.stop();
+    this.isActive = false;
+    this.cleanup();
+  }
 
-    if (this.container && this.container.scene) {
-      this.container.destroy();
-    }
-
+  private cleanup(): void {
+    this.dynamicContent.forEach((obj) => obj?.scene && obj.destroy());
+    this.dynamicContent = [];
+    this.timer?.destroy();
     this.container = undefined;
-    this.modalBg = undefined;
-    this.glowEffect = undefined;
-    this.timerText = undefined;
+    this.backdrop = undefined;
+  }
+
+  public destroy(): void {
+    this.timer?.stop();
+    this.cleanup();
     this.callbacks = undefined;
   }
 }

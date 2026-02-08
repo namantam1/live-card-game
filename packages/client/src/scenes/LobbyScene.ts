@@ -103,7 +103,7 @@ export default class LobbyScene extends Phaser.Scene {
     // Hide all views initially
     this.menuView.hide();
     this.joinView.hide();
-    this.waitingView.hide();
+    this.waitingView.setVisible(false);
   }
 
   private setupStateMachine() {

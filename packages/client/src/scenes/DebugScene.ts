@@ -187,16 +187,15 @@ export default class DebugScene extends Phaser.Scene {
     //   },
     // });
 
-    // new InviteModal(this, {
-    //   onAccept: () => {
-    //     console.log('Accepted invite to room');
-    //   },
-    //   onDecline: () => {
-    //     console.log('Declined invite');
-    //   },
-    //   onTimeout: () => {
-    //     console.log('Invite timed out');
-    //   },
-    // }).show('Alice', 'BBQQ', 5);
+    new InviteModal(this).show({
+      inviterName: 'Alice',
+      roomCode: 'AAAA',
+      timeoutSeconds: 60,
+      callbacks: {
+        onAccept: () => console.log('Invite accepted'),
+        onDecline: () => console.log('Invite declined'),
+        onTimeout: () => console.log('Invite timed out'),
+      },
+    });
   }
 }

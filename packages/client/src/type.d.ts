@@ -89,24 +89,14 @@ export interface PlayerData {
   isLocal: boolean;
 }
 
-export interface OnlineUserData {
-  id: string;
-  name: string;
-  inGame: boolean;
-}
-
-export interface InviteData {
-  inviteId: string;
-  roomCode: string;
-  inviterId: string;
-  inviterName: string;
-}
-
-export type InviteResponseStatus =
-  | 'accepted'
-  | 'declined'
-  | 'timeout'
-  | 'in_game';
+// Re-export from shared package
+export type {
+  OnlineUserData,
+  OnlineUserSchema,
+  IPresenceState,
+  InviteData,
+  InviteResponseStatus,
+} from '@call-break/shared';
 
 export interface RoomAvailability {
   roomId: string;

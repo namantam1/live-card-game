@@ -1,5 +1,6 @@
 import { Room, type Client } from 'colyseus';
 import { OnlineUser, PresenceState } from './PresenceState.js';
+import type { InviteResponseStatus } from '@call-break/shared';
 
 interface PresenceJoinOptions {
   name?: string;
@@ -18,10 +19,10 @@ interface InvitePayload {
 interface InviteResponsePayload {
   inviteId?: string;
   inviterId?: string;
-  response?: 'accepted' | 'declined' | 'timeout' | 'in_game';
+  response?: InviteResponseStatus;
 }
 
-export class PresenceRoom extends Room<PresenceState> {
+export class PresenceRoom extends Room {
   maxClients = 100;
   state = new PresenceState();
 
