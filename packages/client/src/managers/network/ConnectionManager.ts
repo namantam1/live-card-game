@@ -17,7 +17,6 @@ export default class ConnectionManager {
       this.client = new Client(serverUrl);
       this.connected = true;
       this.serverUrl = serverUrl;
-      console.log('ConnectionManager: Connected to server at', serverUrl);
       return true;
     } catch (error) {
       console.error('ConnectionManager: Connection failed', error);
@@ -33,7 +32,6 @@ export default class ConnectionManager {
     this.client = null;
     this.connected = false;
     this.serverUrl = null;
-    console.log('ConnectionManager: Disconnected from server');
   }
 
   /**

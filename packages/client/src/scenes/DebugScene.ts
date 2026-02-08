@@ -13,6 +13,7 @@ import ReactionPanel from '../components/ReactionPanel';
 import Button from '../components/Button';
 import { OnlineUsersPanel } from '../components/lobby/OnlineUsersPanel';
 import { InviteModal } from '../components/InviteModal';
+import ChatPanel from '../components/ChatPanel';
 
 const CARD: CardData = createDeck()[0];
 
@@ -187,15 +188,41 @@ export default class DebugScene extends Phaser.Scene {
     //   },
     // });
 
-    new InviteModal(this).show({
-      inviterName: 'Alice',
-      roomCode: 'AAAA',
-      timeoutSeconds: 60,
-      callbacks: {
-        onAccept: () => console.log('Invite accepted'),
-        onDecline: () => console.log('Invite declined'),
-        onTimeout: () => console.log('Invite timed out'),
+    // new InviteModal(this).show({
+    //   inviterName: 'Alice',
+    //   roomCode: 'AAAA',
+    //   timeoutSeconds: 60,
+    //   callbacks: {
+    //     onAccept: () => console.log('Invite accepted'),
+    //     onDecline: () => console.log('Invite declined'),
+    //     onTimeout: () => console.log('Invite timed out'),
+    //   },
+    // });
+
+    const chatPannel = new ChatPanel(this, {
+      position: {
+        x: 20,
+        y: height - 300,
+      },
+      onSendMessage: (message: string) => {
+        console.log('Send message:', message);
       },
     });
+    chatPannel.addMessage({
+      id: 'msg1',
+      playerId: 'player1',
+      playerName: 'Alice',
+      seatIndex: 0,
+      message: 'Hello, world!',
+      timestamp: Date.now(),
+    });
+    chatPannel.toggle();
+    Button.createReactionbutton(
+      this,
+      this.cameras.main.width - 50,
+      210,
+      '💬',
+      () => chatPannel.toggle()
+    );
   }
 }

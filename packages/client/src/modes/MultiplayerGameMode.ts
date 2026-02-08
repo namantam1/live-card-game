@@ -226,11 +226,10 @@ export default class MultiplayerGameMode extends GameModeBase {
    * This class handles ALL game logic interpretation
    */
   private setupNetworkListeners(): void {
-    // Setup NetworkManager event listeners (these persist across reconnection)
-    this.setupNetworkManagerListeners();
-
     // Setup Colyseus room state listeners (need to be re-attached on reconnection)
     this.setupRoomStateListeners();
+    // Setup NetworkManager event listeners (these persist across reconnection)
+    this.setupNetworkManagerListeners();
   }
 
   /**
@@ -238,20 +237,6 @@ export default class MultiplayerGameMode extends GameModeBase {
    * These listeners are attached to NetworkManager/RoomManager and persist across reconnection
    */
   private setupNetworkManagerListeners(): void {
-    // Listen to room messages (non-game-logic events)
-    this.networkManager.on('message:seated', (_data?: unknown) => {
-      // These are handled by RoomManager already
-    });
-
-    this.networkManager.on('message:dealt', () => {
-      console.log('MultiplayerGameMode: Cards dealt');
-    });
-
-    this.networkManager.on('message:playerLeft', (data?: unknown) => {
-      const playerData = data as { name: string };
-      console.log(`MultiplayerGameMode: ${playerData.name} left`);
-    });
-
     this.networkManager.on('message:playerReaction', (data?: unknown) => {
       const reactionData = data as ReactionData;
       const player = this.players.find(
@@ -262,8 +247,9 @@ export default class MultiplayerGameMode extends GameModeBase {
       }
     });
 
-    this.networkManager.on('message:chatMessage', (_data?: unknown) => {
-      // Chat messages are handled by UIScene
+    this.networkManager.on('message:chatMessage', (data?: unknown) => {
+      // Forward chat messages to UIScene
+      this.emit(EVENTS.CHAT_MESSAGE, data);
     });
 
     this.networkManager.on('message:chatError', (data?: unknown) => {
@@ -621,9 +607,6 @@ export default class MultiplayerGameMode extends GameModeBase {
           (p) => p.networkId === sessionId
         );
         if (localPlayerObj) {
-          console.log(
-            `MultiplayerGameMode: Updating card count for ${player.name}: ${handCount}`
-          );
           localPlayerObj.hand.updateCardCount(handCount);
         }
       }

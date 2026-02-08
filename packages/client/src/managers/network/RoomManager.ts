@@ -29,10 +29,7 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
     try {
       this.room = await client.create('call_break', { name: playerName });
       this.playerId = this.room.sessionId;
-
       this.setupRoomListeners();
-
-      console.log('RoomManager: Room created, waiting for room code...');
       return this.room;
     } catch (error) {
       console.error('RoomManager: Failed to create room', error);
@@ -85,9 +82,9 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
       (data: { seatIndex: number; roomCode: string }) => {
         this.seatIndex = data.seatIndex;
         this.roomCode = data.roomCode;
-        console.log(
-          `RoomManager: Seated at ${this.seatIndex}, room code: ${this.roomCode}`
-        );
+        // console.log(
+        //   `RoomManager: Seated at ${this.seatIndex}, room code: ${this.roomCode}`
+        // );
         this.emit('message:seated', data);
       }
     );
@@ -154,7 +151,7 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
     // Listen to player additions (for lobby player list)
     $(this.room.state).players.onAdd(
       (player: PlayerSchema, sessionId: string) => {
-        console.log(`RoomManager: Player ${player.name} joined`);
+        // console.log(`RoomManager: Player ${player.name} joined`);
         this.emit('playerJoined', { player, sessionId });
 
         // Listen to player ready status changes
@@ -174,7 +171,7 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
 
     // Listen to phase changes (to start game from lobby)
     $(this.room.state).listen('phase', (value: string) => {
-      console.log(`RoomManager: Phase changed to ${value}`);
+      // console.log(`RoomManager: Phase changed to ${value}`);
       this.emit('phaseChange', { phase: value });
     });
   }

@@ -452,7 +452,6 @@ export default class LobbyScene extends Phaser.Scene {
     const storedName = storage.load<string>(this.PLAYER_NAME_KEY) || '';
     const nameToUse = this.menuView.getPlayerName() || storedName;
     const nameResult = validatePlayerName(nameToUse);
-    console.log('Handling accepted invite:', invite, 'Using name:', nameToUse);
     if (!nameResult.valid) {
       this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
       return;
@@ -465,7 +464,6 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private autoJoinInvite(invite: InviteData) {
-    console.log('Auto-joining invite:', invite);
     if (!this.networkManager.isConnected()) {
       console.log('Not connected yet, will join invite once connected');
       this.pendingInviteJoin = invite;
@@ -506,10 +504,6 @@ export default class LobbyScene extends Phaser.Scene {
       this.joinView.showError('Not connected to server');
       return;
     }
-
-    console.log(
-      `Joining room ${roomCode} as ${playerName} (invited by ${inviterName})`
-    );
 
     this.send({
       type: 'JOIN_ROOM',

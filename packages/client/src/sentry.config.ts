@@ -6,7 +6,6 @@ export function initSentry() {
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1'
   ) {
-    console.log('Sentry disabled on localhost');
     return;
   }
 

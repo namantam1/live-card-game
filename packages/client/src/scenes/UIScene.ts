@@ -10,7 +10,9 @@ import Common from '../objects/game/Common';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS, UI_TIMING } from '../utils/constants';
 import ReactionPanel from '../components/ReactionPanel';
+import ChatPanel from '../components/ChatPanel';
 import Button from '../components/Button';
+import type { ChatMessage } from '@call-break/shared';
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
@@ -86,8 +88,6 @@ export default class UIScene extends Phaser.Scene {
   }
 
   setupEventListeners() {
-    // Unified event listeners - no mode conditionals!
-
     // Helper function to check and show bidding UI
     // This handles race conditions between phase and turn state updates
     const checkAndShowBiddingUI = () => {
@@ -112,10 +112,6 @@ export default class UIScene extends Phaser.Scene {
       });
 
       const isMyTurn = currentTurnPlayer?.id === localPlayer.id;
-
-      console.log(
-        `UIScene: checkAndShowBiddingUI - phase: ${phase}, isMyTurn: ${isMyTurn}`
-      );
 
       if (phase === 'bidding' && isMyTurn) {
         console.log('UIScene: Showing bidding UI');
@@ -207,5 +203,34 @@ export default class UIScene extends Phaser.Scene {
       '😊',
       () => reactionPanel.toggle()
     );
+
+    // Setup chat UI for multiplayer mode only
+    if (this.isMultiplayer()) {
+      this.setupChatUI();
+    }
+  }
+
+  private setupChatUI(): void {
+    const chatPanel = new ChatPanel(this, {
+      position: {
+        x: 20,
+        y: this.cameras.main.height - 300,
+      },
+      onSendMessage: (message: string) => this.gameMode.sendChat(message),
+    });
+
+    // Chat toggle button
+    Button.createReactionbutton(
+      this,
+      this.cameras.main.width - 50,
+      230,
+      '💬',
+      () => chatPanel.toggle()
+    );
+
+    // Listen for incoming chat messages
+    this.gameMode.on(EVENTS.CHAT_MESSAGE, (data: ChatMessage) => {
+      chatPanel.addMessage(data);
+    });
   }
 }

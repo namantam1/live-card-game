@@ -72,7 +72,6 @@ export default class ConnectionMonitor extends Phaser.Events.EventEmitter {
   private updateQuality(quality: ConnectionQuality): void {
     if (this.connectionQuality !== quality) {
       this.connectionQuality = quality;
-      console.log(`ConnectionMonitor: Quality changed to ${quality}`);
       this.emit('qualityChange', {
         quality,
         connected: quality !== 'offline',
