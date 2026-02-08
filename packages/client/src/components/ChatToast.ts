@@ -3,16 +3,21 @@ import type { ChatMessage } from '@call-break/shared';
 import { PLAYER_POSITIONS, type Position } from '../utils/constants';
 import type Player from '../objects/Player';
 
+const CONFIG = {
+  TOAST_DURATION: 5000,
+  MAX_WIDTH: 270,
+  VERTICAL_SPACING: 10,
+  MAX_MESSAGES_PER_PLAYER: 4,
+  MESSAGE_FONT_SIZE: '22px',
+  PLAYER_NAME_FONT_SIZE: '20px',
+};
+
 /**
  * Displays chat messages as floating speech bubbles near the player who sent them
  */
 export default class ChatToast {
   private scene: Scene;
   private players: Player[];
-  private readonly TOAST_DURATION = 5000;
-  private readonly MAX_WIDTH = 280;
-  private readonly VERTICAL_SPACING = 10; // Increased spacing to prevent overlap
-  private readonly MAX_MESSAGES_PER_PLAYER = 3; // Maximum messages to show per player
 
   // Track active toasts per player position
   private activeToasts: Map<Position, Phaser.GameObjects.Container[]> =
@@ -71,8 +76,8 @@ export default class ChatToast {
     // Create temporary text to measure message height
     const tempText = this.scene.add.text(0, 0, message.message, {
       fontFamily: 'Arial, sans-serif',
-      fontSize: '13px',
-      wordWrap: { width: this.MAX_WIDTH - 24 },
+      fontSize: CONFIG.MESSAGE_FONT_SIZE,
+      wordWrap: { width: CONFIG.MAX_WIDTH - 24 },
     });
     const messageHeight = tempText.height;
     tempText.destroy();
@@ -83,7 +88,7 @@ export default class ChatToast {
     const existingToasts = this.activeToasts.get(position) || [];
 
     // If we've reached the limit, remove the oldest message first
-    if (existingToasts.length >= this.MAX_MESSAGES_PER_PLAYER) {
+    if (existingToasts.length >= CONFIG.MAX_MESSAGES_PER_PLAYER) {
       const oldestToast = existingToasts[0]; // First message is the oldest
       this.removeToast(oldestToast, true); // Remove immediately without waiting
     }
@@ -99,7 +104,7 @@ export default class ChatToast {
         // Get the stored height from the container data
         const toastHeight =
           toast.getData('bubbleHeight') || toast.getBounds().height;
-        stackOffset += toastHeight + this.VERTICAL_SPACING;
+        stackOffset += toastHeight + CONFIG.VERTICAL_SPACING;
       });
     }
 
@@ -116,7 +121,7 @@ export default class ChatToast {
         bubbleY = playerY - bubbleHeight / 2 - stackOffset; // Stack upward
         break;
       case 'right':
-        bubbleX = playerX - 120 - this.MAX_WIDTH; // To the left
+        bubbleX = playerX - 120 - CONFIG.MAX_WIDTH; // To the left
         bubbleY = playerY - bubbleHeight / 2 - stackOffset; // Stack upward
         break;
     }
@@ -131,21 +136,21 @@ export default class ChatToast {
     // Background with speech bubble style
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x1e293b, 0.95);
-    bg.fillRoundedRect(0, 0, this.MAX_WIDTH, bubbleHeight, 12);
+    bg.fillRoundedRect(0, 0, CONFIG.MAX_WIDTH, bubbleHeight, 12);
 
     // Border with player color
     const borderColor = parseInt(seatColor.replace('#', ''), 16);
     bg.lineStyle(3, borderColor, 1);
-    bg.strokeRoundedRect(0, 0, this.MAX_WIDTH, bubbleHeight, 12);
+    bg.strokeRoundedRect(0, 0, CONFIG.MAX_WIDTH, bubbleHeight, 12);
 
     // Add small triangle pointer towards player
     this.addSpeechBubblePointer(bg, player.position, borderColor);
 
     // Player name
     const playerText = this.scene.add
-      .text(12, 12, `${message.playerName}`, {
+      .text(12, 7, `${message.playerName}`, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: CONFIG.MESSAGE_FONT_SIZE,
         fontStyle: 'bold',
         color: seatColor,
       })
@@ -153,11 +158,11 @@ export default class ChatToast {
 
     // Message text
     const messageText = this.scene.add
-      .text(12, 32, message.message, {
+      .text(12, 38, message.message, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '13px',
+        fontSize: CONFIG.PLAYER_NAME_FONT_SIZE,
         color: '#e2e8f0',
-        wordWrap: { width: this.MAX_WIDTH - 24 },
+        wordWrap: { width: CONFIG.MAX_WIDTH - 24 },
       })
       .setOrigin(0, 0);
 
@@ -179,7 +184,7 @@ export default class ChatToast {
     });
 
     // Auto-dismiss after duration
-    this.scene.time.delayedCall(this.TOAST_DURATION, () => {
+    this.scene.time.delayedCall(CONFIG.TOAST_DURATION, () => {
       this.removeToast(container);
     });
   }
@@ -257,7 +262,7 @@ export default class ChatToast {
           targetY = playerY - bubbleHeight / 2 - stackOffset;
           break;
         case 'right':
-          targetX = playerX - 120 - this.MAX_WIDTH;
+          targetX = playerX - 120 - CONFIG.MAX_WIDTH;
           targetY = playerY - bubbleHeight / 2 - stackOffset;
           break;
       }
@@ -271,7 +276,7 @@ export default class ChatToast {
         ease: 'Power2',
       });
 
-      stackOffset += bubbleHeight + this.VERTICAL_SPACING;
+      stackOffset += bubbleHeight + CONFIG.VERTICAL_SPACING;
     });
   }
 
@@ -289,38 +294,38 @@ export default class ChatToast {
       case 'bottom':
         // Pointer at bottom center
         graphics.fillTriangle(
-          this.MAX_WIDTH / 2 - pointerSize,
-          this.MAX_WIDTH,
-          this.MAX_WIDTH / 2 + pointerSize,
-          this.MAX_WIDTH,
-          this.MAX_WIDTH / 2,
-          this.MAX_WIDTH + pointerSize
+          CONFIG.MAX_WIDTH / 2 - pointerSize,
+          CONFIG.MAX_WIDTH,
+          CONFIG.MAX_WIDTH / 2 + pointerSize,
+          CONFIG.MAX_WIDTH,
+          CONFIG.MAX_WIDTH / 2,
+          CONFIG.MAX_WIDTH + pointerSize
         );
         graphics.strokeTriangle(
-          this.MAX_WIDTH / 2 - pointerSize,
-          this.MAX_WIDTH,
-          this.MAX_WIDTH / 2 + pointerSize,
-          this.MAX_WIDTH,
-          this.MAX_WIDTH / 2,
-          this.MAX_WIDTH + pointerSize
+          CONFIG.MAX_WIDTH / 2 - pointerSize,
+          CONFIG.MAX_WIDTH,
+          CONFIG.MAX_WIDTH / 2 + pointerSize,
+          CONFIG.MAX_WIDTH,
+          CONFIG.MAX_WIDTH / 2,
+          CONFIG.MAX_WIDTH + pointerSize
         );
         break;
       case 'top':
         // Pointer at top center
         graphics.fillTriangle(
-          this.MAX_WIDTH / 2 - pointerSize,
+          CONFIG.MAX_WIDTH / 2 - pointerSize,
           0,
-          this.MAX_WIDTH / 2 + pointerSize,
+          CONFIG.MAX_WIDTH / 2 + pointerSize,
           0,
-          this.MAX_WIDTH / 2,
+          CONFIG.MAX_WIDTH / 2,
           -pointerSize
         );
         graphics.strokeTriangle(
-          this.MAX_WIDTH / 2 - pointerSize,
+          CONFIG.MAX_WIDTH / 2 - pointerSize,
           0,
-          this.MAX_WIDTH / 2 + pointerSize,
+          CONFIG.MAX_WIDTH / 2 + pointerSize,
           0,
-          this.MAX_WIDTH / 2,
+          CONFIG.MAX_WIDTH / 2,
           -pointerSize
         );
         break;
@@ -346,19 +351,19 @@ export default class ChatToast {
       case 'right':
         // Pointer at right center (pointing right)
         graphics.fillTriangle(
-          this.MAX_WIDTH,
+          CONFIG.MAX_WIDTH,
           30 - pointerSize,
-          this.MAX_WIDTH,
+          CONFIG.MAX_WIDTH,
           30 + pointerSize,
-          this.MAX_WIDTH + pointerSize,
+          CONFIG.MAX_WIDTH + pointerSize,
           30
         );
         graphics.strokeTriangle(
-          this.MAX_WIDTH,
+          CONFIG.MAX_WIDTH,
           30 - pointerSize,
-          this.MAX_WIDTH,
+          CONFIG.MAX_WIDTH,
           30 + pointerSize,
-          this.MAX_WIDTH + pointerSize,
+          CONFIG.MAX_WIDTH + pointerSize,
           30
         );
         break;
