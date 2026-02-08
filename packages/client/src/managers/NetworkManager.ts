@@ -1,685 +1,326 @@
-import { Client, Room, getStateCallbacks } from '@colyseus/sdk';
-import type {
-  CardData,
-  CardSchema,
-  ChatMessage,
-  ConnectionQuality,
-  PlayerData,
-  PlayerSchema,
-  ReactionData,
-  TrickEntrySchema,
-} from '../type';
-import type { Suit } from '../utils/constants';
+import { Room } from '@colyseus/sdk';
+import type { ConnectionQuality } from '../type';
+import ConnectionManager from './network/ConnectionManager';
+import ConnectionMonitor from './network/ConnectionMonitor';
+import ReconnectionHandler from './network/ReconnectionHandler';
+import RoomManager from './network/RoomManager';
 
-type EventCallback = (data?: any) => void;
-
+/**
+ * NetworkManager - Facade/Coordinator for network operations
+ * Delegates to specialized managers for different concerns
+ *
+ * This provides a simpler API while maintaining separation of concerns
+ */
 export default class NetworkManager {
-  private client: Client | null;
-  private room: Room | null;
-  private connected: boolean;
-  private roomCode: string | null;
-  playerId: string | null;
-  private seatIndex: number;
-
-  // Event listeners
-  private listeners: Map<string, Set<EventCallback>>;
-
-  // Reconnection state
-  private reconnecting: boolean;
-  private maxReconnectAttempts: number;
-  private reconnectAttempts: number;
-  private reconnectDelay: number;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null;
-
-  // Connection monitoring
-  private connectionQuality: ConnectionQuality;
-  private lastPingTime: number;
-  private pingInterval: ReturnType<typeof setInterval> | null;
-  private pingTimeout: number;
-
-  // Saved state for reconnection (using new Colyseus reconnectionToken API)
-  private reconnectionToken: string | null;
+  private connectionManager: ConnectionManager;
+  private connectionMonitor: ConnectionMonitor;
+  private reconnectionHandler: ReconnectionHandler;
+  private roomManager: RoomManager;
 
   constructor() {
-    this.client = null;
-    this.room = null;
-    this.connected = false;
-    this.roomCode = null;
-    this.playerId = null;
-    this.seatIndex = -1;
+    this.connectionManager = new ConnectionManager();
+    this.connectionMonitor = new ConnectionMonitor();
+    this.reconnectionHandler = new ReconnectionHandler();
+    this.roomManager = new RoomManager();
 
-    // Event listeners
-    this.listeners = new Map();
-
-    // Reconnection state
-    this.reconnecting = false;
-    this.maxReconnectAttempts = 3;
-    this.reconnectAttempts = 0;
-    this.reconnectDelay = 2000;
-    this.reconnectTimer = null;
-
-    // Connection monitoring
-    this.connectionQuality = 'good'; // 'good', 'fair', 'poor', 'offline'
-    this.lastPingTime = Date.now();
-    this.pingInterval = null;
-    this.pingTimeout = 5000;
-
-    // Saved state for reconnection (using new Colyseus reconnectionToken API)
-    this.reconnectionToken = null;
+    this.setupHandlers();
   }
 
+  /**
+   * Setup handlers between components
+   */
+  private setupHandlers(): void {
+    // Forward room manager events
+    this.roomManager.on(
+      'leave',
+      async ({
+        code: _code,
+        wasUnexpected,
+      }: {
+        code: number;
+        wasUnexpected: boolean;
+      }) => {
+        this.connectionMonitor.stop();
+
+        if (wasUnexpected) {
+          console.log(
+            'NetworkManager: Unexpected disconnect, attempting reconnection...'
+          );
+          this.connectionMonitor.setQuality('offline');
+
+          const client = this.connectionManager.getClient();
+          if (client) {
+            const room =
+              await this.reconnectionHandler.handleDisconnect(client);
+            if (room) {
+              // Reconnection successful
+              this.roomManager.updateRoom(room);
+              this.reconnectionHandler.saveToken(room.reconnectionToken);
+              this.connectionMonitor.start();
+              this.connectionMonitor.setQuality('good');
+            }
+          }
+        }
+      }
+    );
+
+    // Forward reconnection events
+    this.reconnectionHandler.on('reconnecting', (data: unknown) => {
+      this.roomManager.emit('reconnecting', data);
+    });
+
+    this.reconnectionHandler.on('succeeded', (_data: unknown) => {
+      this.roomManager.emit('reconnected', { message: 'Reconnected to game' });
+    });
+
+    this.reconnectionHandler.on('failed', (data: unknown) => {
+      this.roomManager.emit('reconnectionFailed', data);
+    });
+
+    // Forward connection quality changes
+    this.connectionMonitor.on('qualityChange', (data: unknown) => {
+      this.roomManager.emit('connectionQualityChange', data);
+    });
+  }
+
+  /**
+   * Expose playerId for backward compatibility
+   */
+  get playerId(): string | null {
+    return this.roomManager.playerId;
+  }
+
+  /**
+   * Connect to the server
+   */
   async connect(serverUrl: string): Promise<boolean> {
-    try {
-      this.client = new Client(serverUrl);
-      this.connected = true;
-      this.reconnectAttempts = 0;
-      console.log('NetworkManager: Connected to server');
-      this.emit('connectionChange', { quality: 'good', connected: true });
-      return true;
-    } catch (error) {
-      console.error('NetworkManager: Connection failed', error);
-      this.connected = false;
-      this.emit('connectionChange', { quality: 'offline', connected: false });
-      return false;
-    }
-  }
-
-  async createRoom(playerName: string): Promise<Room | null> {
-    if (!this.client) {
-      console.error('NetworkManager: Not connected to server');
-      return null;
-    }
-
-    try {
-      this.room = await this.client.create('call_break', { name: playerName });
-      this.playerId = this.room.sessionId;
-
-      this.setupRoomListeners();
-
-      console.log('NetworkManager: Room created, waiting for room code...');
-      return this.room;
-    } catch (error) {
-      console.error('NetworkManager: Failed to create room', error);
-      return null;
-    }
-  }
-
-  async joinRoom(roomCode: string, playerName: string): Promise<Room | null> {
-    if (!this.client) {
-      console.error('NetworkManager: Not connected to server');
-      return null;
-    }
-
-    try {
-      // Join room by roomCode using filterBy matching
-      // This will only join rooms with matching roomCode (won't create new ones)
-      this.room = await this.client.join('call_break', {
-        name: playerName,
-        roomCode: roomCode,
+    const success = await this.connectionManager.connect(serverUrl);
+    if (success) {
+      this.connectionMonitor.setQuality('good');
+      this.roomManager.emit('connectionChange', {
+        quality: 'good',
+        connected: true,
       });
-      this.playerId = this.room.sessionId;
-      this.setupRoomListeners();
+    } else {
+      this.connectionMonitor.setQuality('offline');
+      this.roomManager.emit('connectionChange', {
+        quality: 'offline',
+        connected: false,
+      });
+    }
+    return success;
+  }
 
-      console.log('NetworkManager: Joined room');
-      return this.room;
+  /**
+   * Create a new room
+   */
+  async createRoom(playerName: string): Promise<Room | null> {
+    const client = this.connectionManager.getClient();
+    if (!client) {
+      console.error('NetworkManager: Not connected to server');
+      return null;
+    }
+
+    const room = await this.roomManager.createRoom(client, playerName);
+    if (room) {
+      this.reconnectionHandler.saveToken(room.reconnectionToken);
+      this.connectionMonitor.start(() => {
+        // Record activity on state changes
+        if (room.state) {
+          const originalOnChange = room.state.onChange || (() => {});
+          room.state.onChange = () => {
+            this.connectionMonitor.recordActivity();
+            originalOnChange();
+          };
+        }
+      });
+    }
+    return room;
+  }
+
+  /**
+   * Join an existing room
+   */
+  async joinRoom(roomCode: string, playerName: string): Promise<Room | null> {
+    const client = this.connectionManager.getClient();
+    if (!client) {
+      console.error('NetworkManager: Not connected to server');
+      return null;
+    }
+
+    try {
+      const room = await this.roomManager.joinRoom(
+        client,
+        roomCode,
+        playerName
+      );
+      if (room) {
+        this.reconnectionHandler.saveToken(room.reconnectionToken);
+        this.connectionMonitor.start(() => {
+          // Record activity on state changes
+          if (room.state) {
+            const originalOnChange = room.state.onChange || (() => {});
+            room.state.onChange = () => {
+              this.connectionMonitor.recordActivity();
+              originalOnChange();
+            };
+          }
+        });
+      }
+      return room;
     } catch (error) {
       console.error('NetworkManager: Failed to join room', error);
       throw error;
     }
   }
 
-  setupRoomListeners(): void {
-    if (!this.room) return;
-
-    // Save reconnection token for the new Colyseus API
-    this.reconnectionToken = this.room.reconnectionToken;
-
-    // Start connection monitoring
-    this.startConnectionMonitoring();
-
-    // Get state callbacks proxy (Colyseus 0.17.x recommended pattern)
-    const $ = getStateCallbacks(this.room);
-
-    // Handle seat assignment
-    this.room.onMessage(
-      'seated',
-      (data: { seatIndex: number; roomCode: string }) => {
-        this.seatIndex = data.seatIndex;
-        this.roomCode = data.roomCode;
-        console.log(
-          `NetworkManager: Seated at ${this.seatIndex}, room code: ${this.roomCode}`
-        );
-        this.emit('seated', data);
-      }
-    );
-
-    // Handle dealt notification
-    this.room.onMessage('dealt', () => {
-      console.log('NetworkManager: Cards dealt');
-      this.emit('dealt');
-    });
-
-    // Handle player left
-    this.room.onMessage('playerLeft', (data: { name: string }) => {
-      console.log(`NetworkManager: ${data.name} left`);
-      this.emit('playerLeft', data);
-    });
-
-    // Handle player reactions
-    this.room.onMessage('playerReaction', (data: ReactionData) => {
-      console.log(
-        `NetworkManager: Reaction from ${data.playerName}: ${data.type}`
-      );
-      this.emit('playerReaction', data);
-    });
-
-    // Handle chat messages
-    this.room.onMessage('chatMessage', (data: ChatMessage) => {
-      console.log(
-        `NetworkManager: Chat from ${data.playerName}: ${data.message}`
-      );
-      this.emit('chatMessage', data);
-    });
-
-    // Handle chat errors
-    this.room.onMessage('chatError', (data: { error: string }) => {
-      console.warn(`NetworkManager: Chat error - ${data.error}`);
-      this.emit('chatError', data);
-    });
-
-    // State change listeners using $() proxy
-    $(this.room.state).listen(
-      'phase',
-      (value: string, previousValue: string) => {
-        console.log(
-          `NetworkManager: Phase changed from ${previousValue} to ${value}`
-        );
-
-        // Add extra validation during critical phase transitions
-        if (value === 'trickEnd') {
-          console.log('NetworkManager: Entering trickEnd phase');
-          console.log(
-            '  - Current trick count:',
-            this.room?.state?.currentTrick?.length || 0
-          );
-          console.log(
-            '  - Trick winner:',
-            this.room?.state?.trickWinner || 'not set'
-          );
-        }
-
-        this.emit('phaseChange', {
-          phase: value,
-          previousPhase: previousValue,
-        });
-      }
-    );
-
-    $(this.room.state).listen('currentTurn', (value: string) => {
-      console.log(`NetworkManager: Turn changed to ${value}`);
-      this.emit('turnChange', {
-        playerId: value,
-        isMyTurn: value === this.playerId,
-      });
-    });
-
-    $(this.room.state).listen('leadSuit', (value: string) => {
-      this.emit('leadSuitChange', value);
-    });
-
-    $(this.room.state).listen('trickWinner', (value: string) => {
-      if (value) {
-        this.emit('trickWinner', value);
-      }
-    });
-
-    $(this.room.state).listen('currentRound', (value: number) => {
-      this.emit('roundChange', value);
-    });
-
-    $(this.room.state).listen('trickNumber', (value: number) => {
-      this.emit('trickNumberChange', value);
-    });
-
-    // Player state changes using $() proxy
-    $(this.room.state).players.onAdd(
-      (player: PlayerSchema, sessionId: string) => {
-        console.log(`NetworkManager: Player ${player.name} joined`);
-        this.emit('playerJoined', { player, sessionId });
-
-        // Listen to player changes using $() proxy for the player instance
-        $(player).listen('bid', (value: number) => {
-          this.emit('playerBid', { playerId: sessionId, bid: value });
-        });
-
-        $(player).listen('tricksWon', (value: number) => {
-          this.emit('playerTricksWon', {
-            playerId: sessionId,
-            tricksWon: value,
-          });
-        });
-
-        $(player).listen('score', (value: number) => {
-          this.emit('playerScoreChange', { playerId: sessionId, score: value });
-        });
-
-        $(player).listen('roundScore', (value: number) => {
-          this.emit('playerRoundScore', {
-            playerId: sessionId,
-            roundScore: value,
-          });
-        });
-
-        $(player).listen('isReady', (value: boolean) => {
-          this.emit('playerReady', { playerId: sessionId, isReady: value });
-        });
-
-        $(player).listen('isConnected', (value: boolean) => {
-          this.emit('playerConnection', {
-            playerId: sessionId,
-            isConnected: value,
-          });
-        });
-
-        // Hand changes using $() proxy
-        $(player).hand.onAdd((card: CardSchema, index: number) => {
-          if (sessionId === this.playerId) {
-            // For local player, emit the actual card
-            this.emit('cardAdded', { card: this.cardToObject(card), index });
-          } else {
-            // For remote players, emit hand count change for visual update
-            this.emit('remoteHandChanged', {
-              playerId: sessionId,
-              handCount: player.hand.length,
-            });
-          }
-        });
-
-        $(player).hand.onRemove((card: CardSchema, index: number) => {
-          if (sessionId === this.playerId) {
-            this.emit('cardRemoved', { cardId: card.id, index });
-          } else {
-            // For remote players, emit hand count change for visual update
-            this.emit('remoteHandChanged', {
-              playerId: sessionId,
-              handCount: player.hand.length,
-            });
-          }
-        });
-      }
-    );
-
-    $(this.room.state).players.onRemove(
-      (player: PlayerSchema, sessionId: string) => {
-        console.log(`NetworkManager: Player ${player.name} removed`);
-        this.emit('playerRemoved', { player, sessionId });
-      }
-    );
-
-    // Current trick changes using $() proxy
-    $(this.room.state).currentTrick.onAdd((entry: TrickEntrySchema) => {
-      console.log(`NetworkManager: Card played by ${entry.playerId}`);
-      this.emit('cardPlayed', {
-        playerId: entry.playerId,
-        card: this.cardToObject(entry.card),
-      });
-    });
-
-    $(this.room.state).currentTrick.onRemove(() => {
-      this.emit('trickCleared');
-    });
-
-    // Room error handling
-    this.room.onError((code: number, message?: string) => {
-      console.error(`NetworkManager: Room error ${code}: ${message}`);
-      this.emit('error', { code, message });
-    });
-
-    // Room leave handling
-    this.room.onLeave((code: number) => {
-      console.log(`NetworkManager: Left room with code ${code}`);
-
-      // Stop connection monitoring
-      this.stopConnectionMonitoring();
-
-      // Check if this was an unexpected disconnect
-      if (code !== 1000 && code !== 4000) {
-        console.log(
-          'NetworkManager: Unexpected disconnect, attempting reconnection...'
-        );
-        this.handleUnexpectedDisconnect();
-      } else {
-        // Clean disconnect
-        this.emit('roomLeft', { code });
-        this.room = null;
-        this.roomCode = null;
-        this.reconnectionToken = null;
-      }
-    });
+  /**
+   * Get the room instance
+   */
+  getRoom(): Room | null {
+    return this.roomManager.getRoom();
   }
 
-  cardToObject(card: CardSchema): CardData {
-    return {
-      id: card.id,
-      suit: card.suit as CardData['suit'],
-      rank: card.rank as CardData['rank'],
-      value: card.value,
-    };
+  /**
+   * Get room state (for direct access by game mode)
+   */
+  getState(): unknown {
+    return this.roomManager.getRoom()?.state || null;
   }
 
-  sendReady(): void {
-    if (this.room) {
-      this.room.send('ready');
-      console.log('NetworkManager: Sent ready');
-    }
-  }
-
-  sendBid(bid: number): void {
-    if (this.room) {
-      this.room.send('bid', { bid });
-      console.log(`NetworkManager: Sent bid ${bid}`);
-    }
-  }
-
-  sendPlayCard(cardId: string): void {
-    if (this.room) {
-      this.room.send('playCard', { cardId });
-      console.log(`NetworkManager: Sent playCard ${cardId}`);
-    }
-  }
-
-  sendNextRound(): void {
-    if (this.room) {
-      this.room.send('nextRound');
-      console.log('NetworkManager: Sent nextRound');
-    }
-  }
-
-  sendRestart(): void {
-    if (this.room) {
-      this.room.send('restart');
-      console.log('NetworkManager: Sent restart');
-    }
-  }
-
-  getState(): any {
-    return this.room?.state || null;
-  }
-
-  getMyHand(): CardData[] {
-    if (!this.room || !this.playerId) return [];
-    const player = this.room.state.players.get(this.playerId);
-    if (!player) return [];
-    return Array.from(player.hand).map((c) =>
-      this.cardToObject(c as CardSchema)
-    );
-  }
-
-  getPlayers(): PlayerData[] {
-    if (!this.room || !this.room.state || !this.room.state.players) return [];
-    const players: PlayerData[] = [];
-    this.room.state.players.forEach(
-      (player: PlayerSchema, sessionId: string) => {
-        players.push({
-          id: sessionId,
-          name: player.name,
-          emoji: player.emoji,
-          seatIndex: player.seatIndex,
-          isReady: player.isReady,
-          isConnected: player.isConnected,
-          bid: player.bid,
-          tricksWon: player.tricksWon,
-          score: player.score,
-          roundScore: player.roundScore,
-          isLocal: sessionId === this.playerId,
-        });
-      }
-    );
-    return players.sort((a, b) => a.seatIndex - b.seatIndex);
-  }
-
-  getPlayer(sessionId: string): PlayerSchema | null {
-    return this.room?.state.players.get(sessionId) || null;
-  }
-
-  isMyTurn(): boolean {
-    return this.room?.state.currentTurn === this.playerId;
-  }
-
-  getPhase(): string {
-    return this.room?.state.phase || 'waiting';
-  }
-
-  getLeadSuit(): Suit {
-    return this.room?.state.leadSuit || '';
-  }
-
-  getCurrentTrick(): any[] {
-    if (!this.room?.state.currentTrick) return [];
-    return Array.from(this.room.state.currentTrick).map((entry) => ({
-      playerIndex: (entry as TrickEntrySchema).playerId,
-      card: this.cardToObject((entry as TrickEntrySchema).card),
-    }));
-  }
-
+  /**
+   * Get room code
+   */
   getRoomCode(): string | null {
-    return this.roomCode;
+    return this.roomManager.getRoomCode();
   }
 
+  /**
+   * Get players list (for lobby)
+   */
+  getPlayers() {
+    return this.roomManager.getPlayers();
+  }
+
+  /**
+   * Send ready message
+   */
+  sendReady(): void {
+    this.roomManager.send('ready');
+  }
+
+  /**
+   * Send bid
+   */
+  sendBid(bid: number): void {
+    this.roomManager.send('bid', { bid });
+  }
+
+  /**
+   * Send play card
+   */
+  sendPlayCard(cardId: string): void {
+    this.roomManager.send('playCard', { cardId });
+  }
+
+  /**
+   * Send next round
+   */
+  sendNextRound(): void {
+    this.roomManager.send('nextRound');
+  }
+
+  /**
+   * Send restart
+   */
+  sendRestart(): void {
+    this.roomManager.send('restart');
+  }
+
+  /**
+   * Send reaction
+   */
   sendReaction(reactionType: string): void {
-    if (!this.room) {
-      console.warn('NetworkManager: Cannot send reaction - not in a room');
-      return;
-    }
-    this.room.send('reaction', { type: reactionType });
-    console.log(`NetworkManager: Sent reaction ${reactionType}`);
+    this.roomManager.send('reaction', { type: reactionType });
   }
 
+  /**
+   * Send chat message
+   */
   sendChat(message: string): void {
-    if (!this.room) {
-      console.warn('NetworkManager: Cannot send chat - not in a room');
-      return;
-    }
     if (!message || message.trim().length === 0) {
       console.warn('NetworkManager: Cannot send empty chat message');
       return;
     }
-    this.room.send('chat', { message: message.trim() });
-    console.log(`NetworkManager: Sent chat message`);
+    this.roomManager.send('chat', { message: message.trim() });
   }
 
+  /**
+   * Leave the current room
+   */
   async leaveRoom(): Promise<void> {
-    if (this.room) {
-      await this.room.leave(); // Consented leave (default in 0.17.x)
-      this.room = null;
-      this.roomCode = null;
-      this.seatIndex = -1;
-    }
+    await this.roomManager.leave();
   }
 
+  /**
+   * Disconnect from the server
+   */
   disconnect(): void {
-    this.stopConnectionMonitoring();
-    this.cancelReconnection();
-    this.leaveRoom();
-    this.client = null;
-    this.connected = false;
-    this.reconnectionToken = null;
+    this.connectionMonitor.stop();
+    this.reconnectionHandler.reset();
+    this.roomManager.leave();
+    this.connectionManager.disconnect();
   }
 
+  /**
+   * Check if connected to server
+   */
   isConnected(): boolean {
-    return this.connected && this.client !== null;
+    return this.connectionManager.isConnected();
   }
 
+  /**
+   * Check if in a room
+   */
   isInRoom(): boolean {
-    return this.room !== null;
+    return this.roomManager.isInRoom();
   }
 
-  on(event: string, callback: EventCallback): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)!.add(callback);
+  /**
+   * Get connection quality
+   */
+  getConnectionQuality(): ConnectionQuality {
+    return this.connectionMonitor.getQuality();
   }
 
-  off(event: string, callback: EventCallback): void {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event)!.delete(callback);
-    }
+  /**
+   * Check if currently reconnecting
+   */
+  isReconnecting(): boolean {
+    return this.reconnectionHandler.isReconnecting();
   }
 
-  emit(event: string, data?: any): void {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event)!.forEach((callback: EventCallback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`NetworkManager: Error in ${event} listener`, error);
-        }
-      });
-    }
+  /**
+   * Event methods - delegate to room manager
+   */
+  on(event: string, callback: (data?: unknown) => void): void {
+    this.roomManager.on(event, callback);
   }
 
   removeAllListeners(event?: string): void {
     if (event) {
-      this.listeners.delete(event);
+      this.roomManager.removeAllListeners(event);
     } else {
-      this.listeners.clear();
+      this.roomManager.removeAllListeners();
     }
   }
 
-  startConnectionMonitoring(): void {
-    if (this.pingInterval) return;
-
-    this.lastPingTime = Date.now();
-    this.connectionQuality = 'good';
-
-    // Monitor state updates to detect connection health
-    this.pingInterval = setInterval(() => {
-      const timeSinceLastPing = Date.now() - this.lastPingTime;
-
-      if (timeSinceLastPing > this.pingTimeout * 3) {
-        // No updates for a long time - poor connection or offline
-        this.updateConnectionQuality('offline');
-      } else if (timeSinceLastPing > this.pingTimeout * 2) {
-        // Slow connection
-        this.updateConnectionQuality('poor');
-      } else if (timeSinceLastPing > this.pingTimeout) {
-        // Fair connection
-        this.updateConnectionQuality('fair');
-      } else {
-        // Good connection
-        this.updateConnectionQuality('good');
-      }
-    }, 2000);
-
-    // Update ping time whenever we receive state updates
-    if (this.room && this.room.state) {
-      const originalOnChange = this.room.state.onChange || (() => {});
-      this.room.state.onChange = () => {
-        this.lastPingTime = Date.now();
-        originalOnChange();
-      };
-    }
-  }
-
-  stopConnectionMonitoring(): void {
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
-    }
-  }
-
-  updateConnectionQuality(quality: ConnectionQuality): void {
-    if (this.connectionQuality !== quality) {
-      this.connectionQuality = quality;
-      console.log(`NetworkManager: Connection quality changed to ${quality}`);
-      this.emit('connectionQualityChange', {
-        quality,
-        connected: quality !== 'offline',
-      });
-    }
-  }
-
-  getConnectionQuality(): ConnectionQuality {
-    return this.connectionQuality;
-  }
-
-  async handleUnexpectedDisconnect(): Promise<void> {
-    if (this.reconnecting) return;
-
-    this.reconnecting = true;
-    this.updateConnectionQuality('offline');
-    this.emit('reconnecting', { attempt: this.reconnectAttempts + 1 });
-
-    await this.attemptReconnection();
-  }
-
-  async attemptReconnection(): Promise<void> {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('NetworkManager: Max reconnection attempts reached');
-      this.reconnecting = false;
-      this.emit('reconnectionFailed', {
-        message: 'Could not reconnect to the game',
-      });
-      this.emit('roomLeft', { code: 1006 }); // Abnormal closure
-      this.room = null;
-      this.roomCode = null;
-      this.reconnectionToken = null;
-      return;
-    }
-
-    this.reconnectAttempts++;
-    console.log(
-      `NetworkManager: Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
-    );
-
-    try {
-      // Try to reconnect using the reconnectionToken (new Colyseus API)
-      if (this.reconnectionToken && this.client) {
-        this.room = await this.client.reconnect(this.reconnectionToken);
-
-        // Reconnection successful
-        console.log('NetworkManager: Reconnection successful!');
-        this.reconnecting = false;
-        this.reconnectAttempts = 0;
-        this.updateConnectionQuality('good');
-
-        // Update reconnection token for future reconnections
-        this.reconnectionToken = this.room.reconnectionToken;
-
-        // Re-setup listeners
-        this.setupRoomListeners();
-
-        this.emit('reconnected', {
-          message: 'Reconnected to game',
-        });
-      } else {
-        throw new Error('No reconnection token available');
-      }
-    } catch (error) {
-      console.error('NetworkManager: Reconnection failed', error);
-
-      // Schedule next attempt with exponential backoff
-      const delay =
-        this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-      console.log(`NetworkManager: Retrying in ${delay}ms...`);
-
-      this.reconnectTimer = setTimeout(() => {
-        this.attemptReconnection();
-      }, delay);
-    }
-  }
-
-  cancelReconnection(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    this.reconnecting = false;
-    this.reconnectAttempts = 0;
-  }
-
-  isReconnecting(): boolean {
-    return this.reconnecting;
+  /**
+   * Cleanup all resources
+   */
+  destroy(): void {
+    this.connectionMonitor.destroy();
+    this.reconnectionHandler.destroy();
+    this.roomManager.destroy();
   }
 }

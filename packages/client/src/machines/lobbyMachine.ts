@@ -83,6 +83,15 @@ export const lobbyMachine = createMachine({
             errorMessage: '',
           }),
         },
+        JOIN_ROOM: {
+          target: 'joiningRoom',
+          actions: assign({
+            playerName: ({ event }) => event.playerName,
+            roomCode: ({ event }) => event.roomCode,
+            errorMessage: '',
+            isInviteJoin: ({ event }) => event.isInvite || false,
+          }),
+        },
         BACK_TO_MENU: 'exiting',
       },
     },

@@ -50,13 +50,14 @@ export default class LobbyScene extends Phaser.Scene {
     this.createViews();
     this.lobbyActor = createActor(lobbyMachine);
     this.setupStateMachine();
-    this.connectToServer();
     this.events.once('shutdown', this.shutdown, this);
 
-    this.initializePresence().then(() => {
-      if (this.pendingInviteJoin) {
-        this.autoJoinInvite(this.pendingInviteJoin);
-      }
+    this.connectToServer().then(() => {
+      this.initializePresence().then(() => {
+        if (this.pendingInviteJoin) {
+          this.autoJoinInvite(this.pendingInviteJoin);
+        }
+      });
     });
   }
 
@@ -198,19 +199,18 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private setupNetworkListeners() {
-    this.networkManager.on(
-      'connectionQualityChange',
-      ({ quality }: { quality: Quality }) => {
-        this.networkIndicator?.updateQuality(quality);
-      }
-    );
+    this.networkManager.on('connectionQualityChange', (data?: unknown) => {
+      const qualityData = data as { quality: Quality };
+      this.networkIndicator?.updateQuality(qualityData.quality);
+    });
 
-    this.networkManager.on('seated', (data: { roomCode: string }) => {
+    this.networkManager.on('message:seated', (data?: unknown) => {
+      const seatedData = data as { roomCode: string };
       const state = this.lobbyActor.getSnapshot().value;
       if (state === 'creatingRoom') {
-        this.send({ type: 'ROOM_CREATED', roomCode: data.roomCode });
+        this.send({ type: 'ROOM_CREATED', roomCode: seatedData.roomCode });
       } else if (state === 'joiningRoom') {
-        this.send({ type: 'ROOM_JOINED', roomCode: data.roomCode });
+        this.send({ type: 'ROOM_JOINED', roomCode: seatedData.roomCode });
       }
     });
 
@@ -224,20 +224,20 @@ export default class LobbyScene extends Phaser.Scene {
       }
     });
 
-    this.networkManager.on('phaseChange', (data: { phase: string }) => {
-      if (data.phase === 'dealing' || data.phase === 'bidding') {
+    this.networkManager.on('phaseChange', (data?: unknown) => {
+      const phaseData = data as { phase: string };
+      if (phaseData.phase === 'dealing' || phaseData.phase === 'bidding') {
         this.send({ type: 'START_GAME' });
       }
     });
 
-    this.networkManager.on('error', (data: { message: string }) => {
+    this.networkManager.on('error', (data?: unknown) => {
+      const errorData = data as { message: string };
       const state = this.lobbyActor.getSnapshot().value;
       if (state === 'joiningRoom' || state === 'creatingRoom') {
-        this.send({ type: 'ROOM_ERROR', error: data.message });
+        this.send({ type: 'ROOM_ERROR', error: errorData.message });
       }
     });
-
-    this.networkManager.on('roomLeft', () => this.send({ type: 'ROOM_LEFT' }));
   }
 
   private initializePresence() {
@@ -336,7 +336,6 @@ export default class LobbyScene extends Phaser.Scene {
       const room = await this.networkManager.createRoom(nameResult.value!);
       if (room) {
         storage.save(this.PLAYER_NAME_KEY, nameResult.value!);
-        // Room code will be sent via 'seated' event from server
       } else {
         this.send({ type: 'ROOM_ERROR', error: 'Failed to create room' });
       }
@@ -452,8 +451,8 @@ export default class LobbyScene extends Phaser.Scene {
   private handleInviteAccepted(invite: InviteData): void {
     const storedName = storage.load<string>(this.PLAYER_NAME_KEY) || '';
     const nameToUse = this.menuView.getPlayerName() || storedName;
-
     const nameResult = validatePlayerName(nameToUse);
+    console.log('Handling accepted invite:', invite, 'Using name:', nameToUse);
     if (!nameResult.valid) {
       this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
       return;
@@ -461,7 +460,7 @@ export default class LobbyScene extends Phaser.Scene {
 
     this.menuView.setPlayerName(nameResult.value!);
     this.joinView.setRoomCode(invite.roomCode);
-    this.send({ type: 'JOIN_ROOM_CLICK', playerName: nameResult.value! });
+    // Don't send JOIN_ROOM_CLICK for invites - joinByCode handles the state transition
     this.joinByCode(invite.roomCode, nameResult.value!, invite.inviterName);
   }
 
@@ -474,6 +473,22 @@ export default class LobbyScene extends Phaser.Scene {
         'Connecting to server to join invite...',
         '#f59e0b'
       );
+      return;
+    }
+
+    // Ensure we're in the menu state before proceeding
+    const currentState = this.lobbyActor.getSnapshot().value;
+    if (currentState !== 'menu') {
+      console.log(`Waiting for menu state, currently in: ${currentState}`);
+      // Wait for the state machine to reach menu state
+      const unsubscribe = this.lobbyActor.subscribe((state) => {
+        if (state.value === 'menu') {
+          unsubscribe.unsubscribe();
+          console.log('Now in menu state, proceeding with auto-join');
+          this.handleInviteAccepted(invite);
+          this.pendingInviteJoin = null;
+        }
+      });
       return;
     }
 
@@ -491,6 +506,10 @@ export default class LobbyScene extends Phaser.Scene {
       this.joinView.showError('Not connected to server');
       return;
     }
+
+    console.log(
+      `Joining room ${roomCode} as ${playerName} (invited by ${inviterName})`
+    );
 
     this.send({
       type: 'JOIN_ROOM',
