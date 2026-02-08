@@ -2,8 +2,8 @@ import config from '@colyseus/tools';
 import { monitor, playground } from 'colyseus';
 import type { Application, Request, Response } from 'express';
 import cors from 'cors';
-import { CallBreakRoom } from './rooms/CallBreakRoom.js';
-import { PresenceRoom } from './rooms/PresenceRoom.js';
+import { CallBreakRoom } from './rooms/callbreak/CallBreakRoom.js';
+import { PresenceRoom } from './rooms/presence/PresenceRoom.js';
 
 export default config({
   initializeGameServer: (gameServer) => {

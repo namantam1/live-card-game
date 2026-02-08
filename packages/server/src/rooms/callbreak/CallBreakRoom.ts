@@ -1,7 +1,6 @@
 import { Room, type Client } from 'colyseus';
 import {
   GameState,
-  Player,
   Card,
   TrickEntry,
   createDeck,
@@ -9,18 +8,16 @@ import {
   calculateScore,
   getDealtCards,
 } from './GameState.js';
-import { calculateBid, type Suit, chooseBotCard } from '@call-break/shared';
+import { type Suit } from '@call-break/shared';
 import {
   ChatHandler,
   ReactionHandler,
   ConnectionHandler,
+  BotAIHandler,
 } from './handlers/index.js';
-import { EMOJIS } from './handlers/ConnectionHandler.js';
 
-const BOT_NAMES = ['Bot Alice', 'Bot Bob', 'Bot Charlie'];
 const CARDS_PER_PLAYER = 13;
 const NUM_PLAYERS = 4;
-const BOT_DELAY = 1000; // Delay for bot actions in ms
 
 interface JoinOptions {
   name?: string;
@@ -43,6 +40,7 @@ export class CallBreakRoom extends Room {
   private chatHandler!: ChatHandler;
   private reactionHandler!: ReactionHandler;
   private connectionHandler!: ConnectionHandler;
+  private botAIHandler!: BotAIHandler;
 
   onCreate(_options: JoinOptions): void {
     // Generate room code (with low collision probability)
@@ -57,11 +55,13 @@ export class CallBreakRoom extends Room {
     this.chatHandler = new ChatHandler(this);
     this.reactionHandler = new ReactionHandler(this);
     this.connectionHandler = new ConnectionHandler(this);
+    this.botAIHandler = new BotAIHandler(this);
 
     // Register handler messages
     this.chatHandler.registerMessages();
     this.reactionHandler.registerMessages();
     this.connectionHandler.registerMessages();
+    this.botAIHandler.registerMessages();
 
     // Handle game messages
     this.onMessage('ready', (client) => this.handleReady(client));
@@ -109,33 +109,10 @@ export class CallBreakRoom extends Room {
 
     if (allHumansReady && humanPlayers.length >= 1) {
       // Add bots to fill remaining spots
-      this.addBots();
+      this.botAIHandler.addBots();
 
       // Now start the game
       this.startGame();
-    }
-  }
-
-  addBots(): void {
-    const currentPlayerCount = this.state.players.size;
-    const botsNeeded = NUM_PLAYERS - currentPlayerCount;
-
-    for (let i = 0; i < botsNeeded; i++) {
-      const botId = `bot_${i}_${Date.now()}`;
-      const seatIndex = currentPlayerCount + i;
-
-      const bot = new Player();
-      bot.id = botId;
-      bot.name = BOT_NAMES[i] || `Bot ${i + 1}`;
-      bot.emoji = EMOJIS[seatIndex];
-      bot.seatIndex = seatIndex;
-      bot.isReady = true;
-      bot.isBot = true;
-
-      this.state.players.set(botId, bot);
-      this.state.playerOrder.push(botId);
-
-      console.log(`Added ${bot.name} at seat ${seatIndex}`);
     }
   }
 
@@ -181,7 +158,7 @@ export class CallBreakRoom extends Room {
         this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if first player is a bot
-      this.checkBotTurn();
+      this.botAIHandler.checkBotTurn();
     }, 1000);
   }
 
@@ -227,7 +204,7 @@ export class CallBreakRoom extends Room {
       this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
 
       // Check if first player in playing phase is a bot
-      this.checkBotTurn();
+      this.botAIHandler.checkBotTurn();
     } else {
       // Move to next bidder with wrap-around
       this.state.biddingPlayerIndex =
@@ -236,7 +213,7 @@ export class CallBreakRoom extends Room {
         this.state.playerOrder[this.state.biddingPlayerIndex] || '';
 
       // Check if next bidder is a bot
-      this.checkBotTurn();
+      this.botAIHandler.checkBotTurn();
     }
   }
 
@@ -303,7 +280,7 @@ export class CallBreakRoom extends Room {
       this.state.currentTurn = this.state.playerOrder[nextIndex] || '';
 
       // Check if next player is a bot
-      this.checkBotTurn();
+      this.botAIHandler.checkBotTurn();
     }
   }
 
@@ -357,7 +334,7 @@ export class CallBreakRoom extends Room {
         this.state.currentTurn = winnerId; // Winner leads next trick
 
         // Check if winner is a bot
-        this.checkBotTurn();
+        this.botAIHandler.checkBotTurn();
       }
     }, 1500);
   }
@@ -462,88 +439,5 @@ export class CallBreakRoom extends Room {
 
     this.state.phase = 'waiting';
     this.state.currentRound = 1;
-  }
-
-  // ============ Bot AI Methods ============
-
-  checkBotTurn(): void {
-    const currentPlayerId = this.state.currentTurn;
-    const currentPlayer = this.state.players.get(currentPlayerId);
-
-    if (!currentPlayer || !currentPlayer.isBot) return;
-
-    // Add delay before bot action to make it feel natural
-    this.clock.setTimeout(() => {
-      if (this.state.phase === 'bidding') {
-        this.botBid(currentPlayerId);
-      } else if (this.state.phase === 'playing') {
-        this.botPlayCard(currentPlayerId);
-      }
-    }, BOT_DELAY);
-  }
-
-  botBid(botId: string): void {
-    const bot = this.state.players.get(botId);
-    if (!bot) return;
-
-    const bid = calculateBid(
-      Array.from(bot.hand).map((c) => c.toCardData()),
-      this.state.trumpSuit,
-      this.state.maxBid
-    );
-
-    // Set bid
-    bot.bid = bid;
-    console.log(`${bot.name} (bot) bid ${bid}`);
-
-    // Count how many players have bid
-    const bidsPlaced = Array.from(this.state.players.values()).filter(
-      (p) => p.bid > 0
-    ).length;
-
-    if (bidsPlaced >= NUM_PLAYERS) {
-      // All bids placed, start playing - first bidder starts
-      const firstBidderIndex = (this.state.currentRound - 1) % NUM_PLAYERS;
-      this.state.phase = 'playing';
-      this.state.currentTurn = this.state.playerOrder[firstBidderIndex] || '';
-      this.checkBotTurn();
-    } else {
-      // Move to next bidder with wrap-around
-      this.state.biddingPlayerIndex =
-        (this.state.biddingPlayerIndex + 1) % NUM_PLAYERS;
-      this.state.currentTurn =
-        this.state.playerOrder[this.state.biddingPlayerIndex] || '';
-      this.checkBotTurn();
-    }
-  }
-
-  botPlayCard(botId: string): void {
-    const bot = this.state.players.get(botId);
-    if (!bot || bot.hand.length === 0) return;
-
-    const hand = bot.hand.map((c) => c.toCardData());
-    const currentTrick = Array.from(this.state.currentTrick).map(
-      (e, index) => ({
-        playerIndex: index,
-        card: e.card.toCardData(),
-      })
-    );
-
-    const cardToPlay = chooseBotCard(
-      hand,
-      this.state.leadSuit as Suit,
-      currentTrick,
-      {
-        trumpSuit: this.state.trumpSuit as Suit,
-        tricksWon: bot.tricksWon,
-        bid: bot.bid,
-        numPlayers: NUM_PLAYERS,
-      }
-    );
-
-    console.log(
-      `${bot.name} (bot) playing ${cardToPlay.rank} of ${cardToPlay.suit}`
-    );
-    this.playCard(botId, cardToPlay.id);
   }
 }

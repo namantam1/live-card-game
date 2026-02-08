@@ -33,6 +33,7 @@ export abstract class BaseHandler {
   /**
    * Helper to broadcast to all clients
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected broadcast(type: string, data?: any, options?: any): void {
     this.room.broadcast(type, data, options);
   }
@@ -40,6 +41,7 @@ export abstract class BaseHandler {
   /**
    * Helper to send to specific client
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected send(client: Client, type: string, data?: any): void {
     client.send(type, data);
   }
