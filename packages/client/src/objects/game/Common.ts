@@ -4,7 +4,6 @@ import {
   SETTINGS_ICON_CONFIG,
 } from '../../utils/uiConfig';
 import Button from '../../components/Button';
-import AudioManager from '../../managers/AudioManager';
 
 export default class Common {
   static createBackground(scene: Scene): void {
@@ -100,7 +99,7 @@ export default class Common {
 
   static createSettingIcon(
     scene: Scene,
-    config: { audioManager: AudioManager; onClick: () => void }
+    config: { onClick: () => void }
   ): void {
     const { width, height } = scene.cameras.main;
     const iconConfig = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
@@ -110,7 +109,6 @@ export default class Common {
       fontSize,
       icon: '\u2699',
       onClick: config.onClick,
-      audioManager: config.audioManager,
     });
   }
 

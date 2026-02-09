@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import Common from '../objects/game/Common';
 import PresenceManager from '../managers/PresenceManager';
 import type { InviteData } from '../type';
+import AudioManager from '../managers/AudioManager';
 
 export default class MenuScene extends Phaser.Scene {
   private presenceManager!: PresenceManager;
@@ -17,6 +18,8 @@ export default class MenuScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
+
+    AudioManager.getInstance().setScene(this);
 
     // Background gradient effect
     Common.createBackground(this);

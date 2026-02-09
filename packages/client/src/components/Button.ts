@@ -12,7 +12,6 @@ interface ButtonConfig {
   hoverScale?: number;
   pressScale?: number;
   playSound?: boolean;
-  audioManager?: AudioManager | null;
 }
 
 interface IconButtonConfig {
@@ -27,7 +26,7 @@ interface IconButtonConfig {
   iconColor?: string;
   iconHoverColor?: string;
   hoverScale?: number;
-  audioManager?: AudioManager | null;
+  playSound?: boolean;
 }
 
 export default class Button {
@@ -48,8 +47,7 @@ export default class Button {
       fontFamily = 'Arial, sans-serif',
       hoverScale = 1.05,
       pressScale = 0.95,
-      playSound = false,
-      audioManager = null,
+      playSound = true,
     } = config;
 
     // Create container
@@ -104,8 +102,8 @@ export default class Button {
     container.on('pointerdown', () => {
       isPressed = true;
       container.setScale(pressScale);
-      if (playSound && audioManager) {
-        audioManager.playButtonSound();
+      if (playSound) {
+        AudioManager.getInstance().playButtonSound();
       }
     });
 
@@ -138,7 +136,7 @@ export default class Button {
       iconColor = '#94a3b8',
       iconHoverColor = '#ffffff',
       hoverScale = 1.1,
-      audioManager,
+      playSound = true,
     } = config;
 
     const fontSize = `${iconSize * 2}px`;
@@ -250,7 +248,7 @@ export default class Button {
 
         if (distance <= hitAreaRadius) {
           // Only trigger onClick if release happened within the button area
-          if (audioManager) audioManager.playButtonSound();
+          if (playSound) AudioManager.getInstance().playButtonSound();
           onClick();
         }
 

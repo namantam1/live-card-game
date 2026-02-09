@@ -1,7 +1,6 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
 import { getFontSize } from '../../utils/uiConfig';
-import AudioManager from '../../managers/AudioManager';
 
 interface RoundModalData {
   players: Array<{
@@ -15,17 +14,12 @@ interface RoundModalData {
 export default class RoundModal extends BaseModal {
   private onContinue: () => void;
 
-  constructor(
-    scene: Scene,
-    onContinue: () => void,
-    audioManager: AudioManager
-  ) {
-    super(scene, 'Round Complete', audioManager);
+  constructor(scene: Scene, onContinue: () => void) {
+    super(scene, { title: 'Round Complete' });
     this.onContinue = onContinue;
   }
 
   showRoundResults(data: RoundModalData) {
-    this.clearContent();
     const { width, height } = this.scene.cameras.main;
 
     // Player results with responsive font sizes

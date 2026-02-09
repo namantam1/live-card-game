@@ -1,48 +1,66 @@
 import { Scene } from 'phaser';
 
 export default class AudioManager {
-  scene: any;
-  enabled: boolean;
-  musicEnabled: boolean;
-  soundEnabled: boolean;
-  bgMusic: Phaser.Sound.BaseSound | null;
-  audioContext: AudioContext | null;
-  initialized: boolean;
-  constructor(scene: Scene) {
-    this.scene = scene;
+  private static instance: AudioManager | null = null;
+  private scene: Scene | null = null;
+  private musicEnabled: boolean;
+  private soundEnabled: boolean;
+  private bgMusic: Phaser.Sound.BaseSound | null;
+
+  private constructor() {
     // Load preferences from localStorage
     const savedMusicEnabled = localStorage.getItem('audioMusicEnabled');
     const savedSoundEnabled = localStorage.getItem('audioSoundEnabled');
 
-    this.enabled = true;
     this.musicEnabled =
       savedMusicEnabled !== null ? savedMusicEnabled === 'true' : true;
     this.soundEnabled =
       savedSoundEnabled !== null ? savedSoundEnabled === 'true' : true;
     this.bgMusic = null;
-    this.audioContext = null;
-    this.initialized = false;
   }
 
-  init() {
-    // Don't auto-create AudioContext - wait for user gesture
-    // This will be created on first sound play
-    this.initialized = true;
-  }
-
-  ensureAudioContext() {
-    if (!this.audioContext) {
-      try {
-        this.audioContext = new (
-          window.AudioContext || (window as any).webkitAudioContext
-        )();
-      } catch (e) {
-        console.log('Could not create AudioContext');
-      }
+  static getInstance(): AudioManager {
+    if (!AudioManager.instance) {
+      AudioManager.instance = new AudioManager();
     }
-    // Resume if suspended
-    if (this.audioContext?.state === 'suspended') {
-      this.audioContext.resume();
+    return AudioManager.instance;
+  }
+
+  /**
+   * Set the current scene context for audio operations
+   * Should be called when a scene is created or becomes active
+   */
+  setScene(scene: Scene): this {
+    this.scene = scene;
+    return this;
+  }
+
+  /**
+   * Get the current scene, returns null with warning if not set
+   */
+  private getScene(): Scene | null {
+    if (!this.scene) {
+      console.warn('AudioManager: Scene not set. Call setScene(scene) first.');
+      return null;
+    }
+    return this.scene;
+  }
+
+  /**
+   * Helper to play sound effects with consistent error handling
+   */
+  private playSound(audioKey: string, volume: number): void {
+    if (!this.soundEnabled) return;
+
+    const scene = this.getScene();
+    if (!scene) return;
+
+    try {
+      if (scene.cache.audio.exists(audioKey)) {
+        scene.sound.play(audioKey, { volume });
+      }
+    } catch (e) {
+      console.log(`Could not play sound '${audioKey}'`, e);
     }
   }
 
@@ -50,18 +68,21 @@ export default class AudioManager {
     if (!this.musicEnabled) return;
     if (this.bgMusic && this.bgMusic.isPlaying) return;
 
+    const scene = this.getScene();
+    if (!scene) return;
+
     try {
-      if (this.scene.cache.audio.exists('bgm')) {
+      if (scene.cache.audio.exists('bgm')) {
         if (!this.bgMusic) {
-          this.bgMusic = this.scene.sound.add('bgm', {
+          this.bgMusic = scene.sound.add('bgm', {
             volume: 0.3,
             loop: true,
           });
         }
-        this.bgMusic!.play();
+        this.bgMusic.play();
       }
     } catch (e) {
-      console.log('Could not start background music');
+      console.log('Could not start background music', e);
     }
   }
 
@@ -69,21 +90,6 @@ export default class AudioManager {
     if (this.bgMusic && this.bgMusic.isPlaying) {
       this.bgMusic.stop();
     }
-  }
-
-  toggleSound() {
-    this.enabled = !this.enabled;
-    this.musicEnabled = this.enabled;
-    this.soundEnabled = this.enabled;
-
-    if (this.enabled) {
-      this.ensureAudioContext();
-      this.startBackgroundMusic();
-    } else {
-      this.stopBackgroundMusic();
-    }
-
-    return this.enabled;
   }
 
   toggleMusic() {
@@ -114,113 +120,14 @@ export default class AudioManager {
   }
 
   playCardSound() {
-    if (!this.soundEnabled) return;
-    this.ensureAudioContext();
-    if (!this.audioContext) return;
-
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
-
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-
-    gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      this.audioContext.currentTime + 0.1
-    );
-
-    oscillator.start(this.audioContext.currentTime);
-    oscillator.stop(this.audioContext.currentTime + 0.1);
-  }
-
-  playTrumpSound() {
-    if (!this.soundEnabled) return;
-    this.ensureAudioContext();
-    if (!this.audioContext) return;
-
-    [400, 500, 600].forEach((freq, i) => {
-      const oscillator = this.audioContext!.createOscillator();
-      const gainNode = this.audioContext!.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext!.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = 'triangle';
-
-      gainNode.gain.setValueAtTime(0.15, this.audioContext!.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        this.audioContext!.currentTime + 0.3
-      );
-
-      oscillator.start(this.audioContext!.currentTime + i * 0.05);
-      oscillator.stop(this.audioContext!.currentTime + 0.3);
-    });
+    this.playSound('card-play', 0.3);
   }
 
   playButtonSound() {
-    if (!this.soundEnabled) return;
-    this.ensureAudioContext();
-    if (!this.audioContext) return;
-
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
-
-    oscillator.frequency.value = 600;
-    oscillator.type = 'sine';
-
-    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      this.audioContext.currentTime + 0.05
-    );
-
-    oscillator.start(this.audioContext.currentTime);
-    oscillator.stop(this.audioContext.currentTime + 0.05);
+    this.playSound('button-click', 0.4);
   }
 
   playWinSound() {
-    if (!this.soundEnabled) return;
-    this.ensureAudioContext();
-    if (!this.audioContext) return;
-
-    [523, 659, 784, 1047].forEach((freq, i) => {
-      const oscillator = this.audioContext!.createOscillator();
-      const gainNode = this.audioContext!.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext!.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(0.2, this.audioContext!.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        this.audioContext!.currentTime + 0.4
-      );
-
-      oscillator.start(this.audioContext!.currentTime + i * 0.1);
-      oscillator.stop(this.audioContext!.currentTime + 0.4);
-    });
-  }
-
-  isEnabled() {
-    return this.enabled;
-  }
-
-  destroy() {
-    this.stopBackgroundMusic();
-    if (this.audioContext) {
-      this.audioContext.close();
-    }
+    this.playSound('game-end', 0.5);
   }
 }

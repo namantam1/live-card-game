@@ -13,12 +13,11 @@ import ReactionPanel from '../components/ReactionPanel';
 import Button from '../components/Button';
 import { OnlineUsersPanel } from '../components/lobby/OnlineUsersPanel';
 import { InviteModal } from '../components/InviteModal';
+import QuickChatPanel from '../components/QuickChatPanel';
 
 const CARD: CardData = createDeck()[0];
 
 export default class DebugScene extends Phaser.Scene {
-  audioManager: AudioManager = new AudioManager(this);
-
   constructor() {
     super({ key: 'DebugScene' });
   }
@@ -28,9 +27,12 @@ export default class DebugScene extends Phaser.Scene {
   }
 
   create() {
+    // Initialize AudioManager singleton
+    AudioManager.getInstance().setScene(this);
+
     // set bg color to dark gray
     this.cameras.main.setBackgroundColor('#2d2d2d');
-    const { width, height } = this.cameras.main;
+    // const { width, height } = this.cameras.main;
 
     // set bg image if available
     // const tableBg = this.add.image(width / 2, height / 2, "table-bg");
@@ -57,14 +59,14 @@ export default class DebugScene extends Phaser.Scene {
     //   console.log(data),
     // );
 
-    const players = [
-      { id: 'player1', name: 'Alice', emoji: '😀', score: 10 },
-      { id: 'player2', name: 'Bob', emoji: '😎', score: 20 },
-      { id: 'player3', name: 'Charlie', emoji: '🤠', score: 15 },
-      { id: 'player4', name: 'Diana', emoji: '🧐', score: 25 },
-    ];
-    const scoreboard = new ScoreBoard(this, false, players, 0);
-    scoreboard.updateScoreboard(players, 2);
+    // const players = [
+    //   { id: 'player1', name: 'Alice', emoji: '😀', score: 10 },
+    //   { id: 'player2', name: 'Bob', emoji: '😎', score: 20 },
+    //   { id: 'player3', name: 'Charlie', emoji: '🤠', score: 15 },
+    //   { id: 'player4', name: 'Diana', emoji: '🧐', score: 25 },
+    // ];
+    // const scoreboard = new ScoreBoard(this, false, players, 0);
+    // scoreboard.updateScoreboard(players, 2);
 
     // const roundModal = new RoundModal(
     //   this,
@@ -106,26 +108,26 @@ export default class DebugScene extends Phaser.Scene {
     //   });
     // });
 
-    new NetworkIndicator(this, width - 150, 50);
+    // new NetworkIndicator(this, width - 150, 50);
 
-    const setting = new SettingsModal(this, {
-      audioManager: this.audioManager,
-      onNewGame: () => {
-        console.log('New Game clicked');
-      },
-      onQuit: () => {
-        console.log('Quit clicked');
-      },
-    });
-    // setting.showSettings();
-    Common.createSettingIcon(this, {
-      audioManager: this.audioManager,
-      onClick: () => {
-        // setting.showSettings();
-        this.scene.start('GameScene');
-        return console.log('Settings clicked');
-      },
-    });
+    // const setting = new SettingsModal(this, {
+    //   audioManager: this.audioManager,
+    //   onNewGame: () => {
+    //     console.log('New Game clicked');
+    //   },
+    //   onQuit: () => {
+    //     console.log('Quit clicked');
+    //   },
+    // });
+    // // setting.showSettings();
+    // Common.createSettingIcon(this, {
+    //   audioManager: this.audioManager,
+    //   onClick: () => {
+    //     // setting.showSettings();
+    //     this.scene.start('GameScene');
+    //     return console.log('Settings clicked');
+    //   },
+    // });
 
     // card
     // new Card(this, {
@@ -187,15 +189,16 @@ export default class DebugScene extends Phaser.Scene {
     //   },
     // });
 
-    // new InviteModal(this).show({
-    //   inviterName: 'Alice',
-    //   roomCode: 'AAAA',
-    //   timeoutSeconds: 60,
-    //   callbacks: {
-    //     onAccept: () => console.log('Invite accepted'),
-    //     onDecline: () => console.log('Invite declined'),
-    //     onTimeout: () => console.log('Invite timed out'),
+    // new QuickChatPanel(this, {
+    //   position: { x: 300, y: 300 },
+    //   onSendMessage: (message: string) => {
+    //     console.log('Send chat message:', message);
     //   },
-    // });
+    // }).show();
+
+    // play sound after delay
+    setTimeout(() => {
+      AudioManager.getInstance().playCardSound();
+    }, 5000);
   }
 }

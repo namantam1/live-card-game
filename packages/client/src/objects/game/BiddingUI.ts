@@ -2,7 +2,6 @@ import { Scene } from 'phaser';
 import { COLORS, MAX_BID } from '../../utils/constants';
 import { BIDDING_CONFIG, getResponsiveConfig } from '../../utils/uiConfig';
 import Button from '../../components/Button';
-import AudioManager from '../../managers/AudioManager';
 
 export default class BiddingUI {
   private scene: Scene;
@@ -11,11 +10,7 @@ export default class BiddingUI {
   private highlightBorders: Phaser.GameObjects.Graphics[] = [];
   private buttonPositions: number[] = [];
 
-  constructor(
-    scene: Scene,
-    onBidSelected: (bid: number) => void,
-    audioManager: AudioManager
-  ) {
+  constructor(scene: Scene, onBidSelected: (bid: number) => void) {
     this.scene = scene;
     const { width, height } = scene.cameras.main;
 
@@ -74,7 +69,6 @@ export default class BiddingUI {
         bgColor: COLORS.PRIMARY,
         borderRadius: config.borderRadius,
         fontSize: config.fontSize,
-        audioManager: audioManager,
       });
 
       this.container.add(button);

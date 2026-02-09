@@ -15,20 +15,18 @@ export default class SettingsModal extends BaseModal {
   constructor(
     scene: Scene,
     config: {
-      audioManager: AudioManager;
       onQuit: () => void;
       onNewGame: null | (() => void);
     }
   ) {
-    const { onNewGame, onQuit, audioManager } = config;
-    super(
-      scene,
-      'Settings',
-      audioManager,
-      true,
-      WIDTH,
-      onNewGame ? HEIGHT : HEIGHT - ITEM_SPACING
-    );
+    const { onNewGame, onQuit } = config;
+    super(scene, {
+      title: 'Settings',
+      closeOnOverlayClick: true,
+      clearContentOnHide: false,
+      width: WIDTH,
+      height: onNewGame ? HEIGHT : HEIGHT - ITEM_SPACING,
+    });
     this.onNewGame = onNewGame;
     this.onQuit = onQuit;
 
@@ -43,9 +41,9 @@ export default class SettingsModal extends BaseModal {
       0,
       startY,
       'Music',
-      this.audioManager.isMusicEnabled(),
+      AudioManager.getInstance().isMusicEnabled(),
       () => {
-        this.audioManager.toggleMusic();
+        AudioManager.getInstance().toggleMusic();
       }
     );
     startY += ITEM_SPACING;
@@ -55,9 +53,9 @@ export default class SettingsModal extends BaseModal {
       0,
       startY,
       'Sound',
-      this.audioManager.isSoundEnabled(),
+      AudioManager.getInstance().isSoundEnabled(),
       () => {
-        this.audioManager.toggleButtonSound();
+        AudioManager.getInstance().toggleButtonSound();
       }
     );
     startY += ITEM_SPACING;
@@ -100,7 +98,7 @@ export default class SettingsModal extends BaseModal {
     x: number,
     y: number,
     label: string,
-    initialState: boolean,
+    initialState: boolean = false,
     callback: () => void
   ) {
     const container = this.scene.add.container(x, y);
@@ -151,7 +149,7 @@ export default class SettingsModal extends BaseModal {
     hitArea.on('pointerdown', () => {
       isEnabled = !isEnabled;
       drawToggle();
-      this.audioManager.playButtonSound();
+      AudioManager.getInstance().playButtonSound();
       callback();
     });
 

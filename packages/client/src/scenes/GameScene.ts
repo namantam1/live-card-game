@@ -12,7 +12,6 @@ import PresenceManager from '../managers/PresenceManager';
 
 export default class GameScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
-  audioManager!: AudioManager;
   trickArea!: TrickArea;
   players!: Player[];
   networkIndicator?: NetworkIndicator;
@@ -40,11 +39,8 @@ export default class GameScene extends Phaser.Scene {
       .setInviteHandlingEnabled(false)
       .updateStatus(true);
 
-    // Initialize managers FIRST (before UI that depends on them)
-    this.audioManager = new AudioManager(this);
-    this.audioManager.init();
-    // Start background music (user already clicked "Start Game" so gesture is satisfied)
-    this.audioManager.startBackgroundMusic();
+    // Initialize AudioManager singleton
+    AudioManager.getInstance().setScene(this).startBackgroundMusic();
 
     // Create background
     Common.createGameBackground(this);
@@ -63,7 +59,6 @@ export default class GameScene extends Phaser.Scene {
     // Initialize the game mode with all dependencies
     await this.gameMode.initialize(this, {
       trickArea: this.trickArea,
-      audioManager: this.audioManager,
       networkManager: this.initData?.networkManager,
     });
 
@@ -79,7 +74,6 @@ export default class GameScene extends Phaser.Scene {
     // Launch UI scene
     this.scene.launch('UIScene', {
       gameMode: this.gameMode,
-      audioManager: this.audioManager,
     });
 
     // Start the game
@@ -91,7 +85,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Create network indicator in top-right corner, to the left of settings icon
     // Hidden by default, will be shown when connection events are received
-    this.networkIndicator = new NetworkIndicator(this, width - 120, 30);
+    this.networkIndicator = new NetworkIndicator(this, width - 140, 50);
     this.networkIndicator.container.setVisible(false);
 
     // Create reconnection overlay (hidden by default)
@@ -203,7 +197,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Card played
     this.gameMode.on(EVENTS.CARD_PLAYED, () => {
-      this.audioManager.playCardSound();
+      AudioManager.getInstance().playCardSound();
     });
 
     // Trick complete
@@ -222,7 +216,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Game complete - play win sound
     this.gameMode.on(EVENTS.GAME_COMPLETE, () => {
-      this.audioManager.playWinSound();
+      AudioManager.getInstance().playWinSound();
     });
 
     // Setup connection listeners (only fired by multiplayer mode)
@@ -242,7 +236,7 @@ export default class GameScene extends Phaser.Scene {
 
   // Called from UIScene to return to menu
   async returnToMenu() {
-    this.audioManager.destroy();
+    AudioManager.getInstance().stopBackgroundMusic();
 
     // Clean up network indicator
     if (this.networkIndicator) {

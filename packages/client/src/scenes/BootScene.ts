@@ -75,10 +75,11 @@ export default class BootScene extends Phaser.Scene {
     scene.load.image('table', 'assets/table-bg.webp');
     scene.load.image('bg', 'assets/background.jpg');
 
-    // Audio (optional - check if exists)
-    scene.load.audio('bgm', 'audio/bgm.mp3').on('loaderror', () => {
-      console.log('BGM not found, continuing without music');
-    });
+    // audio
+    scene.load.audio('bgm', 'audio/bgm.mp3');
+    scene.load.audio('button-click', 'audio/button-click-1.mp3');
+    scene.load.audio('game-end', 'audio/game-end.mp3');
+    scene.load.audio('card-play', 'audio/card-play.mp3');
   }
 
   create() {

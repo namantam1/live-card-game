@@ -1,11 +1,20 @@
 import { Scene } from 'phaser';
 import { COLORS } from '../../utils/constants';
-import { getFontSize } from '../../utils/uiConfig';
 import Button from '../../components/Button';
-import AudioManager from '../../managers/AudioManager';
 
-const HEIGHT = 300;
-const WIDTH = 300;
+const defaultConfig = {
+  width: 400,
+  height: 300,
+  titleFontSize: '28px',
+  closeOnOverlayClick: false,
+  clearContentOnHide: true,
+};
+
+type ModalConfig = Partial<typeof defaultConfig> & {
+  title: string;
+  positionX?: number;
+  positionY?: number;
+};
 
 type ModalButtonParams = {
   x: number;
@@ -24,40 +33,41 @@ export default abstract class BaseModal {
   protected bg: Phaser.GameObjects.Graphics;
   protected titleText: Phaser.GameObjects.Text;
   protected content: Phaser.GameObjects.Container;
-  protected audioManager: AudioManager;
-  protected closeOnOverlayClick: boolean;
+  protected config: Pick<ModalConfig, 'clearContentOnHide'>;
 
-  constructor(
-    scene: Scene,
-    title: string,
-    audioManager: AudioManager,
-    closeOnOverlayClick: boolean = false,
-    modalWidth: number = WIDTH,
-    modalHeight: number = HEIGHT
-  ) {
-    this.audioManager = audioManager;
+  constructor(scene: Scene, modalConfig: ModalConfig) {
+    const { centerX, centerY, width, height } = scene.cameras.main;
+    const {
+      title,
+      positionX = centerX,
+      positionY = centerY,
+      closeOnOverlayClick,
+      ...config
+    } = {
+      ...defaultConfig,
+      ...modalConfig,
+    };
     this.scene = scene;
-    this.closeOnOverlayClick = closeOnOverlayClick;
-    const { width, height } = scene.cameras.main;
+    this.config = config;
 
-    const halfWidth = modalWidth / 2;
-    const halfHeight = modalHeight / 2;
+    const halfWidth = config.width / 2;
+    const halfHeight = config.height / 2;
 
-    this.modal = scene.add.container(width / 2, height / 2);
+    this.modal = scene.add.container(positionX, positionY);
     this.modal.setVisible(false);
     this.modal.setDepth(100);
 
     // Overlay - make it interactive to block clicks
     this.overlay = scene.add.graphics();
     this.overlay.fillStyle(0x000000, 0.7);
-    this.overlay.fillRect(-width / 2, -height / 2, width, height);
+    this.overlay.fillRect(-centerX, -centerY, width, height);
     this.overlay.setInteractive(
-      new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      new Phaser.Geom.Rectangle(-centerX, -centerY, width, height),
       Phaser.Geom.Rectangle.Contains
     );
 
     // Add overlay click handler if closeOnOverlayClick is enabled
-    if (this.closeOnOverlayClick) {
+    if (closeOnOverlayClick) {
       this.overlay.on('pointerdown', () => {
         this.hide();
       });
@@ -69,30 +79,30 @@ export default abstract class BaseModal {
     this.bg.fillRoundedRect(
       -halfWidth,
       -halfHeight,
-      modalWidth,
-      modalHeight,
+      config.width,
+      config.height,
       20
     );
     this.bg.lineStyle(2, COLORS.PRIMARY, 0.5);
     this.bg.strokeRoundedRect(
       -halfWidth,
       -halfHeight,
-      modalWidth,
-      modalHeight,
+      config.width,
+      config.height,
       20
     );
     this.bg.setInteractive(
       new Phaser.Geom.Rectangle(
         -halfWidth,
         -halfHeight,
-        modalWidth,
-        modalHeight
+        config.width,
+        config.height
       ),
       Phaser.Geom.Rectangle.Contains
     );
     this.bg.on(
       'pointerdown',
-      (pointer: any, localX: number, localY: number, event: any) => {
+      (_pointer: unknown, _localX: number, _localY: number, event: Event) => {
         // Stop event propagation to prevent clicks from going through
         event.stopPropagation();
       }
@@ -102,9 +112,10 @@ export default abstract class BaseModal {
     this.titleText = scene.add
       .text(0, -halfHeight + 30, title, {
         fontFamily: 'Arial, sans-serif',
-        fontSize: getFontSize('modalTitle', width, height),
+        fontSize: config.titleFontSize,
         fontStyle: 'bold',
         color: '#ffffff',
+        padding: { bottom: 5 },
       })
       .setOrigin(0.5);
 
@@ -132,6 +143,8 @@ export default abstract class BaseModal {
       duration: 200,
       onComplete: () => {
         this.modal.setVisible(false);
+
+        if (this.config.clearContentOnHide) this.clearContent();
       },
     });
   }
@@ -159,12 +172,11 @@ export default abstract class BaseModal {
       fontSize: '20px',
       hoverScale: 1.05,
       pressScale: 0.95,
-      playSound: true,
-      audioManager: this.audioManager,
     });
   }
 
   destroy() {
+    this.clearContent();
     this.modal.destroy();
   }
 }

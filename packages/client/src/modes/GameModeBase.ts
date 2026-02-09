@@ -4,7 +4,6 @@ import type Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
 import type { CardData } from '../type';
 import { type GameEvent } from '../utils/constants';
-import type AudioManager from '../managers/AudioManager';
 import type NetworkManager from '../managers/NetworkManager';
 
 export interface PlayerData {
@@ -22,7 +21,6 @@ export interface PlayerData {
 export interface GameModeConfig {
   scene: Scene;
   trickArea: TrickArea;
-  audioManager?: AudioManager;
   networkManager?: NetworkManager;
 }
 

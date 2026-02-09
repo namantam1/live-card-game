@@ -4,7 +4,6 @@ import BiddingUI from '../objects/game/BiddingUI';
 import RoundModal from '../objects/game/RoundModal';
 import GameOverModal from '../objects/game/GameOverModal';
 import SettingsModal from '../objects/game/SettingsModal';
-import AudioManager from '../managers/AudioManager';
 import GameScene from './GameScene';
 import Common from '../objects/game/Common';
 import type { GameModeBase } from '../modes/GameModeBase';
@@ -18,7 +17,6 @@ import type { ReactionData } from '../type';
 
 export default class UIScene extends Phaser.Scene {
   private gameMode!: GameModeBase;
-  private audioManager!: AudioManager;
   private gameScene!: GameScene;
   scoreBoard!: ScoreBoard;
   roundModal!: RoundModal;
@@ -32,7 +30,6 @@ export default class UIScene extends Phaser.Scene {
 
   init(data: any) {
     this.gameMode = data.gameMode;
-    this.audioManager = data.audioManager;
   }
 
   create() {
@@ -48,27 +45,22 @@ export default class UIScene extends Phaser.Scene {
     );
 
     // Create modals
-    this.roundModal = new RoundModal(
-      this,
-      () => this.gameScene.continueToNextRound(),
-      this.audioManager
+    this.roundModal = new RoundModal(this, () =>
+      this.gameScene.continueToNextRound()
     );
 
     this.gameOverModal = new GameOverModal(
       this,
       () => this.gameScene.restartGame(),
-      () => this.gameScene.returnToMenu(),
-      this.audioManager
+      () => this.gameScene.returnToMenu()
     );
 
     // Get responsive sizing from centralized config
     Common.createSettingIcon(this, {
-      audioManager: this.audioManager,
       onClick: () => this.settingsModal.showSettings(),
     });
 
     this.settingsModal = new SettingsModal(this, {
-      audioManager: this.audioManager,
       onQuit: () => this.gameScene.returnToMenu(),
       onNewGame: this.isMultiplayer()
         ? null
@@ -76,10 +68,8 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Create bidding UI
-    this.biddingUI = new BiddingUI(
-      this,
-      (bid) => this.gameMode.onBidSelected(bid),
-      this.audioManager
+    this.biddingUI = new BiddingUI(this, (bid) =>
+      this.gameMode.onBidSelected(bid)
     );
 
     // Setup reaction UI for multiplayer mode

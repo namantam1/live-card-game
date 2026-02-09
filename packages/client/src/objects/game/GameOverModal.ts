@@ -1,6 +1,5 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
-import AudioManager from '../../managers/AudioManager';
 
 interface GameOverModalData {
   winner: {
@@ -18,20 +17,13 @@ export default class GameOverModal extends BaseModal {
   private onPlayAgain: () => void;
   private onMenu: () => void;
 
-  constructor(
-    scene: Scene,
-    onPlayAgain: () => void,
-    onMenu: () => void,
-    audioManager: AudioManager
-  ) {
-    super(scene, 'Game Over', audioManager);
+  constructor(scene: Scene, onPlayAgain: () => void, onMenu: () => void) {
+    super(scene, { title: 'Game Over' });
     this.onPlayAgain = onPlayAgain;
     this.onMenu = onMenu;
   }
 
   showGameResults(data: GameOverModalData) {
-    this.clearContent();
-
     // Winner announcement
     const winner = data.winner;
     const winnerText = this.scene.add
@@ -95,6 +87,6 @@ export default class GameOverModal extends BaseModal {
 
     this.content.add([playAgainBtn, menuBtn]);
 
-    this.show();
+    super.show();
   }
 }

@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import Button from './Button';
+import { ChatMessageModalData } from '../objects/game/ChatMessageModal';
 
 interface QuickChatConfig {
   position: { x: number; y: number };
@@ -33,6 +34,7 @@ export default class QuickChatPanel {
   private readonly PANEL_WIDTH = 300;
   private readonly BUTTON_HEIGHT = 50;
   private readonly BUTTON_SPACING = 10;
+  customChatModal: ChatMessageModalData;
 
   constructor(scene: Scene, config: QuickChatConfig) {
     const {
@@ -48,6 +50,9 @@ export default class QuickChatPanel {
     this.container.setDepth(1500);
 
     this.createPanel();
+
+    // custom chat modal
+    this.customChatModal = new ChatMessageModalData(scene, { onSendMessage });
 
     // Initially hidden
     this.container.setVisible(false);
@@ -119,128 +124,13 @@ export default class QuickChatPanel {
       text: 'Custom Message... ✏️',
       onClick: () => {
         this.hide();
-        this.showCustomInput();
+        this.customChatModal.show();
       },
       fontSize: CONFIG.FONT_SIZE,
       bgColor: 0x6366f1,
     });
 
     return button;
-  }
-
-  private showCustomInput(): void {
-    const { width, height } = this.scene.cameras.main;
-
-    // Create overlay
-    const overlay = this.scene.add.graphics();
-    overlay.fillStyle(0x000000, 0.7);
-    overlay.fillRect(0, 0, width, height);
-    overlay.setDepth(1800);
-    overlay.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, width, height),
-      Phaser.Geom.Rectangle.Contains
-    );
-
-    // Create input panel
-    const panelWidth = 400;
-    const panelHeight = 180;
-    const panelX = width / 2 - panelWidth / 2;
-    const panelY = height / 2 - panelHeight / 2;
-
-    const inputPanel = this.scene.add.graphics();
-    inputPanel.fillStyle(0x1e293b, 1);
-    inputPanel.fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 12);
-    inputPanel.lineStyle(2, 0x6366f1, 1);
-    inputPanel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 12);
-    inputPanel.setDepth(1801);
-
-    // Title
-    const title = this.scene.add
-      .text(width / 2, panelY + 20, 'Send Custom Message', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '16px',
-        fontStyle: 'bold',
-        color: '#f1f5f9',
-      })
-      .setOrigin(0.5, 0)
-      .setDepth(1801);
-
-    // Input field
-    const inputField = this.scene.add
-      .rexCanvasInput({
-        x: width / 2,
-        y: panelY + 70,
-        width: panelWidth - 40,
-        height: 40,
-        background: {
-          color: 0x334155,
-          stroke: 0x475569,
-          strokeThickness: 2,
-          cornerRadius: 6,
-          'focus.stroke': 0x6366f1,
-        },
-        style: {
-          fontSize: CONFIG.FONT_SIZE,
-          fontFamily: 'Arial, sans-serif',
-          color: '#f1f5f9',
-        },
-        text: '',
-        maxLength: 100,
-      })
-      .setOrigin(0.5)
-      .setDepth(1801);
-
-    // Buttons
-    const sendBtn = Button.create(this.scene, width / 2 - 60, panelY + 130, {
-      width: 100,
-      height: 36,
-      text: 'Send',
-      onClick: () => {
-        const message = (inputField.text || '').trim();
-        if (message.length > 0) {
-          this.onSendMessage(message);
-          cleanup();
-        }
-      },
-      fontSize: CONFIG.FONT_SIZE,
-      bgColor: 0x22c55e,
-    });
-    sendBtn.setDepth(1801);
-
-    const cancelBtn = Button.create(this.scene, width / 2 + 60, panelY + 130, {
-      width: 100,
-      height: 36,
-      text: 'Cancel',
-      onClick: () => cleanup(),
-      fontSize: CONFIG.FONT_SIZE,
-      bgColor: 0x475569,
-    });
-    cancelBtn.setDepth(1801);
-
-    // Cleanup function
-    const cleanup = () => {
-      overlay.destroy();
-      inputPanel.destroy();
-      title.destroy();
-      inputField.destroy();
-      sendBtn.destroy();
-      cancelBtn.destroy();
-    };
-
-    // Click overlay to close
-    overlay.on('pointerdown', cleanup);
-
-    // Focus input
-    this.scene.time.delayedCall(100, () => inputField.open());
-
-    // Enter key to send
-    inputField.on('keydown-ENTER', () => {
-      const message = (inputField.text || '').trim();
-      if (message.length > 0) {
-        this.onSendMessage(message);
-        cleanup();
-      }
-    });
   }
 
   show(): void {
