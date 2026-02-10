@@ -202,20 +202,92 @@ export default class DebugScene extends Phaser.Scene {
     //   AudioManager.getInstance().playCardSound();
     // }, 5000);
 
-    new ChatToast(this, [
-      new Player(this, 0, 'Alice', '😀', true, (data: CardData) =>
-        console.log('Alice played:', data)
+    const toast = new ChatToast(this, [
+      new Player(
+        this,
+        {
+          id: 'player-0',
+          name: 'Alice',
+          emoji: '😀',
+          seatIndex: 0,
+          isLocal: true,
+          bid: 0,
+          tricksWon: 0,
+          score: 0,
+          roundScore: 0,
+          isBot: false,
+          isReady: true,
+          isConnected: true,
+        },
+        0,
+        (data: CardData) => console.log('Alice played:', data)
       ),
-      new Player(this, 1, 'Bob', '😎', false),
-      new Player(this, 2, 'Charlie', '🤠', false),
-      new Player(this, 3, 'Diana', '🧐', false),
-    ]).showMessage({
-      id: 'msg1',
-      playerId: 'player1',
-      playerName: 'Alice',
-      seatIndex: 0,
-      message: 'Hello everyone!',
-      timestamp: Date.now(),
-    });
+      new Player(
+        this,
+        {
+          id: 'player-1',
+          name: 'Bob',
+          emoji: '😎',
+          seatIndex: 1,
+          isLocal: false,
+          bid: 0,
+          tricksWon: 0,
+          score: 0,
+          roundScore: 0,
+          isBot: true,
+          isReady: true,
+          isConnected: true,
+        },
+        1
+      ),
+      new Player(
+        this,
+        {
+          id: 'player-2',
+          name: 'Charlie',
+          emoji: '🤠',
+          seatIndex: 2,
+          isLocal: false,
+          bid: 0,
+          tricksWon: 0,
+          score: 0,
+          roundScore: 0,
+          isBot: true,
+          isReady: true,
+          isConnected: true,
+        },
+        2
+      ),
+      new Player(
+        this,
+        {
+          id: 'player-3',
+          name: 'Diana',
+          emoji: '🧐',
+          seatIndex: 3,
+          isLocal: false,
+          bid: 0,
+          tricksWon: 0,
+          score: 0,
+          roundScore: 0,
+          isBot: true,
+          isReady: true,
+          isConnected: true,
+        },
+        3
+      ),
+    ]);
+
+    let count = 1;
+    setInterval(() => {
+      toast.showMessage({
+        id: 'msg1',
+        playerId: `player-${count % 4}`,
+        playerName: 'Alice',
+        seatIndex: 0,
+        message: 'Hello ' + count++,
+        timestamp: Date.now(),
+      });
+    }, 100);
   }
 }

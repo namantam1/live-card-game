@@ -80,6 +80,7 @@ export default class BootScene extends Phaser.Scene {
     scene.load.audio('button-click', 'audio/button-click-1.mp3');
     scene.load.audio('game-end', 'audio/game-end.mp3');
     scene.load.audio('card-play', 'audio/card-play.mp3');
+    scene.load.audio('alert', 'audio/alert-1.mp3');
   }
 
   create() {

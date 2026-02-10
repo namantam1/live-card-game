@@ -130,4 +130,8 @@ export default class AudioManager {
   playWinSound() {
     this.playSound('game-end', 0.5);
   }
+
+  playAlertSound() {
+    this.playSound('alert', 0.4);
+  }
 }

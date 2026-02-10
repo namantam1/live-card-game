@@ -11,47 +11,29 @@ import {
   getResponsiveConfig,
 } from '../utils/uiConfig';
 import { Scene } from 'phaser';
-import type { CardData, TrickEntry } from '../type';
+import type { CardData, TrickEntry, PlayerData } from '../type';
 import ReactionAnimation from '../components/shared/ReactionAnimation';
 
 export default class Player {
-  scene: Scene;
-  index: number;
-  name: string;
-  emoji: string;
-  isLocal: boolean;
-  bid: number;
-  tricksWon: number;
-  score: number;
-  roundScore: number;
-  position: Position;
-  hand: Hand;
-  id: string = '';
-  seatIndex: number = -1;
-  nameLabel!: Phaser.GameObjects.Text;
-  statsLabel!: Phaser.GameObjects.Text;
-  labelBackground!: Phaser.GameObjects.Graphics;
-  turnIndicator!: Phaser.GameObjects.Graphics;
+  readonly scene: Scene;
+  readonly data: PlayerData;
+  readonly index: number;
+  readonly position: Position;
+  private hand: Hand;
+  private nameLabel!: Phaser.GameObjects.Text;
+  private statsLabel!: Phaser.GameObjects.Text;
+  private labelBackground!: Phaser.GameObjects.Graphics;
+  private turnIndicator!: Phaser.GameObjects.Graphics;
 
   constructor(
     scene: Scene,
+    data: PlayerData,
     index: number,
-    name: string,
-    emoji: string,
-    isLocal = false,
     onCardPlay?: (data: CardData) => void
   ) {
     this.scene = scene;
+    this.data = data;
     this.index = index;
-    this.name = name;
-    this.emoji = emoji;
-    this.isLocal = isLocal;
-
-    // Game state
-    this.bid = 0;
-    this.tricksWon = 0;
-    this.score = 0;
-    this.roundScore = 0;
 
     // Position mapping: 0=bottom (human), 1=left, 2=top, 3=right
     const positions: Position[] = ['bottom', 'left', 'top', 'right'];
@@ -60,7 +42,7 @@ export default class Player {
     // Create hand
     this.hand = new Hand(scene, {
       position: this.position,
-      isLocal: isLocal,
+      isLocal: data.isLocal,
       onCardPlay,
     });
 
@@ -99,7 +81,7 @@ export default class Player {
 
     // Player name with emoji using responsive font size
     this.nameLabel = this.scene.add
-      .text(labelX, labelY, `${this.emoji} ${this.name}`, {
+      .text(labelX, labelY, `${this.data.emoji} ${this.data.name}`, {
         fontFamily: 'Arial, sans-serif',
         fontSize: getFontSize('playerName', width, height),
         fontStyle: 'bold',
@@ -193,19 +175,72 @@ export default class Player {
     return this.hand.getCardData();
   }
 
+  getHandSize(): number {
+    return this.hand.getCardData().length;
+  }
+
+  addCard(cardData: CardData): void {
+    this.hand.addCard(cardData);
+  }
+
+  updateCardCount(count: number): void {
+    this.hand.updateCardCount(count);
+  }
+
+  removeFirstCard() {
+    return this.hand.removeFirstCard();
+  }
+
+  // Computed properties for convenience
+  get id(): string {
+    return this.data.id;
+  }
+
+  get name(): string {
+    return this.data.name;
+  }
+
+  get emoji(): string {
+    return this.data.emoji;
+  }
+
+  get seatIndex(): number {
+    return this.data.seatIndex;
+  }
+
+  get isLocal(): boolean {
+    return this.data.isLocal;
+  }
+
+  get bid(): number {
+    return this.data.bid;
+  }
+
+  get tricksWon(): number {
+    return this.data.tricksWon;
+  }
+
+  get score(): number {
+    return this.data.score;
+  }
+
+  get roundScore(): number {
+    return this.data.roundScore;
+  }
+
   setBid(bid: number) {
-    this.bid = bid;
+    this.data.bid = bid;
     this.updateStats();
   }
 
   addTrick() {
-    this.tricksWon++;
+    this.data.tricksWon++;
     this.updateStats();
   }
 
   updateStats() {
-    if (this.bid !== null) {
-      this.statsLabel.setText(`${this.tricksWon}/${this.bid}`);
+    if (this.data.bid !== null) {
+      this.statsLabel.setText(`${this.data.tricksWon}/${this.data.bid}`);
       this.updateLabelBackground();
     } else {
       this.statsLabel.setText('');
@@ -214,8 +249,8 @@ export default class Player {
   }
 
   setRoundScore(score: number) {
-    this.roundScore = score;
-    this.score += score;
+    this.data.roundScore = score;
+    this.data.score += score;
   }
 
   showTurnIndicator() {
@@ -250,9 +285,9 @@ export default class Player {
   }
 
   reset() {
-    this.bid = 0;
-    this.tricksWon = 0;
-    this.roundScore = 0;
+    this.data.bid = 0;
+    this.data.tricksWon = 0;
+    this.data.roundScore = 0;
     this.hand.clearCards();
     this.updateStats();
     this.hideTurnIndicator();
@@ -260,7 +295,7 @@ export default class Player {
 
   fullReset() {
     this.reset();
-    this.score = 0;
+    this.data.score = 0;
   }
 
   showReaction(emoji: string): void {
@@ -269,7 +304,19 @@ export default class Player {
     const posConfig = PLAYER_POSITIONS[this.position];
     const x = width * posConfig.x;
     const y = height * posConfig.y;
-    ReactionAnimation.show(this.scene, x, y - 50, emoji, this.name);
+    ReactionAnimation.show(this.scene, x, y - 50, emoji, this.data.name);
+  }
+
+  animateNameLabel(): void {
+    if (this.nameLabel) {
+      this.scene.tweens.add({
+        targets: this.nameLabel,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 200,
+        yoyo: true,
+      });
+    }
   }
 
   destroy() {

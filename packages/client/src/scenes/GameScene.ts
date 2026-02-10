@@ -203,14 +203,8 @@ export default class GameScene extends Phaser.Scene {
     // Trick complete
     this.gameMode.on(EVENTS.TRICK_COMPLETE, ({ winnerIndex }: any) => {
       const winner = this.players[winnerIndex];
-      if (winner && winner.nameLabel) {
-        this.tweens.add({
-          targets: winner.nameLabel,
-          scaleX: 1.2,
-          scaleY: 1.2,
-          duration: 200,
-          yoyo: true,
-        });
+      if (winner) {
+        winner.animateNameLabel();
       }
     });
 

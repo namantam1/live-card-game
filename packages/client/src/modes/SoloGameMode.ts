@@ -36,19 +36,29 @@ export default class SoloGameMode extends GameModeBase {
     const playerInfo = this.gameManager.playerInfo;
 
     for (let i = 0; i < 4; i++) {
+      const playerData: PlayerData = {
+        id: `player-${i}`,
+        name: playerInfo[i].name,
+        emoji: playerInfo[i].emoji,
+        seatIndex: i,
+        isLocal: playerInfo[i].isLocal,
+        bid: 0,
+        tricksWon: 0,
+        score: 0,
+        roundScore: 0,
+        isBot: !playerInfo[i].isLocal,
+        isReady: true,
+        isConnected: true,
+      };
+
       const player = new Player(
         scene,
+        playerData,
         i,
-        playerInfo[i].name,
-        playerInfo[i].emoji,
-        playerInfo[i].isLocal, // isLocal
         playerInfo[i].isLocal
           ? (cardData: CardData) => this.onCardPlayed(cardData)
           : undefined
       );
-      // Set id and seatIndex for consistency
-      player.id = `player-${i}`;
-      player.seatIndex = i; // In solo mode, seatIndex equals index
       players.push(player);
     }
 
@@ -67,22 +77,7 @@ export default class SoloGameMode extends GameModeBase {
 
   override getPlayers(): PlayerData[] {
     const playerObjects = this.gameManager.getPlayers();
-    const playerInfo = this.gameManager.playerInfo;
-
-    return playerObjects.map((player, index) => ({
-      id: `player-${index}`,
-      name: player.name,
-      emoji: player.emoji,
-      seatIndex: index,
-      bid: player.bid,
-      tricksWon: player.tricksWon,
-      score: player.score,
-      roundScore: player.roundScore,
-      isBot: !playerInfo[index].isLocal,
-      isLocal: playerInfo[index].isLocal,
-      isReady: true,
-      isConnected: true,
-    }));
+    return playerObjects.map((player) => player.data);
   }
 
   override getLocalPlayer(): PlayerData | null {
@@ -94,7 +89,7 @@ export default class SoloGameMode extends GameModeBase {
   override getRecommendedBid(): number | undefined {
     const playerObjects = this.gameManager.getPlayers();
     const localPlayer = playerObjects[0]; // Player 0 is always local in solo mode
-    const hand = localPlayer?.hand?.getCardData() || [];
+    const hand = localPlayer?.getCardData() || [];
     if (hand.length === 0) return undefined;
     return calculateBid(hand, TRUMP_SUIT);
   }

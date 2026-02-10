@@ -49,50 +49,31 @@ export default class MultiplayerGameMode extends GameModeBase {
     if (!room || !room.state) return players;
 
     const localId = this.networkManager.playerId;
-    const networkPlayers: {
-      id: string;
-      name: string;
-      emoji: string;
-      seatIndex: number;
-    }[] = [];
 
-    // Get players from room state
-    room.state.players.forEach((player: PlayerSchema) => {
-      networkPlayers.push({
-        id: player.id,
-        name: player.name,
-        emoji: player.emoji,
-        seatIndex: player.seatIndex,
-      });
-    });
+    // Get all player data from network
+    const playerDataList = this.getPlayers();
 
     // Find local player's seat index
-    const localPlayer = networkPlayers.find((p) => p.id === localId);
-    const localSeatIndex = localPlayer ? localPlayer.seatIndex : 0;
+    const localPlayerData = playerDataList.find((p) => p.isLocal);
+    const localSeatIndex = localPlayerData ? localPlayerData.seatIndex : 0;
 
     // Create player objects with relative positioning
     // Local player should always be at position 0 (bottom)
-    networkPlayers.forEach((netPlayer) => {
-      const isLocal = netPlayer.id === localId;
+    playerDataList.forEach((playerData) => {
+      const isLocal = playerData.id === localId;
 
       // Calculate relative position: local player at 0 (bottom), others clockwise
-      const relativePosition = (netPlayer.seatIndex - localSeatIndex + 4) % 4;
+      const relativePosition = (playerData.seatIndex - localSeatIndex + 4) % 4;
 
       const player = new Player(
         scene,
+        playerData,
         relativePosition,
-        netPlayer.name,
-        netPlayer.emoji,
-        isLocal, // isHuman = isLocal in multiplayer
         isLocal
           ? (cardData: CardData) => this.onCardPlayed(cardData)
           : undefined
       );
       players.push(player);
-
-      // Store network ID and absolute seat index for server communication
-      player.id = netPlayer.id;
-      player.seatIndex = netPlayer.seatIndex;
     });
 
     // Sort players by relative position for consistent array indexing
@@ -134,16 +115,16 @@ export default class MultiplayerGameMode extends GameModeBase {
     const players: PlayerData[] = [];
     room.state.players.forEach((player: PlayerSchema) => {
       players.push({
+        id: player.id,
         name: player.name,
         emoji: player.emoji,
+        seatIndex: player.seatIndex,
+        isLocal: player.id === this.networkManager.playerId,
         bid: player.bid,
         tricksWon: player.tricksWon,
         score: player.score,
         roundScore: player.roundScore,
-        isBot: false,
-        isLocal: player.id === this.networkManager.playerId,
-        id: player.id,
-        seatIndex: player.seatIndex,
+        isBot: player.isBot,
         isReady: player.isReady,
         isConnected: player.isConnected,
       });
@@ -373,12 +354,12 @@ export default class MultiplayerGameMode extends GameModeBase {
             const currentTrick = this.getCurrentTrick();
             const phase = room.state.phase;
             if (phase === 'playing') {
-              p.hand.updatePlayableCards(leadSuit, currentTrick);
+              p.updatePlayableCards(leadSuit, currentTrick);
             }
           }
         } else {
           p.hideTurnIndicator();
-          p.hand.disableAllCards();
+          p.disableAllCards();
         }
       });
 
@@ -396,7 +377,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         );
         if (localPlayer) {
           const currentTrick = this.getCurrentTrick();
-          localPlayer.hand.updatePlayableCards(value as any, currentTrick);
+          localPlayer.updatePlayableCards(value as any, currentTrick);
         }
       }
     });
@@ -407,16 +388,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         const winner = this.players.find((p) => p.id === winnerId);
         if (winner) {
           winner.addTrick();
-
-          if (winner.nameLabel) {
-            this.scene.tweens.add({
-              targets: winner.nameLabel,
-              scaleX: 1.2,
-              scaleY: 1.2,
-              duration: 200,
-              yoyo: true,
-            });
-          }
+          winner.animateNameLabel();
 
           const winnerIndex = this.players.indexOf(winner);
           this.scene.time.delayedCall(1000, () => {
@@ -481,13 +453,13 @@ export default class MultiplayerGameMode extends GameModeBase {
           // For local player, add the actual card
           const localPlayer = this.players.find((p) => p.id === player.id);
           if (localPlayer) {
-            localPlayer.hand.addCard(this.cardToObject(card));
+            localPlayer.addCard(this.cardToObject(card));
           }
         } else {
           // For remote players, update card count
           const remotePlayer = this.players.find((p) => p.id === player.id);
           if (remotePlayer) {
-            remotePlayer.hand.updateCardCount(player.hand.length);
+            remotePlayer.updateCardCount(player.hand.length);
           }
         }
       });
@@ -519,10 +491,10 @@ export default class MultiplayerGameMode extends GameModeBase {
         // Remove card from player's hand for animation
         if (player.id === this.networkManager.playerId) {
           // Local player - remove the actual card
-          removedCard = player.hand.removeCard(card.id);
+          removedCard = player.removeCard(card);
         } else {
           // Remote player - remove any placeholder card for animation
-          removedCard = player.hand.removeFirstCard();
+          removedCard = player.removeFirstCard();
         }
       } else {
         console.warn(`MultiplayerGameMode: Player ${playerId} not found`);
@@ -586,7 +558,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         'MultiplayerGameMode: Syncing hand from server. Cards:',
         hand.length
       );
-      localPlayer.hand.setCards(hand, false);
+      localPlayer.setCards(hand, false);
     }
 
     // Sync card counts for all remote players (show card backs)
@@ -595,7 +567,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         const handCount = player.hand.length;
         const localPlayerObj = this.players.find((p) => p.id === player.id);
         if (localPlayerObj) {
-          localPlayerObj.hand.updateCardCount(handCount);
+          localPlayerObj.updateCardCount(handCount);
         }
       }
     });
@@ -611,7 +583,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         p.showTurnIndicator();
       } else {
         p.hideTurnIndicator();
-        p.hand.disableAllCards();
+        p.disableAllCards();
       }
     });
 
@@ -627,7 +599,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         'MultiplayerGameMode: Reconnected during our turn, updating playable cards. Lead suit:',
         leadSuit
       );
-      localPlayer.hand.updatePlayableCards(leadSuit, currentTrick);
+      localPlayer.updatePlayableCards(leadSuit, currentTrick);
     }
   }
 }
