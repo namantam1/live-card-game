@@ -82,6 +82,7 @@ export interface PlayerData {
   seatIndex: number;
   isReady: boolean;
   isConnected: boolean;
+  isBot: boolean;
   bid: number;
   tricksWon: number;
   score: number;

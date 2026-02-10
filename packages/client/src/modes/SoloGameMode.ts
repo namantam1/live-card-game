@@ -1,10 +1,10 @@
 import type { Scene } from 'phaser';
-import { GameModeBase, type PlayerData } from './GameModeBase';
+import { GameModeBase } from './GameModeBase';
 import GameManager from '../managers/GameManager';
 import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
 import Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
-import type { CardData } from '../type';
+import type { CardData, PlayerData } from '../type';
 import { EVENTS } from '../utils/constants';
 
 /**
@@ -41,11 +41,14 @@ export default class SoloGameMode extends GameModeBase {
         i,
         playerInfo[i].name,
         playerInfo[i].emoji,
-        playerInfo[i].isHuman,
-        playerInfo[i].isHuman
+        playerInfo[i].isLocal, // isLocal
+        playerInfo[i].isLocal
           ? (cardData: CardData) => this.onCardPlayed(cardData)
           : undefined
       );
+      // Set id and seatIndex for consistency
+      player.id = `player-${i}`;
+      player.seatIndex = i; // In solo mode, seatIndex equals index
       players.push(player);
     }
 
@@ -63,15 +66,22 @@ export default class SoloGameMode extends GameModeBase {
   }
 
   override getPlayers(): PlayerData[] {
-    return this.gameManager.getPlayers().map((player) => ({
+    const playerObjects = this.gameManager.getPlayers();
+    const playerInfo = this.gameManager.playerInfo;
+
+    return playerObjects.map((player, index) => ({
+      id: `player-${index}`,
       name: player.name,
       emoji: player.emoji,
+      seatIndex: index,
       bid: player.bid,
       tricksWon: player.tricksWon,
       score: player.score,
       roundScore: player.roundScore,
-      isHuman: player.isHuman,
-      isLocal: player.isHuman, // In solo mode, human = local
+      isBot: !playerInfo[index].isLocal,
+      isLocal: playerInfo[index].isLocal,
+      isReady: true,
+      isConnected: true,
     }));
   }
 

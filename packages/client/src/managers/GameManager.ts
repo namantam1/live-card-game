@@ -37,7 +37,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   trickNumber: number;
   biddingPlayer: number;
   currentTrick: TrickEntry[];
-  playerInfo: { name: string; emoji: string; isHuman: boolean }[];
+  playerInfo: { name: string; emoji: string; isLocal: boolean }[];
   constructor(scene: Scene) {
     super();
 
@@ -56,10 +56,10 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
     // Player info
     this.playerInfo = [
-      { name: 'You', emoji: '\uD83D\uDE0E', isHuman: true },
-      { name: 'Ace', emoji: '\uD83E\uDD16', isHuman: false },
-      { name: 'Max', emoji: '\uD83E\uDD8A', isHuman: false },
-      { name: 'Zara', emoji: '\uD83D\uDC31', isHuman: false },
+      { name: 'You', emoji: '\uD83D\uDE0E', isLocal: true },
+      { name: 'Ace', emoji: '\uD83E\uDD16', isLocal: false },
+      { name: 'Max', emoji: '\uD83E\uDD8A', isLocal: false },
+      { name: 'Zara', emoji: '\uD83D\uDC31', isLocal: false },
     ];
   }
 
@@ -128,7 +128,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
 
       const player = this.players[playerIndex];
 
-      if (player.isHuman) {
+      if (player.isLocal) {
         // Wait for human bid (handled by UI)
         await this.waitForHumanBid();
       } else {
@@ -147,7 +147,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
     this.updatePlayableCards();
 
     // If first player is a bot, automatically play
-    if (!this.players[this.currentTurn].isHuman) {
+    if (!this.players[this.currentTurn].isLocal) {
       await this.playBotTurn();
     }
   }
@@ -173,7 +173,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
   updatePlayableCards() {
     console.log('Updating playable cards for current turn:', this.currentTurn);
     this.players.forEach((player, index) => {
-      if (index === this.currentTurn && player.isHuman) {
+      if (index === this.currentTurn && player.isLocal) {
         player.updatePlayableCards(this.leadSuit!, this.currentTrick);
       } else {
         player.disableAllCards();
@@ -218,7 +218,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
       this.updatePlayableCards();
 
       // If bot's turn, play automatically
-      if (!this.players[this.currentTurn].isHuman) {
+      if (!this.players[this.currentTurn].isLocal) {
         await this.playBotTurn();
       }
     }
@@ -272,7 +272,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
       this.updatePlayableCards();
 
       // If bot's turn, play automatically
-      if (!this.players[this.currentTurn].isHuman) {
+      if (!this.players[this.currentTurn].isLocal) {
         await this.playBotTurn();
       }
     }
@@ -362,7 +362,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
    */
   private triggerBotTrickReactions(winnerIndex: number) {
     this.players.forEach((player, index) => {
-      if (player.isHuman) return;
+      if (player.isLocal) return;
 
       const wonTrick = index === winnerIndex;
       const reaction = decideBotReaction({
@@ -386,7 +386,7 @@ export default class GameManager extends Phaser.Events.EventEmitter {
    */
   private triggerBotRoundEndReactions() {
     this.players.forEach((player, index) => {
-      if (player.isHuman) return;
+      if (player.isLocal) return;
 
       const reaction = decideBotReaction({
         event: 'roundEnd',

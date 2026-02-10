@@ -11,7 +11,7 @@ import { CARD_CONFIG, isMobile } from '../utils/uiConfig';
 import type { CardData, TrickEntry } from '../type';
 
 export default class Hand {
-  isHuman: boolean;
+  isLocal: boolean;
   cards: Card[];
   cardScale: number;
   handOverlap: number;
@@ -27,11 +27,11 @@ export default class Hand {
     scene: Scene,
     config: {
       position: Position;
-      isHuman: boolean;
+      isLocal: boolean;
       onCardPlay?: (data: CardData) => void;
     }
   ) {
-    const { position, isHuman, onCardPlay } = config;
+    const { position, isLocal, onCardPlay } = config;
     const { width, height } = scene.cameras.main;
     const posConfig = PLAYER_POSITIONS[position];
 
@@ -41,7 +41,7 @@ export default class Hand {
     this.onCardPlay = onCardPlay;
     this.scene = scene;
     this.playerPosition = position;
-    this.isHuman = isHuman;
+    this.isLocal = isLocal;
     this.cards = [];
 
     // Calculate responsive card scale based on screen size using centralized config
@@ -83,7 +83,7 @@ export default class Hand {
 
     for (let i = 0; i < cardDataArray.length; i++) {
       const cardData = cardDataArray[i];
-      const faceDown = !this.isHuman;
+      const faceDown = !this.isLocal;
 
       // Create card at center (deck position)
       const card = new Card(this.scene, {
@@ -91,7 +91,7 @@ export default class Hand {
         y: centerY,
         cardData,
         faceDown,
-        onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
+        onClick: this.isLocal ? (data) => this.onCardPlay?.(data) : undefined,
       });
 
       // Calculate target position in hand
@@ -115,25 +115,25 @@ export default class Hand {
 
   createCards(cardDataArray: CardData[]): void {
     cardDataArray.forEach((cardData) => {
-      const faceDown = !this.isHuman;
+      const faceDown = !this.isLocal;
       const card = new Card(this.scene, {
         x: 0,
         y: 0,
         cardData,
         faceDown,
-        onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
+        onClick: this.isLocal ? (data) => this.onCardPlay?.(data) : undefined,
       });
       this.cards.push(card);
     });
   }
 
   getCardPosition(index: number, total: number) {
-    const overlap = this.isHuman ? this.handOverlap : this.handOverlap * 0.1;
+    const overlap = this.isLocal ? this.handOverlap : this.handOverlap * 0.1;
     const totalSpan = (total - 1) * overlap;
     const startOffset = -totalSpan / 2;
 
-    // Fan effect - slight rotation for each card (only for human player)
-    const fanAngle = this.isHuman ? 1 : 0;
+    // Fan effect - slight rotation for each card (only for local player)
+    const fanAngle = this.isLocal ? 1 : 0;
     const middleIndex = (total - 1) / 2;
     const angleOffset = (index - middleIndex) * fanAngle;
 
@@ -178,7 +178,7 @@ export default class Hand {
   }
 
   updatePlayableCards(leadSuit: Suit, currentTrick: TrickEntry[] = []) {
-    if (!this.isHuman) return;
+    if (!this.isLocal) return;
 
     const cardDataArray = this.cards.map((c) => c.cardData);
     const validCards = getValidCards(cardDataArray, leadSuit, currentTrick);
@@ -199,7 +199,7 @@ export default class Hand {
   }
 
   addCard(cardData: CardData, animate = true) {
-    const faceDown = !this.isHuman;
+    const faceDown = !this.isLocal;
     const { width, height } = this.scene.cameras.main;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -210,7 +210,7 @@ export default class Hand {
       y: animate ? centerY : this.y,
       cardData,
       faceDown,
-      onClick: this.isHuman ? (data) => this.onCardPlay?.(data) : undefined,
+      onClick: this.isLocal ? (data) => this.onCardPlay?.(data) : undefined,
     });
 
     // if (animate) {
@@ -269,7 +269,7 @@ export default class Hand {
    * Update the number of face-down placeholder cards (for remote players)
    */
   updateCardCount(count: number) {
-    if (this.isHuman) return; // Only for non-human players
+    if (this.isLocal) return; // Only for non-local players
 
     const currentCount = this.cards.length;
 

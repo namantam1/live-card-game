@@ -1,6 +1,6 @@
 import { Client, Room, getStateCallbacks } from '@colyseus/sdk';
 import Phaser from 'phaser';
-import type { PlayerSchema } from '../../type';
+import type { PlayerData, PlayerSchema } from '../../type';
 
 /**
  * RoomManager - Handles Colyseus room operations
@@ -149,25 +149,21 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
     const $ = getStateCallbacks(this.room);
 
     // Listen to player additions (for lobby player list)
-    $(this.room.state).players.onAdd(
-      (player: PlayerSchema, sessionId: string) => {
-        // console.log(`RoomManager: Player ${player.name} joined`);
-        this.emit('playerJoined', { player, sessionId });
+    $(this.room.state).players.onAdd((player: PlayerSchema) => {
+      // console.log(`RoomManager: Player ${player.name} joined`);
+      this.emit('playerJoined', { player, playerId: player.id });
 
-        // Listen to player ready status changes
-        $(player).listen('isReady', (value: boolean) => {
-          this.emit('playerReady', { playerId: sessionId, isReady: value });
-        });
-      }
-    );
+      // Listen to player ready status changes
+      $(player).listen('isReady', (value: boolean) => {
+        this.emit('playerReady', { playerId: player.id, isReady: value });
+      });
+    });
 
     // Listen to player removals (for lobby player list)
-    $(this.room.state).players.onRemove(
-      (player: PlayerSchema, sessionId: string) => {
-        console.log(`RoomManager: Player ${player.name} removed`);
-        this.emit('playerRemoved', { player, sessionId });
-      }
-    );
+    $(this.room.state).players.onRemove((player: PlayerSchema) => {
+      console.log(`RoomManager: Player ${player.name} removed`);
+      this.emit('playerRemoved', { player, playerId: player.id });
+    });
 
     // Listen to phase changes (to start game from lobby)
     $(this.room.state).listen('phase', (value: string) => {
@@ -220,50 +216,25 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
   /**
    * Get players list (for lobby)
    */
-  getPlayers(): Array<{
-    id: string;
-    name: string;
-    emoji: string;
-    seatIndex: number;
-    isReady: boolean;
-    isConnected: boolean;
-    bid: number;
-    tricksWon: number;
-    score: number;
-    roundScore: number;
-    isLocal: boolean;
-  }> {
+  getPlayers(): PlayerData[] {
     if (!this.room || !this.room.state || !this.room.state.players) return [];
-    const players: Array<{
-      id: string;
-      name: string;
-      emoji: string;
-      seatIndex: number;
-      isReady: boolean;
-      isConnected: boolean;
-      bid: number;
-      tricksWon: number;
-      score: number;
-      roundScore: number;
-      isLocal: boolean;
-    }> = [];
-    this.room.state.players.forEach(
-      (player: PlayerSchema, sessionId: string) => {
-        players.push({
-          id: sessionId,
-          name: player.name,
-          emoji: player.emoji,
-          seatIndex: player.seatIndex,
-          isReady: player.isReady,
-          isConnected: player.isConnected,
-          bid: player.bid,
-          tricksWon: player.tricksWon,
-          score: player.score,
-          roundScore: player.roundScore,
-          isLocal: sessionId === this.playerId,
-        });
-      }
-    );
+    const players: PlayerData[] = [];
+    this.room.state.players.forEach((player: PlayerSchema) => {
+      players.push({
+        id: player.id,
+        name: player.name,
+        emoji: player.emoji,
+        seatIndex: player.seatIndex,
+        isReady: player.isReady,
+        isConnected: player.isConnected,
+        isBot: player.isBot,
+        bid: player.bid,
+        tricksWon: player.tricksWon,
+        score: player.score,
+        roundScore: player.roundScore,
+        isLocal: player.id === this.playerId,
+      });
+    });
     return players.sort((a, b) => a.seatIndex - b.seatIndex);
   }
 

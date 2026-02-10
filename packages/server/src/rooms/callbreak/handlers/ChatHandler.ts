@@ -62,7 +62,7 @@ export class ChatHandler extends BaseHandler {
     };
 
     // Broadcast to all players
-    this.broadcast('chatMessage', chatMessage, { except: client });
+    this.broadcast('chatMessage', chatMessage);
 
     console.log(
       `[Chat] ${player.name}: ${sanitizedMessage.substring(0, 50)}${sanitizedMessage.length > 50 ? '...' : ''}`

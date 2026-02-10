@@ -2,21 +2,9 @@ import Phaser from 'phaser';
 import type { Scene } from 'phaser';
 import type Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
-import type { CardData } from '../type';
+import type { CardData, PlayerData } from '../type';
 import { type GameEvent } from '../utils/constants';
 import type NetworkManager from '../managers/NetworkManager';
-
-export interface PlayerData {
-  name: string;
-  emoji: string;
-  bid: number;
-  tricksWon: number;
-  score: number;
-  roundScore: number;
-  isHuman: boolean;
-  isLocal?: boolean;
-  id?: string;
-}
 
 export interface GameModeConfig {
   scene: Scene;

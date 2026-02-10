@@ -19,15 +19,15 @@ export default class Player {
   index: number;
   name: string;
   emoji: string;
-  isHuman: boolean;
+  isLocal: boolean;
   bid: number;
   tricksWon: number;
   score: number;
   roundScore: number;
   position: Position;
   hand: Hand;
-  networkId: string | null = null;
-  absoluteSeatIndex: number | null = null;
+  id: string = '';
+  seatIndex: number = -1;
   nameLabel!: Phaser.GameObjects.Text;
   statsLabel!: Phaser.GameObjects.Text;
   labelBackground!: Phaser.GameObjects.Graphics;
@@ -38,14 +38,14 @@ export default class Player {
     index: number,
     name: string,
     emoji: string,
-    isHuman = false,
+    isLocal = false,
     onCardPlay?: (data: CardData) => void
   ) {
     this.scene = scene;
     this.index = index;
     this.name = name;
     this.emoji = emoji;
-    this.isHuman = isHuman;
+    this.isLocal = isLocal;
 
     // Game state
     this.bid = 0;
@@ -60,7 +60,7 @@ export default class Player {
     // Create hand
     this.hand = new Hand(scene, {
       position: this.position,
-      isHuman,
+      isLocal: isLocal,
       onCardPlay,
     });
 

@@ -14,6 +14,7 @@ import Button from '../components/shared/Button';
 import { OnlineUsersPanel } from '../components/lobby/OnlineUsersPanel';
 import { InviteModal } from '../components/shared/InviteModal';
 import QuickChatPanel from '../components/shared/QuickChatPanel';
+import { ChatToast } from '../components';
 
 const CARD: CardData = createDeck()[0];
 
@@ -197,8 +198,24 @@ export default class DebugScene extends Phaser.Scene {
     // }).show();
 
     // play sound after delay
-    setTimeout(() => {
-      AudioManager.getInstance().playCardSound();
-    }, 5000);
+    // setTimeout(() => {
+    //   AudioManager.getInstance().playCardSound();
+    // }, 5000);
+
+    new ChatToast(this, [
+      new Player(this, 0, 'Alice', '😀', true, (data: CardData) =>
+        console.log('Alice played:', data)
+      ),
+      new Player(this, 1, 'Bob', '😎', false),
+      new Player(this, 2, 'Charlie', '🤠', false),
+      new Player(this, 3, 'Diana', '🧐', false),
+    ]).showMessage({
+      id: 'msg1',
+      playerId: 'player1',
+      playerName: 'Alice',
+      seatIndex: 0,
+      message: 'Hello everyone!',
+      timestamp: Date.now(),
+    });
   }
 }

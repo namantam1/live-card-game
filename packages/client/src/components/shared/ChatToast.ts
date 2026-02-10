@@ -47,13 +47,7 @@ export default class ChatToast {
     const { width, height } = this.scene.cameras.main;
 
     // Find the player who sent the message
-    // TODO: Check if this is correct plance to find player
-    const player = this.players.find((p) => {
-      if (p.networkId) {
-        return p.networkId === message.playerId;
-      }
-      return p.absoluteSeatIndex === message.seatIndex;
-    });
+    const player = this.players.find((p) => p.id === message.playerId);
 
     if (!player) {
       console.warn('Player not found for chat message:', message);

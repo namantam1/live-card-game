@@ -199,12 +199,7 @@ export default class UIScene extends Phaser.Scene {
   private setupReactionListener(): void {
     // Listen for incoming reactions and show them on the player (same pattern as chat)
     this.gameMode.on(EVENTS.REACTION, (data: ReactionData) => {
-      const player = this.gameScene.players.find((p) => {
-        if (p.networkId) {
-          return p.networkId === data.playerId;
-        }
-        return p.absoluteSeatIndex === data.seatIndex;
-      });
+      const player = this.gameScene.players.find((p) => p.id === data.playerId);
 
       if (player) {
         player.showReaction(data.type);

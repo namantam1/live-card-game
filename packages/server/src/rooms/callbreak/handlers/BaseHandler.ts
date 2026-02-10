@@ -1,5 +1,6 @@
-import type { Client } from 'colyseus';
+import type { Client } from '@colyseus/core';
 import type { CallBreakRoom } from '../CallBreakRoom.js';
+import type { IBroadcastOptions } from '@colyseus/core/Room';
 
 /**
  * Base handler class for organizing room message handlers
@@ -33,8 +34,12 @@ export abstract class BaseHandler {
   /**
    * Helper to broadcast to all clients
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected broadcast(type: string, data?: any, options?: any): void {
+
+  protected broadcast(
+    type: string,
+    data?: any,
+    options?: IBroadcastOptions
+  ): void {
     this.room.broadcast(type, data, options);
   }
 

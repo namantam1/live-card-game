@@ -29,17 +29,13 @@ export class ReactionHandler extends BaseHandler {
     }
 
     // Broadcast reaction to all other players
-    this.broadcast(
-      'playerReaction',
-      {
-        playerId: client.sessionId,
-        playerName: player.name,
-        seatIndex: player.seatIndex,
-        type: data.type,
-        timestamp: Date.now(),
-      },
-      { except: client }
-    );
+    this.broadcast('playerReaction', {
+      playerId: client.sessionId,
+      playerName: player.name,
+      seatIndex: player.seatIndex,
+      type: data.type,
+      timestamp: Date.now(),
+    });
 
     console.log(
       `${player.name} sent reaction: ${data.type} in room ${this.room.state.roomCode}`

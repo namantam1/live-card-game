@@ -81,7 +81,7 @@ export default class ScoreBoard {
             color: '#22c55e',
           })
           .setOrigin(0, 0.5),
-        playerId: this.isMultiplayer ? player.id : index,
+        playerId: player.id,
       };
       this.scoreboard.add([entry.emoji, entry.score]);
       this.playerScoreEntries.push(entry);

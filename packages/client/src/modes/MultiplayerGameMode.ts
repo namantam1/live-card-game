@@ -1,5 +1,5 @@
 import type { Scene } from 'phaser';
-import { GameModeBase, type PlayerData } from './GameModeBase';
+import { GameModeBase } from './GameModeBase';
 import NetworkManager from '../managers/NetworkManager';
 import Player from '../objects/Player';
 import type TrickArea from '../objects/TrickArea';
@@ -8,6 +8,7 @@ import type {
   CardSchema,
   PlayerSchema,
   TrickEntrySchema,
+  PlayerData,
 } from '../type';
 import { EVENTS } from '../utils/constants';
 import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
@@ -56,9 +57,9 @@ export default class MultiplayerGameMode extends GameModeBase {
     }[] = [];
 
     // Get players from room state
-    room.state.players.forEach((player: PlayerSchema, sessionId: string) => {
+    room.state.players.forEach((player: PlayerSchema) => {
       networkPlayers.push({
-        id: sessionId,
+        id: player.id,
         name: player.name,
         emoji: player.emoji,
         seatIndex: player.seatIndex,
@@ -90,8 +91,8 @@ export default class MultiplayerGameMode extends GameModeBase {
       players.push(player);
 
       // Store network ID and absolute seat index for server communication
-      player.networkId = netPlayer.id;
-      player.absoluteSeatIndex = netPlayer.seatIndex;
+      player.id = netPlayer.id;
+      player.seatIndex = netPlayer.seatIndex;
     });
 
     // Sort players by relative position for consistent array indexing
@@ -131,7 +132,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     if (!room || !room.state || !room.state.players) return [];
 
     const players: PlayerData[] = [];
-    room.state.players.forEach((player: PlayerSchema, sessionId: string) => {
+    room.state.players.forEach((player: PlayerSchema) => {
       players.push({
         name: player.name,
         emoji: player.emoji,
@@ -139,9 +140,12 @@ export default class MultiplayerGameMode extends GameModeBase {
         tricksWon: player.tricksWon,
         score: player.score,
         roundScore: player.roundScore,
-        isHuman: sessionId === this.networkManager.playerId,
-        isLocal: sessionId === this.networkManager.playerId,
-        id: sessionId,
+        isBot: false,
+        isLocal: player.id === this.networkManager.playerId,
+        id: player.id,
+        seatIndex: player.seatIndex,
+        isReady: player.isReady,
+        isConnected: player.isConnected,
       });
     });
     return players.sort((a, b) => {
@@ -152,7 +156,7 @@ export default class MultiplayerGameMode extends GameModeBase {
   }
 
   override getLocalPlayer(): PlayerData | null {
-    // In multiplayer mode, local player is identified by networkId
+    // In multiplayer mode, local player is identified by id
     const players = this.getPlayers();
     return players.find((p) => p.isLocal) || null;
   }
@@ -353,9 +357,7 @@ export default class MultiplayerGameMode extends GameModeBase {
       const isMyTurn = value === this.networkManager.playerId;
 
       // Convert network playerId to local player index
-      const playerIndex = this.players.findIndex(
-        (p) => p.networkId === playerId
-      );
+      const playerIndex = this.players.findIndex((p) => p.id === playerId);
 
       if (playerIndex === -1) {
         console.warn(`MultiplayerGameMode: Player ${playerId} not found`);
@@ -390,7 +392,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         room.state.phase === 'playing'
       ) {
         const localPlayer = this.players.find(
-          (p) => p.networkId === this.networkManager.playerId
+          (p) => p.id === this.networkManager.playerId
         );
         if (localPlayer) {
           const currentTrick = this.getCurrentTrick();
@@ -402,7 +404,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     // Trick winner
     $(room.state).listen('trickWinner', (winnerId: string) => {
       if (winnerId) {
-        const winner = this.players.find((p) => p.networkId === winnerId);
+        const winner = this.players.find((p) => p.id === winnerId);
         if (winner) {
           winner.addTrick();
 
@@ -434,12 +436,12 @@ export default class MultiplayerGameMode extends GameModeBase {
     });
 
     // Player state changes
-    $(room.state).players.onAdd((player: PlayerSchema, sessionId: string) => {
+    $(room.state).players.onAdd((player: PlayerSchema) => {
       console.log(`MultiplayerGameMode: Player ${player.name} joined`);
 
       // Listen to player property changes
       $(player).listen('bid', (value: number) => {
-        const localPlayer = this.players.find((p) => p.networkId === sessionId);
+        const localPlayer = this.players.find((p) => p.id === player.id);
         if (localPlayer) {
           localPlayer.setBid(value);
           const playerIndex = this.players.indexOf(localPlayer);
@@ -465,7 +467,7 @@ export default class MultiplayerGameMode extends GameModeBase {
 
       $(player).listen('isConnected', (value: boolean) => {
         // Connection state updates
-        const localPlayer = this.players.find((p) => p.networkId === sessionId);
+        const localPlayer = this.players.find((p) => p.id === player.id);
         if (localPlayer && !value) {
           console.log(
             `MultiplayerGameMode: Player ${player.name} disconnected`
@@ -475,19 +477,15 @@ export default class MultiplayerGameMode extends GameModeBase {
 
       // Hand changes
       $(player).hand.onAdd((card: CardSchema, _index: number) => {
-        if (sessionId === this.networkManager.playerId) {
+        if (player.id === this.networkManager.playerId) {
           // For local player, add the actual card
-          const localPlayer = this.players.find(
-            (p) => p.networkId === sessionId
-          );
+          const localPlayer = this.players.find((p) => p.id === player.id);
           if (localPlayer) {
             localPlayer.hand.addCard(this.cardToObject(card));
           }
         } else {
           // For remote players, update card count
-          const remotePlayer = this.players.find(
-            (p) => p.networkId === sessionId
-          );
+          const remotePlayer = this.players.find((p) => p.id === player.id);
           if (remotePlayer) {
             remotePlayer.hand.updateCardCount(player.hand.length);
           }
@@ -499,11 +497,9 @@ export default class MultiplayerGameMode extends GameModeBase {
       });
     });
 
-    $(room.state).players.onRemove(
-      (player: PlayerSchema, _sessionId: string) => {
-        console.log(`MultiplayerGameMode: Player ${player.name} removed`);
-      }
-    );
+    $(room.state).players.onRemove((player: PlayerSchema) => {
+      console.log(`MultiplayerGameMode: Player ${player.name} removed`);
+    });
 
     // Current trick changes
     $(room.state).currentTrick.onAdd((entry: TrickEntrySchema) => {
@@ -513,7 +509,7 @@ export default class MultiplayerGameMode extends GameModeBase {
       console.log(`MultiplayerGameMode: Card played by ${playerId}`);
 
       // Find player in local array
-      let player = this.players.find((p) => p.networkId === playerId);
+      let player = this.players.find((p) => p.id === playerId);
       let relativePosition;
       let removedCard = null;
 
@@ -521,7 +517,7 @@ export default class MultiplayerGameMode extends GameModeBase {
         relativePosition = player.index;
 
         // Remove card from player's hand for animation
-        if (player.networkId === this.networkManager.playerId) {
+        if (player.id === this.networkManager.playerId) {
           // Local player - remove the actual card
           removedCard = player.hand.removeCard(card.id);
         } else {
@@ -579,7 +575,7 @@ export default class MultiplayerGameMode extends GameModeBase {
     // Get current hand from server and display
     const player = room.state.players.get(this.networkManager.playerId || '');
     const localPlayer = this.players.find(
-      (p) => p.networkId === this.networkManager.playerId
+      (p) => p.id === this.networkManager.playerId
     );
 
     if (localPlayer && player) {
@@ -594,12 +590,10 @@ export default class MultiplayerGameMode extends GameModeBase {
     }
 
     // Sync card counts for all remote players (show card backs)
-    room.state.players.forEach((player: PlayerSchema, sessionId: string) => {
-      if (sessionId !== this.networkManager.playerId) {
+    room.state.players.forEach((player: PlayerSchema) => {
+      if (player.id !== this.networkManager.playerId) {
         const handCount = player.hand.length;
-        const localPlayerObj = this.players.find(
-          (p) => p.networkId === sessionId
-        );
+        const localPlayerObj = this.players.find((p) => p.id === player.id);
         if (localPlayerObj) {
           localPlayerObj.hand.updateCardCount(handCount);
         }
@@ -613,7 +607,7 @@ export default class MultiplayerGameMode extends GameModeBase {
 
     // Update turn indicators for all players
     this.players.forEach((p) => {
-      if (p.networkId === currentTurnPlayerId) {
+      if (p.id === currentTurnPlayerId) {
         p.showTurnIndicator();
       } else {
         p.hideTurnIndicator();
