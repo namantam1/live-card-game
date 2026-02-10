@@ -97,6 +97,10 @@ export default class SoloGameMode extends GameModeBase {
     return this.gameManager.getPhase();
   }
 
+  override isLocalPlayersTurn(): boolean {
+    return this.gameManager.getCurrentTurn() === 0;
+  }
+
   override onBidSelected(bid: number): void {
     this.gameManager.placeHumanBid(bid);
   }

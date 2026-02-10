@@ -1,19 +1,19 @@
-import NetworkIndicator from '../components/NetworkIndicator';
+import NetworkIndicator from '../components/shared/NetworkIndicator';
 import AudioManager from '../managers/AudioManager';
-import SettingsModal from '../objects/game/SettingsModal';
+import SettingsModal from '../components/game/modals/SettingsModal';
 import type { CardData } from '../type';
 import { createDeck, shuffleDeck } from '../utils/cards';
 import { SUITS } from '../utils/constants';
-import ScoreBoard from '../objects/game/ScoreBoard';
-import Common from '../objects/game/Common';
+import ScoreBoard from '../components/game/panels/ScoreBoard';
+import { createTable } from '../helpers/ui/table';
 import Player from '../objects/Player';
 import TrickArea from '../objects/TrickArea';
 import BootScene from './BootScene';
-import ReactionPanel from '../components/ReactionPanel';
-import Button from '../components/Button';
+import ReactionPanel from '../components/shared/ReactionPanel';
+import Button from '../components/shared/Button';
 import { OnlineUsersPanel } from '../components/lobby/OnlineUsersPanel';
-import { InviteModal } from '../components/InviteModal';
-import QuickChatPanel from '../components/QuickChatPanel';
+import { InviteModal } from '../components/shared/InviteModal';
+import QuickChatPanel from '../components/shared/QuickChatPanel';
 
 const CARD: CardData = createDeck()[0];
 

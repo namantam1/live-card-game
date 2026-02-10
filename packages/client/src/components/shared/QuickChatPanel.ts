@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import Button from './Button';
-import { ChatMessageModalData } from '../objects/game/ChatMessageModal';
+import { ChatMessageModalData } from '../game/modals/ChatMessageModal';
 
 interface QuickChatConfig {
   position: { x: number; y: number };

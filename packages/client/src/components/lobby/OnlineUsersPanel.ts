@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import Button from '../Button';
+import Button from '../shared/Button';
 
 export interface OnlineUser {
   id: string;

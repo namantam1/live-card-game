@@ -1,4 +1,4 @@
-import Button from '../../components/Button';
+import Button from '../../shared/Button';
 import BaseModal from './BaseModal';
 
 const CONFIG = {

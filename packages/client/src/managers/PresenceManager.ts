@@ -7,7 +7,7 @@ import type {
   OnlineUserSchema,
   IPresenceState,
 } from '@call-break/shared';
-import { InviteModal } from '../components/InviteModal';
+import { InviteModal } from '../components/shared/InviteModal';
 import { storage } from './StorageManager';
 import { SERVER } from '../utils/constants';
 

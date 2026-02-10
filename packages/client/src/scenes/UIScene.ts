@@ -1,17 +1,17 @@
 import Phaser from 'phaser';
-import ScoreBoard from '../objects/game/ScoreBoard';
-import BiddingUI from '../objects/game/BiddingUI';
-import RoundModal from '../objects/game/RoundModal';
-import GameOverModal from '../objects/game/GameOverModal';
-import SettingsModal from '../objects/game/SettingsModal';
+import ScoreBoard from '../components/game/panels/ScoreBoard';
+import BiddingModal from '../components/game/modals/BiddingModal';
+import RoundModal from '../components/game/modals/RoundModal';
+import GameOverModal from '../components/game/modals/GameOverModal';
+import SettingsModal from '../components/game/modals/SettingsModal';
 import GameScene from './GameScene';
-import Common from '../objects/game/Common';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS, UI_TIMING } from '../utils/constants';
-import ReactionPanel from '../components/ReactionPanel';
-import QuickChatPanel from '../components/QuickChatPanel';
-import ChatToast from '../components/ChatToast';
-import Button from '../components/Button';
+import ReactionPanel from '../components/shared/ReactionPanel';
+import QuickChatPanel from '../components/shared/QuickChatPanel';
+import ChatToast from '../components/shared/ChatToast';
+import Button from '../components/shared/Button';
+import { getResponsiveConfig, SETTINGS_ICON_CONFIG } from '../utils/uiConfig';
 import type { ChatMessage } from '@call-break/shared';
 import type { ReactionData } from '../type';
 
@@ -22,7 +22,7 @@ export default class UIScene extends Phaser.Scene {
   roundModal!: RoundModal;
   gameOverModal!: GameOverModal;
   settingsModal!: SettingsModal;
-  biddingUI!: BiddingUI;
+  biddingUI!: BiddingModal;
 
   constructor() {
     super({ key: 'UIScene' });
@@ -56,7 +56,13 @@ export default class UIScene extends Phaser.Scene {
     );
 
     // Get responsive sizing from centralized config
-    Common.createSettingIcon(this, {
+    const { width, height } = this.cameras.main;
+    const iconConfig = getResponsiveConfig(SETTINGS_ICON_CONFIG, width, height);
+    const { iconSize, fontSize, margin } = iconConfig;
+    Button.createIconButton(this, width - margin, margin, {
+      iconSize,
+      fontSize,
+      icon: '\u2699',
       onClick: () => this.settingsModal.showSettings(),
     });
 
@@ -68,7 +74,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Create bidding UI
-    this.biddingUI = new BiddingUI(this, (bid) =>
+    this.biddingUI = new BiddingModal(this, (bid) =>
       this.gameMode.onBidSelected(bid)
     );
 
@@ -88,22 +94,7 @@ export default class UIScene extends Phaser.Scene {
 
       if (!localPlayer) return;
 
-      // Get current turn from game mode
-      const players = this.gameMode.getPlayers();
-      const currentTurnPlayer = players.find((p) => {
-        // In multiplayer, check against network state
-        if (this.isMultiplayer()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const networkManager = (this.gameMode as any).networkManager;
-          if (networkManager) {
-            const currentTurnId = networkManager.getState()?.currentTurn;
-            return p.id === currentTurnId;
-          }
-        }
-        return false;
-      });
-
-      const isMyTurn = currentTurnPlayer?.id === localPlayer.id;
+      const isMyTurn = this.gameMode.isLocalPlayersTurn();
 
       if (phase === 'bidding' && isMyTurn) {
         console.log('UIScene: Showing bidding UI');

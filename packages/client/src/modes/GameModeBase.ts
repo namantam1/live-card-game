@@ -139,6 +139,17 @@ export abstract class GameModeBase extends Phaser.Events.EventEmitter {
   }
 
   /**
+   * Check if it is the local player's turn.
+   * @returns true if the local player should act now
+   */
+  isLocalPlayersTurn(): boolean {
+    console.error(
+      `${this.constructor.name}: isLocalPlayersTurn() not implemented`
+    );
+    throw new Error('isLocalPlayersTurn() must be implemented');
+  }
+
+  /**
    * Get the local player (the player controlled by this client)
    * @returns The player data for the local player, or null if not found
    */

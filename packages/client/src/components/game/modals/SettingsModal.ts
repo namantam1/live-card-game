@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
-import AudioManager from '../../managers/AudioManager';
-import { COLORS } from '../../utils/constants';
+import AudioManager from '../../../managers/AudioManager';
+import { COLORS } from '../../../utils/constants';
 
 const HEIGHT = 300;
 const WIDTH = 300;

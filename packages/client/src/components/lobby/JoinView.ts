@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
-import Button from '../Button';
-import Common from '../../objects/game/Common';
+import Button from '../shared/Button';
+import { createInputField } from '../../helpers/ui/input';
 
 export interface JoinViewCallbacks {
   onJoin: () => void;
@@ -52,7 +52,7 @@ export class JoinView {
       .setOrigin(0.5);
 
     // Room code input
-    this.roomCodeInput = Common.createInputField(this.scene, {
+    this.roomCodeInput = createInputField(this.scene, {
       x: centerX,
       y: centerY - 10,
       width: 350,

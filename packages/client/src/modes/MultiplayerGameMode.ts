@@ -180,6 +180,14 @@ export default class MultiplayerGameMode extends GameModeBase {
     return state?.phase || 'waiting';
   }
 
+  override isLocalPlayersTurn(): boolean {
+    const state = this.networkManager.getState() as any;
+    if (!state?.currentTurn) {
+      return false;
+    }
+    return state.currentTurn === this.networkManager.playerId;
+  }
+
   override onBidSelected(bid: number): void {
     this.networkManager.sendBid(bid);
   }

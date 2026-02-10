@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import BaseModal from './BaseModal';
-import { getFontSize } from '../../utils/uiConfig';
+import { getFontSize } from '../../../utils/uiConfig';
 
 interface RoundModalData {
   players: Array<{

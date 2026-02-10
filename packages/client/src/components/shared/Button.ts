@@ -1,4 +1,4 @@
-import AudioManager from '../managers/AudioManager';
+import AudioManager from '../../managers/AudioManager';
 
 interface ButtonConfig {
   width: number;

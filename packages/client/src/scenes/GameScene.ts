@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import Player from '../objects/Player';
 import TrickArea from '../objects/TrickArea';
 import AudioManager from '../managers/AudioManager';
-import NetworkIndicator from '../components/NetworkIndicator';
-import { ReconnectionOverlay } from '../objects/game/ReconnectionOverlay';
-import Common from '../objects/game/Common';
+import NetworkIndicator from '../components/shared/NetworkIndicator';
+import { ReconnectionOverlay } from '../components/game/overlays/ReconnectionOverlay';
+import { createGameBackground, createTable } from '../helpers/ui';
 import GameModeFactory from '../modes/GameModeFactory';
 import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS } from '../utils/constants';
@@ -43,10 +43,10 @@ export default class GameScene extends Phaser.Scene {
     AudioManager.getInstance().setScene(this).startBackgroundMusic();
 
     // Create background
-    Common.createGameBackground(this);
+    createGameBackground(this);
 
     // Create table
-    Common.createTable(this);
+    createTable(this);
 
     // Create trick area
     this.trickArea = new TrickArea(this);

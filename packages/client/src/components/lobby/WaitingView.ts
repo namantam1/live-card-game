@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
-import Button from '../Button';
+import Button from '../shared/Button';
 import { OnlineUsersPanel } from './OnlineUsersPanel';
 
 export interface WaitingViewCallbacks {

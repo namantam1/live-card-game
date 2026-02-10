@@ -12,7 +12,7 @@ import {
 } from '../utils/uiConfig';
 import { Scene } from 'phaser';
 import type { CardData, TrickEntry } from '../type';
-import ReactionAnimation from '../components/ReactionAnimation';
+import ReactionAnimation from '../components/shared/ReactionAnimation';
 
 export default class Player {
   scene: Scene;

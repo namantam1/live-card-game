@@ -1,9 +1,9 @@
 import { Scene } from 'phaser';
-import { COLORS, MAX_BID } from '../../utils/constants';
-import { BIDDING_CONFIG, getResponsiveConfig } from '../../utils/uiConfig';
-import Button from '../../components/Button';
+import { COLORS, MAX_BID } from '../../../utils/constants';
+import { BIDDING_CONFIG, getResponsiveConfig } from '../../../utils/uiConfig';
+import Button from '../../shared/Button';
 
-export default class BiddingUI {
+export default class BiddingModal {
   private scene: Scene;
   private container: Phaser.GameObjects.Container;
   private bidButtons: Phaser.GameObjects.Container[];

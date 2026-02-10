@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
-import { COLORS } from '../../utils/constants';
-import Button from '../../components/Button';
+import { COLORS } from '../../../utils/constants';
+import Button from '../../shared/Button';
 
 const defaultConfig = {
   width: 400,

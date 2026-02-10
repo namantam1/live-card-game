@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { COLORS, ANIMATION } from '../utils/constants';
 import { getFontSize } from '../utils/uiConfig';
-import Button from '../components/Button';
-import Common from '../objects/game/Common';
+import Button from '../components/shared/Button';
+import { createBackground } from '../helpers/ui/background';
 import PresenceManager from '../managers/PresenceManager';
 import type { InviteData } from '../type';
 import AudioManager from '../managers/AudioManager';
@@ -22,7 +22,7 @@ export default class MenuScene extends Phaser.Scene {
     AudioManager.getInstance().setScene(this);
 
     // Background gradient effect
-    Common.createBackground(this);
+    createBackground(this);
 
     // Title with spade icon
     this.createTitle(centerX, centerY - 100);

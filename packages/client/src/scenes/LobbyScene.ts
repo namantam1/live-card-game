@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import { createActor } from 'xstate';
 import { ANIMATION, SERVER } from '../utils/constants';
 import NetworkManager from '../managers/NetworkManager';
-import NetworkIndicator from '../components/NetworkIndicator';
-import type { Quality } from '../components/NetworkIndicator';
-import Common from '../objects/game/Common';
+import NetworkIndicator from '../components/shared/NetworkIndicator';
+import type { Quality } from '../components/shared/NetworkIndicator';
+import { createBackground } from '../helpers/ui/background';
 import { MenuView } from '../components/lobby/MenuView';
 import { JoinView } from '../components/lobby/JoinView';
 import { WaitingView } from '../components/lobby/WaitingView';
@@ -45,7 +45,7 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   create() {
-    Common.createBackground(this);
+    createBackground(this);
     this.initializeManagers();
     this.createViews();
     this.lobbyActor = createActor(lobbyMachine);

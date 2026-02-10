@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import type { ChatMessage } from '@call-break/shared';
-import { PLAYER_POSITIONS, type Position } from '../utils/constants';
-import type Player from '../objects/Player';
+import { PLAYER_POSITIONS, type Position } from '../../utils/constants';
+import type Player from '../../objects/Player';
 
 const CONFIG = {
   TOAST_DURATION: 5000,

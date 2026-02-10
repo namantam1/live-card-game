@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import type { Position } from '../type';
+import type { Position } from '../../type';
 import Button from './Button';
 
 /**

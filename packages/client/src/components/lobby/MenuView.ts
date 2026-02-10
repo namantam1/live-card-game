@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
-import Button from '../Button';
+import Button from '../shared/Button';
 import { getFontSize } from '../../utils/uiConfig';
-import Common from '../../objects/game/Common';
+import { createInputField } from '../../helpers/ui/input';
 
 export interface MenuViewCallbacks {
   onCreateRoom: () => void;
@@ -63,7 +63,7 @@ export class MenuView {
       .setOrigin(0.5);
 
     // Name input field
-    this.nameInput = Common.createInputField(this.scene, {
+    this.nameInput = createInputField(this.scene, {
       x: centerX,
       y: centerY - 30,
       width: 350,

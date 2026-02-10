@@ -3,8 +3,8 @@ import {
   getResponsiveConfig,
   isMobile,
   SCOREBOARD_CONFIG,
-} from '../../utils/uiConfig';
-import { TOTAL_ROUNDS } from '../../utils/constants';
+} from '../../../utils/uiConfig';
+import { TOTAL_ROUNDS } from '../../../utils/constants';
 
 export default class ScoreBoard {
   scoreboard: Phaser.GameObjects.Container;
