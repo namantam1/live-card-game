@@ -20,14 +20,21 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
   /**
    * Create a new room
    */
-  async createRoom(client: Client, playerName: string): Promise<Room | null> {
+  async createRoom(
+    client: Client,
+    userId: string,
+    playerName: string
+  ): Promise<Room | null> {
     if (!client) {
       console.error('RoomManager: Client not provided');
       return null;
     }
 
     try {
-      this.room = await client.create('call_break', { name: playerName });
+      this.room = await client.create('call_break', {
+        userId,
+        name: playerName,
+      });
       this.playerId = this.room.sessionId;
       this.setupRoomListeners();
       return this.room;
@@ -43,6 +50,7 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
   async joinRoom(
     client: Client,
     roomCode: string,
+    userId: string,
     playerName: string
   ): Promise<Room | null> {
     if (!client) {
@@ -52,6 +60,7 @@ export default class RoomManager extends Phaser.Events.EventEmitter {
 
     try {
       this.room = await client.join('call_break', {
+        userId,
         name: playerName,
         roomCode: roomCode,
       });

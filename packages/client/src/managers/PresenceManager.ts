@@ -8,12 +8,10 @@ import type {
   IPresenceState,
 } from '@call-break/shared';
 import { InviteModal } from '../components/shared/InviteModal';
-import { storage } from './StorageManager';
+import { userIdentity } from './UserIdentityManager';
 import { SERVER } from '../utils/constants';
 
 type InviteAcceptCallback = (invite: InviteData) => void;
-
-const PLAYER_NAME_KEY = 'player_name';
 
 export default class PresenceManager extends Phaser.Events.EventEmitter {
   private static instance: PresenceManager | null = null;
@@ -42,6 +40,7 @@ export default class PresenceManager extends Phaser.Events.EventEmitter {
 
   private async connect(
     serverUrl: string,
+    userId: string,
     playerName: string
   ): Promise<boolean> {
     if (this.connected || this.room) {
@@ -51,6 +50,7 @@ export default class PresenceManager extends Phaser.Events.EventEmitter {
     try {
       this.client = new Client(serverUrl);
       this.room = await this.client.joinOrCreate('presence', {
+        userId,
         name: playerName,
       });
       this.connected = true;
@@ -70,15 +70,20 @@ export default class PresenceManager extends Phaser.Events.EventEmitter {
 
   /**
    * Ensure presence connection is established
-   * Reads player name from storage and uses default server URL
+   * Gets or creates user identity and connects to presence server
    */
   async ensureConnected(playerName?: string): Promise<boolean> {
-    const name = playerName || storage.load<string>(PLAYER_NAME_KEY);
-    if (!name) {
+    // Get or create user identity
+    const identity = playerName
+      ? userIdentity.updateName(playerName)
+      : userIdentity.getOrCreateIdentity();
+
+    if (!identity.name) {
       console.warn('PresenceManager: No player name available for connection');
       return false;
     }
-    return this.connect(SERVER.URL, name);
+
+    return this.connect(SERVER.URL, identity.userId, identity.name);
   }
 
   setInviteHandlingEnabled(enabled: boolean) {
@@ -108,10 +113,6 @@ export default class PresenceManager extends Phaser.Events.EventEmitter {
 
   getOnlineUsers(): OnlineUserData[] {
     return Array.from(this.onlineUsers.values());
-  }
-
-  getSessionId(): string | null {
-    return this.room?.sessionId || null;
   }
 
   /**
@@ -200,34 +201,32 @@ export default class PresenceManager extends Phaser.Events.EventEmitter {
     if (!this.room) return;
     const $ = getStateCallbacks(this.room);
 
-    $(this.room.state).users.onAdd(
-      (user: OnlineUserSchema, sessionId: string) => {
-        this.onlineUsers.set(sessionId, {
-          id: sessionId,
-          name: user.name,
-          inGame: user.inGame,
-        });
+    $(this.room.state).users.onAdd((user: OnlineUserSchema, userId: string) => {
+      this.onlineUsers.set(userId, {
+        id: user.id, // Use user.id for consistency
+        name: user.name,
+        inGame: user.inGame,
+      });
+      this.emit('usersUpdated', this.getOnlineUsers());
+
+      $(user).listen('name', (value: string) => {
+        const existing = this.onlineUsers.get(userId);
+        if (!existing) return;
+        existing.name = value;
         this.emit('usersUpdated', this.getOnlineUsers());
+      });
 
-        $(user).listen('name', (value: string) => {
-          const existing = this.onlineUsers.get(sessionId);
-          if (!existing) return;
-          existing.name = value;
-          this.emit('usersUpdated', this.getOnlineUsers());
-        });
-
-        $(user).listen('inGame', (value: boolean) => {
-          const existing = this.onlineUsers.get(sessionId);
-          if (!existing) return;
-          existing.inGame = value;
-          this.emit('usersUpdated', this.getOnlineUsers());
-        });
-      }
-    );
+      $(user).listen('inGame', (value: boolean) => {
+        const existing = this.onlineUsers.get(userId);
+        if (!existing) return;
+        existing.inGame = value;
+        this.emit('usersUpdated', this.getOnlineUsers());
+      });
+    });
 
     $(this.room.state).users.onRemove(
-      (_user: OnlineUserSchema, sessionId: string) => {
-        this.onlineUsers.delete(sessionId);
+      (_user: OnlineUserSchema, userId: string) => {
+        this.onlineUsers.delete(userId);
         this.emit('usersUpdated', this.getOnlineUsers());
       }
     );

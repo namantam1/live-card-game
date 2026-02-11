@@ -3,6 +3,7 @@ import { BaseHandler } from './BaseHandler.js';
 import { Player } from '../GameState.js';
 
 interface JoinOptions {
+  userId?: string; // Persistent user identity (for future features like stats)
   name?: string;
   roomCode?: string;
 }

@@ -8,7 +8,7 @@ import { createBackground } from '../helpers/ui/background';
 import { MenuView } from '../components/lobby/MenuView';
 import { JoinView } from '../components/lobby/JoinView';
 import { WaitingView } from '../components/lobby/WaitingView';
-import { storage } from '../managers/StorageManager';
+import { userIdentity } from '../managers/UserIdentityManager';
 import PresenceManager from '../managers/PresenceManager';
 import type { InviteData, OnlineUserData } from '../type';
 import { validatePlayerName, validateRoomCode } from '../utils/validation';
@@ -29,8 +29,6 @@ export default class LobbyScene extends Phaser.Scene {
   // State machine
   private lobbyActor!: ReturnType<typeof createActor<typeof lobbyMachine>>;
 
-  // Constants
-  private readonly PLAYER_NAME_KEY = 'player_name';
   private pendingInviteJoin: InviteData | null = null;
 
   constructor() {
@@ -74,8 +72,8 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private createViews() {
-    // Load saved player name
-    const savedName = storage.load<string>(this.PLAYER_NAME_KEY);
+    // Load user identity (auto-migrates from legacy storage if needed)
+    const identity = userIdentity.getOrCreateIdentity();
 
     // Create menu view with callbacks
     this.menuView = new MenuView(this, {
@@ -97,8 +95,8 @@ export default class LobbyScene extends Phaser.Scene {
       onInviteUser: (userId: string) => this.handleInviteUser(userId),
     });
 
-    if (savedName) {
-      this.menuView.setPlayerName(savedName);
+    if (identity?.name) {
+      this.menuView.setPlayerName(identity.name);
     }
 
     // Hide all views initially
@@ -333,10 +331,12 @@ export default class LobbyScene extends Phaser.Scene {
 
     try {
       await this.presenceManager.ensureConnected(nameResult.value!);
-      const room = await this.networkManager.createRoom(nameResult.value!);
-      if (room) {
-        storage.save(this.PLAYER_NAME_KEY, nameResult.value!);
-      } else {
+      const identity = userIdentity.updateName(nameResult.value!);
+      const room = await this.networkManager.createRoom(
+        identity.userId,
+        nameResult.value!
+      );
+      if (!room) {
         this.send({ type: 'ROOM_ERROR', error: 'Failed to create room' });
       }
     } catch (error) {
@@ -372,11 +372,15 @@ export default class LobbyScene extends Phaser.Scene {
       roomCode: codeResult.value!,
     });
 
-    storage.save(this.PLAYER_NAME_KEY, nameResult.value!);
+    const identity = userIdentity.updateName(nameResult.value!);
     await this.presenceManager.ensureConnected(nameResult.value!);
 
     try {
-      await this.networkManager.joinRoom(codeResult.value!, nameResult.value!);
+      await this.networkManager.joinRoom(
+        codeResult.value!,
+        identity.userId,
+        nameResult.value!
+      );
     } catch (error) {
       const errorMsg =
         'Error: ' + (error as Error).message || 'Room not found or full';
@@ -423,10 +427,11 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private updateOnlineUsers() {
-    const localPresenceId = this.presenceManager.getSessionId() || '';
+    const identity = userIdentity.getIdentity();
+    const localUserId = identity?.userId || '';
     const isHost = this.isLocalHost();
     const onlineUsers = this.presenceManager.getOnlineUsers();
-    this.waitingView.updateOnlineUsers(onlineUsers, localPresenceId, isHost);
+    this.waitingView.updateOnlineUsers(onlineUsers, localUserId, isHost);
   }
 
   private isLocalHost(): boolean {
@@ -449,8 +454,8 @@ export default class LobbyScene extends Phaser.Scene {
    * Handle when user accepts an invite
    */
   private handleInviteAccepted(invite: InviteData): void {
-    const storedName = storage.load<string>(this.PLAYER_NAME_KEY) || '';
-    const nameToUse = this.menuView.getPlayerName() || storedName;
+    const identity = userIdentity.getIdentity();
+    const nameToUse = this.menuView.getPlayerName() || identity?.name || '';
     const nameResult = validatePlayerName(nameToUse);
     if (!nameResult.valid) {
       this.menuView.setConnectionStatus(nameResult.error!, '#ef4444');
@@ -511,14 +516,15 @@ export default class LobbyScene extends Phaser.Scene {
       roomCode,
       isInvite: !!inviterName,
     });
-    storage.save(this.PLAYER_NAME_KEY, playerName);
+
+    const identity = userIdentity.updateName(playerName);
     await this.presenceManager.ensureConnected(playerName);
 
     try {
       if (inviterName) {
         this.joinView.showError(`Joining ${inviterName}'s room...`, '#f59e0b');
       }
-      await this.networkManager.joinRoom(roomCode, playerName);
+      await this.networkManager.joinRoom(roomCode, identity.userId, playerName);
     } catch (error) {
       const errorMsg =
         'Error: ' + (error as Error).message || 'Room not found or full';

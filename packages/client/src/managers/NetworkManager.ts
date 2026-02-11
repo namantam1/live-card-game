@@ -114,14 +114,14 @@ export default class NetworkManager {
   /**
    * Create a new room
    */
-  async createRoom(playerName: string): Promise<Room | null> {
+  async createRoom(userId: string, playerName: string): Promise<Room | null> {
     const client = this.connectionManager.getClient();
     if (!client) {
       console.error('NetworkManager: Not connected to server');
       return null;
     }
 
-    const room = await this.roomManager.createRoom(client, playerName);
+    const room = await this.roomManager.createRoom(client, userId, playerName);
     if (room) {
       this.reconnectionHandler.saveToken(room.reconnectionToken);
       this.connectionMonitor.start(() => {
@@ -141,7 +141,11 @@ export default class NetworkManager {
   /**
    * Join an existing room
    */
-  async joinRoom(roomCode: string, playerName: string): Promise<Room | null> {
+  async joinRoom(
+    roomCode: string,
+    userId: string,
+    playerName: string
+  ): Promise<Room | null> {
     const client = this.connectionManager.getClient();
     if (!client) {
       console.error('NetworkManager: Not connected to server');
@@ -152,6 +156,7 @@ export default class NetworkManager {
       const room = await this.roomManager.joinRoom(
         client,
         roomCode,
+        userId,
         playerName
       );
       if (room) {
