@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { COLORS } from '../../utils/constants';
 import Button from '../shared/Button';
 import { OnlineUsersPanel } from './OnlineUsersPanel';
+import type { OnlineUserData } from '@call-break/shared';
 
 export interface WaitingViewCallbacks {
   onReady: () => void;
@@ -206,11 +207,7 @@ export class WaitingView {
   }
 
   updateOnlineUsers(
-    users: Array<{
-      id: string;
-      name: string;
-      inGame: boolean;
-    }>,
+    users: OnlineUserData[],
     localPlayerId: string,
     canInvite: boolean
   ) {

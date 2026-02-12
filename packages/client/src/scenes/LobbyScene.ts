@@ -402,13 +402,13 @@ export default class LobbyScene extends Phaser.Scene {
     });
   }
 
-  private async handleLeaveRoom() {
+  private handleLeaveRoom() {
     this.send({ type: 'LEAVE_ROOM' });
 
     try {
-      await this.networkManager.leaveRoom();
       this.joinView.clearRoomCode();
       this.waitingView.clearPendingInvitees();
+      this.networkManager.leaveRoom();
     } catch (error) {
       console.error('Error leaving room:', error);
     } finally {
