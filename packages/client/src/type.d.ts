@@ -1,4 +1,4 @@
-import { Rank, Suit } from './utils/constants';
+import type { Rank, Suit } from './utils/constants';
 
 export type Position = {
   x: number;
@@ -88,6 +88,7 @@ export interface PlayerData {
   score: number;
   roundScore: number;
   isLocal: boolean;
+  hand?: CardData[];
 }
 
 // Re-export from shared package
@@ -105,4 +106,15 @@ export interface RoomAvailability {
   metadata?: {
     roomCode?: string;
   };
+}
+
+export interface GameState {
+  phase: string;
+  currentRound: number;
+  currentTurn: string;
+  leadSuit: Suit | null;
+  trickNumber: number;
+  currentTrick: any[];
+  players: PlayerData[];
+  currentPlayer: PlayerData;
 }

@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { createActor } from 'xstate';
-import { ANIMATION, SERVER } from '../utils/constants';
-import NetworkManager from '../managers/NetworkManager';
+import { ANIMATION } from '../utils/constants';
 import NetworkIndicator from '../components/shared/NetworkIndicator';
 import type { Quality } from '../components/shared/NetworkIndicator';
 import { createBackground } from '../helpers/ui/background';
@@ -14,10 +13,14 @@ import type { InviteData, OnlineUserData } from '../type';
 import { validatePlayerName, validateRoomCode } from '../utils/validation';
 import { lobbyMachine } from '../machines/lobbyMachine';
 import type { LobbyEvent } from '../machines/lobbyMachine';
+import { ServiceLocator } from '../core/ServiceLocator';
+import type { NetworkService } from '../services/NetworkService';
+import type { EventBus, ScopedEventBus } from '../services/EventBus';
 
 export default class LobbyScene extends Phaser.Scene {
-  // Managers
-  private networkManager!: NetworkManager;
+  // Services
+  private networkService!: NetworkService;
+  private scopedEvents!: ScopedEventBus;
   private networkIndicator!: NetworkIndicator;
   private presenceManager!: PresenceManager;
 
@@ -60,8 +63,10 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private initializeManagers() {
-    // Initialize network manager
-    this.networkManager = new NetworkManager();
+    // Get services from ServiceLocator
+    this.networkService = ServiceLocator.get<NetworkService>('network');
+    const eventBus = ServiceLocator.get<EventBus>('eventBus');
+    this.scopedEvents = eventBus.subscribeTo(this); // Auto-cleanup on shutdown
 
     // Create network indicator
     const { width } = this.cameras.main;
@@ -197,43 +202,48 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private setupNetworkListeners() {
-    this.networkManager.on('connectionQualityChange', (data?: unknown) => {
-      const qualityData = data as { quality: Quality };
-      this.networkIndicator?.updateQuality(qualityData.quality);
-    });
+    // All listeners auto-cleaned on scene shutdown via ScopedEventBus
+    this.scopedEvents.onNetworkEvent(
+      'connectionQualityChange',
+      ({ quality }) => {
+        this.networkIndicator?.updateQuality(quality as Quality);
+      }
+    );
 
-    this.networkManager.on('message:seated', (data?: unknown) => {
-      const seatedData = data as { roomCode: string };
+    this.scopedEvents.onLobbyEvent('seated', ({ roomCode }) => {
       const state = this.lobbyActor.getSnapshot().value;
       if (state === 'creatingRoom') {
-        this.send({ type: 'ROOM_CREATED', roomCode: seatedData.roomCode });
+        this.send({ type: 'ROOM_CREATED', roomCode });
       } else if (state === 'joiningRoom') {
-        this.send({ type: 'ROOM_JOINED', roomCode: seatedData.roomCode });
+        this.send({ type: 'ROOM_JOINED', roomCode });
       }
     });
 
-    this.networkManager.on('playerJoined', () => this.updatePlayersList());
-    this.networkManager.on('playerRemoved', () => this.updatePlayersList());
+    this.scopedEvents.onLobbyEvent('playerJoined', () => {
+      this.updatePlayersList();
+    });
 
-    this.networkManager.on('playerReady', () => {
+    this.scopedEvents.onLobbyEvent('playerRemoved', () => {
+      this.updatePlayersList();
+    });
+
+    this.scopedEvents.onLobbyEvent('playerReady', () => {
       this.updatePlayersList();
       if (this.lobbyActor.getSnapshot().value === 'readying') {
         this.send({ type: 'READY_SENT' });
       }
     });
 
-    this.networkManager.on('phaseChange', (data?: unknown) => {
-      const phaseData = data as { phase: string };
-      if (phaseData.phase === 'dealing' || phaseData.phase === 'bidding') {
+    this.scopedEvents.onGameEvent('phaseChanged', ({ phase }) => {
+      if (phase === 'dealing' || phase === 'bidding') {
         this.send({ type: 'START_GAME' });
       }
     });
 
-    this.networkManager.on('error', (data?: unknown) => {
-      const errorData = data as { message: string };
+    this.scopedEvents.onNetworkEvent('error', ({ message }) => {
       const state = this.lobbyActor.getSnapshot().value;
       if (state === 'joiningRoom' || state === 'creatingRoom') {
-        this.send({ type: 'ROOM_ERROR', error: errorData.message });
+        this.send({ type: 'ROOM_ERROR', error: message });
       }
     });
   }
@@ -247,7 +257,7 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Handle invite received - check if we're in a room before showing modal
     this.presenceManager.on('inviteReceived', (invite: InviteData) => {
-      if (this.networkManager.isInRoom()) {
+      if (this.networkService.getRoom() !== null) {
         this.presenceManager.respondToInvite(
           invite.inviteId,
           invite.inviterId,
@@ -280,27 +290,19 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private async connectToServer() {
-    const connected = await this.networkManager.connect(SERVER.URL);
-    if (connected) {
-      this.menuView.setConnectionStatus('Connected', '#22c55e');
-      this.networkIndicator.updateQuality('good');
-      this.setupNetworkListeners();
-      this.send({ type: 'CONNECTION_SUCCESS' });
-      if (this.pendingInviteJoin) {
-        this.autoJoinInvite(this.pendingInviteJoin);
-        this.pendingInviteJoin = null;
-      }
-    } else {
-      this.menuView.setConnectionStatus(
-        'Connection failed. Retry...',
-        '#ef4444'
-      );
-      this.networkIndicator.updateQuality('offline');
-      this.send({ type: 'CONNECTION_FAILED' });
-      this.time.delayedCall(3000, () => {
-        this.send({ type: 'CONNECT' });
-        this.connectToServer();
-      });
+    // NetworkService is already connected at bootstrap
+    // const connected = this.networkService.isConnected();
+
+    this.menuView.setConnectionStatus('Connected', '#22c55e');
+    this.networkIndicator.updateQuality(
+      this.networkService.getConnectionQuality()
+    );
+    this.setupNetworkListeners();
+    this.send({ type: 'CONNECTION_SUCCESS' });
+
+    if (this.pendingInviteJoin) {
+      this.autoJoinInvite(this.pendingInviteJoin);
+      this.pendingInviteJoin = null;
     }
   }
 
@@ -322,17 +324,18 @@ export default class LobbyScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.networkManager.isConnected()) {
-      this.menuView.setConnectionStatus('Not connected to server', '#ef4444');
-      return;
-    }
+    // if (!this.networkService.isConnected()) {
+    //   this.menuView.setConnectionStatus('Not connected to server', '#ef4444');
+    //   return;
+    // }
 
     this.send({ type: 'CREATE_ROOM', playerName: nameResult.value! });
 
     try {
       await this.presenceManager.ensureConnected(nameResult.value!);
       const identity = userIdentity.updateName(nameResult.value!);
-      const room = await this.networkManager.createRoom(
+      const room = await this.networkService.createRoom(
+        'call_break',
         identity.userId,
         nameResult.value!
       );
@@ -361,10 +364,10 @@ export default class LobbyScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.networkManager.isConnected()) {
-      this.joinView.showError('Not connected to server');
-      return;
-    }
+    // if (!this.networkService.isConnected()) {
+    //   this.joinView.showError('Not connected to server');
+    //   return;
+    // }
 
     this.send({
       type: 'JOIN_ROOM',
@@ -376,7 +379,8 @@ export default class LobbyScene extends Phaser.Scene {
     await this.presenceManager.ensureConnected(nameResult.value!);
 
     try {
-      await this.networkManager.joinRoom(
+      await this.networkService.joinRoom(
+        'call_break',
         codeResult.value!,
         identity.userId,
         nameResult.value!
@@ -393,7 +397,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (this.lobbyActor.getSnapshot().value === 'readying') return;
 
     this.send({ type: 'READY' });
-    this.networkManager.sendReady();
+    this.networkService.send('ready');
 
     this.time.delayedCall(2000, () => {
       if (this.lobbyActor.getSnapshot().value === 'readying') {
@@ -408,7 +412,7 @@ export default class LobbyScene extends Phaser.Scene {
     try {
       this.joinView.clearRoomCode();
       this.waitingView.clearPendingInvitees();
-      this.networkManager.leaveRoom();
+      this.networkService.disconnect();
     } catch (error) {
       console.error('Error leaving room:', error);
     } finally {
@@ -418,8 +422,8 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private updatePlayersList() {
-    const players = this.networkManager.getPlayers();
-    const localId = this.networkManager.playerId || '';
+    const players = this.getPlayers();
+    const localId = this.getPlayerId();
     this.waitingView.updatePlayersList(players, localId);
     if (this.lobbyActor.getSnapshot().value === 'waiting') {
       this.updateOnlineUsers();
@@ -435,14 +439,49 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private isLocalHost(): boolean {
-    const players = this.networkManager.getPlayers();
+    const players = this.getPlayers();
     const localPlayer = players.find((player) => player.isLocal);
     return !!localPlayer && localPlayer.seatIndex === 0;
   }
 
+  private getPlayers() {
+    const room = this.networkService.getRoom();
+    if (!room?.state?.players) return [];
+
+    const players: any[] = [];
+    const playerId = room.sessionId;
+
+    room.state.players.forEach((player: any) => {
+      players.push({
+        id: player.id,
+        name: player.name,
+        emoji: player.emoji,
+        seatIndex: player.seatIndex,
+        isLocal: player.id === playerId,
+        bid: player.bid,
+        tricksWon: player.tricksWon,
+        score: player.score,
+        roundScore: player.roundScore,
+        isBot: player.isBot,
+        isReady: player.isReady,
+        isConnected: player.isConnected,
+      });
+    });
+
+    return players.sort((a, b) => a.seatIndex - b.seatIndex);
+  }
+
+  private getPlayerId(): string {
+    return this.networkService.getRoom()?.sessionId || '';
+  }
+
+  private getRoomCode(): string | null {
+    return this.networkService.getRoom()?.state?.roomCode || null;
+  }
+
   private handleInviteUser(userId: string) {
     if (!this.isLocalHost()) return;
-    const roomCode = this.networkManager.getRoomCode();
+    const roomCode = this.getRoomCode();
     if (!roomCode) return;
     this.presenceManager.sendInvite(userId, roomCode);
     this.waitingView.addPendingInvitee(userId);
@@ -469,15 +508,15 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private autoJoinInvite(invite: InviteData) {
-    if (!this.networkManager.isConnected()) {
-      console.log('Not connected yet, will join invite once connected');
-      this.pendingInviteJoin = invite;
-      this.menuView.setConnectionStatus(
-        'Connecting to server to join invite...',
-        '#f59e0b'
-      );
-      return;
-    }
+    // if (!this.networkService.isConnected()) {
+    //   console.log('Not connected yet, will join invite once connected');
+    //   this.pendingInviteJoin = invite;
+    //   this.menuView.setConnectionStatus(
+    //     'Connecting to server to join invite...',
+    //     '#f59e0b'
+    //   );
+    //   return;
+    // }
 
     // Ensure we're in the menu state before proceeding
     const currentState = this.lobbyActor.getSnapshot().value;
@@ -505,10 +544,10 @@ export default class LobbyScene extends Phaser.Scene {
     playerName: string,
     inviterName?: string
   ) {
-    if (!this.networkManager.isConnected()) {
-      this.joinView.showError('Not connected to server');
-      return;
-    }
+    // if (!this.networkService.isConnected()) {
+    //   this.joinView.showError('Not connected to server');
+    //   return;
+    // }
 
     this.send({
       type: 'JOIN_ROOM',
@@ -524,7 +563,12 @@ export default class LobbyScene extends Phaser.Scene {
       if (inviterName) {
         this.joinView.showError(`Joining ${inviterName}'s room...`, '#f59e0b');
       }
-      await this.networkManager.joinRoom(roomCode, identity.userId, playerName);
+      await this.networkService.joinRoom(
+        'call_break',
+        roomCode,
+        identity.userId,
+        playerName
+      );
     } catch (error) {
       const errorMsg =
         'Error: ' + (error as Error).message || 'Room not found or full';
@@ -534,14 +578,14 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   private startGame() {
-    // Transition to GameScene with network manager
+    // Transition to GameScene (no networkManager needed - uses ServiceLocator)
     this.cameras.main.fadeOut(ANIMATION.SCENE_TRANSITION);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('GameScene', {
-        networkManager: this.networkManager,
         isMultiplayer: true,
       });
     });
+    // Note: ScopedEventBus listeners auto-cleaned on shutdown
   }
 
   shutdown() {

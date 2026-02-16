@@ -5,7 +5,6 @@ import RoundModal from '../components/game/modals/RoundModal';
 import GameOverModal from '../components/game/modals/GameOverModal';
 import SettingsModal from '../components/game/modals/SettingsModal';
 import GameScene from './GameScene';
-import type { GameModeBase } from '../modes/GameModeBase';
 import { EVENTS, UI_TIMING } from '../utils/constants';
 import ReactionPanel from '../components/shared/ReactionPanel';
 import QuickChatPanel from '../components/shared/QuickChatPanel';
@@ -14,9 +13,12 @@ import Button from '../components/shared/Button';
 import { getResponsiveConfig, SETTINGS_ICON_CONFIG } from '../utils/uiConfig';
 import type { ChatMessage } from '@call-break/shared';
 import type { ReactionData } from '../type';
+import type { GameInstance } from '../core/GameInstance';
+import type { BaseMode } from '../modes/BaseMode';
 
 export default class UIScene extends Phaser.Scene {
-  private gameMode!: GameModeBase;
+  private gameInstance!: GameInstance;
+  private mode!: BaseMode;
   private gameScene!: GameScene;
   scoreBoard!: ScoreBoard;
   roundModal!: RoundModal;
@@ -29,19 +31,20 @@ export default class UIScene extends Phaser.Scene {
   }
 
   init(data: any) {
-    this.gameMode = data.gameMode;
+    this.gameInstance = data.gameInstance;
+    this.mode = this.gameInstance.getMode();
   }
 
   create() {
     // Get reference to game scene
     this.gameScene = this.scene.get('GameScene') as GameScene;
 
-    // Create scoreboard - unified for both modes!
+    // Create scoreboard
     this.scoreBoard = new ScoreBoard(
       this,
-      false, // We'll update this based on game mode later if needed
-      this.gameMode.getPlayers(),
-      this.gameMode.getCurrentRound()
+      false,
+      this.mode.getPlayers(),
+      this.getCurrentRound()
     );
 
     // Create modals
@@ -74,9 +77,7 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Create bidding UI
-    this.biddingUI = new BiddingModal(this, (bid) =>
-      this.gameMode.onBidSelected(bid)
-    );
+    this.biddingUI = new BiddingModal(this, (bid) => this.onBidSelected(bid));
 
     // Setup reaction UI for multiplayer mode
     this.setupReactionUI();
@@ -85,24 +86,41 @@ export default class UIScene extends Phaser.Scene {
     this.setupEventListeners();
   }
 
+  private getCurrentRound(): number {
+    // Get from mode if available
+    if ('getCurrentRound' in this.mode) {
+      return (this.mode as any).getCurrentRound();
+    }
+    return 1;
+  }
+
+  private onBidSelected(bid: number): void {
+    // Delegate to mode
+    if ('placeBid' in this.mode) {
+      (this.mode as any).placeBid(bid);
+    } else {
+      this.mode.sendBid(bid);
+    }
+  }
+
   setupEventListeners() {
     // Helper function to check and show bidding UI
     // This handles race conditions between phase and turn state updates
     const checkAndShowBiddingUI = () => {
-      const phase = this.gameMode.getPhase();
-      const localPlayer = this.gameMode.getLocalPlayer();
+      const phase = this.mode.getPhase();
+      const localPlayer = this.mode.getLocalPlayer();
 
       if (!localPlayer) return;
 
-      const isMyTurn = this.gameMode.isLocalPlayersTurn();
+      const isMyTurn = this.mode.isLocalPlayersTurn();
 
       if (phase === 'bidding' && isMyTurn) {
         console.log('UIScene: Showing bidding UI');
         // Small delay to allow card animations to settle before showing UI
         this.time.delayedCall(UI_TIMING.BIDDING_UI_DELAY, () => {
           // Double-check conditions haven't changed during delay
-          if (this.gameMode.getPhase() === 'bidding') {
-            const recommendedBid = this.gameMode.getRecommendedBid();
+          if (this.mode.getPhase() === 'bidding') {
+            const recommendedBid = this.mode.getRecommendedBid();
             this.biddingUI.show(recommendedBid);
           }
         });
@@ -110,11 +128,11 @@ export default class UIScene extends Phaser.Scene {
     };
 
     // Phase changed
-    this.gameMode.on(EVENTS.PHASE_CHANGED, (_phase: string) => {
+    this.mode.on(EVENTS.PHASE_CHANGED, (_phase: string) => {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
-        this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound()
+        this.mode.getPlayers(),
+        this.mode.getCurrentRound()
       );
 
       // Check if we should show bidding UI (handles race condition)
@@ -122,39 +140,39 @@ export default class UIScene extends Phaser.Scene {
     });
 
     // Turn changed
-    this.gameMode.on(EVENTS.TURN_CHANGED, (_data: { isMyTurn: boolean }) => {
+    this.mode.on(EVENTS.TURN_CHANGED, (_data: { isMyTurn: boolean }) => {
       // Check if we should show bidding UI (handles race condition)
       checkAndShowBiddingUI();
     });
 
     // Bid placed
-    this.gameMode.on(EVENTS.BID_PLACED, ({ playerIndex }: any) => {
+    this.mode.on(EVENTS.BID_PLACED, ({ playerIndex }: any) => {
       // Update scoreboard
       this.scoreBoard.updateScoreboard(
-        this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound()
+        this.mode.getPlayers(),
+        this.mode.getCurrentRound()
       );
 
       // Hide bidding UI if it was the local player
-      if (this.gameMode.isLocalPlayer(playerIndex)) {
+      if (this.mode.isLocalPlayer(playerIndex)) {
         this.biddingUI.hide();
       }
     });
 
     // Round complete
-    this.gameMode.on(EVENTS.ROUND_COMPLETE, (data: any) => {
+    this.mode.on(EVENTS.ROUND_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
-        this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound()
+        this.mode.getPlayers(),
+        this.mode.getCurrentRound()
       );
       this.time.delayedCall(500, () => this.roundModal.showRoundResults(data));
     });
 
     // Game complete
-    this.gameMode.on(EVENTS.GAME_COMPLETE, (data: any) => {
+    this.mode.on(EVENTS.GAME_COMPLETE, (data: any) => {
       this.scoreBoard.updateScoreboard(
-        this.gameMode.getPlayers(),
-        this.gameMode.getCurrentRound()
+        this.mode.getPlayers(),
+        this.mode.getCurrentRound()
       );
       this.time.delayedCall(500, () =>
         this.gameOverModal.showGameResults(data)
@@ -164,7 +182,7 @@ export default class UIScene extends Phaser.Scene {
 
   private isMultiplayer(): boolean {
     // Check if any player has an id (multiplayer players have network IDs)
-    const players = this.gameMode.getPlayers();
+    const players = this.mode.getPlayers();
     return players.some((p) => p.id !== undefined);
   }
 
@@ -175,7 +193,7 @@ export default class UIScene extends Phaser.Scene {
 
     const reactionPanel = new ReactionPanel(
       this,
-      (type: string) => this.gameMode.sendReaction(type),
+      (type: string) => this.mode.sendReaction(type),
       {
         position: {
           x: this.cameras.main.centerX,
@@ -198,7 +216,7 @@ export default class UIScene extends Phaser.Scene {
 
   private setupReactionListener(): void {
     // Listen for incoming reactions and show them on the player (same pattern as chat)
-    this.gameMode.on(EVENTS.REACTION, (data: ReactionData) => {
+    this.mode.on(EVENTS.REACTION, (data: ReactionData) => {
       const player = this.gameScene.players.find((p) => p.id === data.playerId);
 
       if (player) {
@@ -222,7 +240,7 @@ export default class UIScene extends Phaser.Scene {
         x: width - 390, // Position to the left of the button
         y: startY + 120, // Below the chat button
       },
-      onSendMessage: (message: string) => this.gameMode.sendChat(message),
+      onSendMessage: (message: string) => this.mode.sendChat(message),
     });
 
     // Chat toggle button (positioned below reaction button)
@@ -231,7 +249,7 @@ export default class UIScene extends Phaser.Scene {
     );
 
     // Listen for incoming chat messages and show as speech bubbles
-    this.gameMode.on(EVENTS.CHAT_MESSAGE, (data: ChatMessage) => {
+    this.mode.on(EVENTS.CHAT_MESSAGE, (data: ChatMessage) => {
       chatToast.showMessage(data);
     });
   }

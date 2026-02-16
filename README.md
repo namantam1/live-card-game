@@ -127,21 +127,6 @@ npm run format:check
 
 **Pre-commit Hook:** Automatically runs linting and formatting on staged files before commit.
 
-### Versioning
-
-```bash
-# Bump patch version (1.0.0 → 1.0.1)
-npm run version:patch
-
-# Bump minor version (1.0.0 → 1.1.0)
-npm run version:minor
-
-# Bump major version (1.0.0 → 2.0.0)
-npm run version:major
-```
-
-These commands update versions in all workspace packages and the root package.json.
-
 ### Clean
 
 ```bash
@@ -184,10 +169,12 @@ This project uses **npm workspaces** to manage a monorepo containing three packa
    - TypeScript types and constants
 
 2. **Client Package** - Frontend game implementation
-   - Re-exports shared logic
-   - Adds UI-specific utilities
-   - Phaser 3 game scenes
-   - Client-specific constants (animations, positions)
+   - Service Locator + Event Bus architecture
+   - Pluggable game/mode system (BaseGame + BaseMode)
+   - NetworkService (Colyseus connection, reconnection, monitoring)
+   - Typed EventBus with ScopedEventBus for auto-cleanup
+   - See [packages/client/README.md](./packages/client/README.md) for architecture details
+   - See [packages/client/developer-guide.md](./packages/client/developer-guide.md) for full developer guide
 
 3. **Server Package** - Backend multiplayer server
    - Uses shared game logic
@@ -197,55 +184,16 @@ This project uses **npm workspaces** to manage a monorepo containing three packa
 
 ### Why npm workspaces?
 
-- ✅ Zero additional dependencies (native npm)
-- ✅ Perfect for small monorepos (3 packages)
-- ✅ Simple linear dependency graph
-- ✅ Automatic dependency hoisting
-- ✅ Workspace symlinks for instant updates
-
-## Development Notes
-
-### Development Workflow
-
-**Client (Vite):**
-
-- Uses Vite alias to read shared package source directly
-- No rebuild needed - changes to shared are instant
-- Configuration: `packages/client/vite.config.ts` → `resolve.alias`
-
-**Server (tsx):**
-
-- Requires shared package built to `dist/`
-- Use `npm run dev:all` to run shared in watch mode
-- Server auto-restarts when shared dist changes
-
-**Shared Package:**
-
-- Watch mode: `tsc --watch` rebuilds on file changes
-- Client sees changes instantly (via Vite alias)
-- Server restarts automatically (tsx detects dist changes)
-
-### TypeScript Configuration
-
-- Root `tsconfig.json` uses project references
-- Each package has its own TypeScript configuration
-- Client has separate configs for app code and build tooling
-
-### ES Modules
-
-- All packages use ES modules (`"type": "module"`)
-- `.js` extensions required in imports for Node.js compatibility
-- `moduleResolution: "bundler"` for TypeScript
-
-### Code Duplication Eliminated
-
-- ~740 lines of duplicate code removed
-- Game logic centralized in shared package
-- Single source of truth for all game rules
+- Zero additional dependencies (native npm)
+- Perfect for small monorepos (3 packages)
+- Simple linear dependency graph
+- Automatic dependency hoisting
+- Workspace symlinks for instant updates
 
 ## Documentation
 
-- [Restructuring Plan](./docs/restructuring/RESTRUCTURING_PLAN.md) - Complete migration history
+- [Client Architecture](./packages/client/README.md) - Architecture overview
+- [Client Developer Guide](./packages/client/developer-guide.md) - Full developer guide (events, extending, conventions)
 
 ## Key Dependencies
 
