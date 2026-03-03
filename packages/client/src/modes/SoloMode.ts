@@ -193,4 +193,12 @@ export class SoloMode extends BaseMode {
   isLocalPlayer(playerIndex: number): boolean {
     return playerIndex === 0;
   }
+
+  sendReaction(_type: string): void {
+    // Solo mode doesn't support reactions
+  }
+
+  sendChat(_message: string): void {
+    // Solo mode doesn't support chat
+  }
 }

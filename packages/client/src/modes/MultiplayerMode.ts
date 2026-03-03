@@ -4,6 +4,7 @@ import { ServiceLocator } from '../core/ServiceLocator';
 import type { EventBus } from '../services/EventBus';
 import type { NetworkService } from '../services/NetworkService';
 import type { CardData, PlayerData, GameState } from '../type.d';
+import { calculateBid, TRUMP_SUIT } from '@call-break/shared';
 
 /**
  * Multiplayer mode using NetworkService and EventBus
@@ -65,8 +66,8 @@ export class MultiplayerMode extends BaseMode {
       this.emit('cardPlayed', { playerId, card });
     });
 
-    this.eventBus.onGameEvent('bidPlaced', ({ playerId, bid }) => {
-      this.emit('bidPlaced', { playerId, bid });
+    this.eventBus.onGameEvent('bidPlaced', ({ playerIndex, bid }) => {
+      this.emit('bidPlaced', { playerIndex, bid });
     });
 
     this.eventBus.onGameEvent('trickComplete', ({ winnerId }) => {
@@ -138,5 +139,47 @@ export class MultiplayerMode extends BaseMode {
         value: entry.card.value,
       },
     }));
+  }
+
+  // Additional methods for UIScene compatibility
+  getCurrentRound(): number {
+    const room = this.networkService.getRoom();
+    return room?.state.currentRound || 1;
+  }
+
+  getPhase(): string {
+    const room = this.networkService.getRoom();
+    return room?.state.phase || 'waiting';
+  }
+
+  getLocalPlayer(): PlayerData | null {
+    return this.getCurrentPlayer();
+  }
+
+  isLocalPlayersTurn(): boolean {
+    const room = this.networkService.getRoom();
+    return room?.state.currentTurn === this.playerId;
+  }
+
+  isLocalPlayer(playerIndex: number): boolean {
+    const players = this.getPlayers();
+    const player = players[playerIndex];
+    return player?.id === this.playerId;
+  }
+
+  getRecommendedBid(): number | undefined {
+    const localPlayer = this.getLocalPlayer();
+    if (!localPlayer?.hand || localPlayer.hand.length === 0) {
+      return undefined;
+    }
+    return calculateBid(localPlayer.hand, TRUMP_SUIT);
+  }
+
+  sendReaction(type: string): void {
+    this.networkService.send('reaction', { type });
+  }
+
+  sendChat(message: string): void {
+    this.networkService.send('chat', { message });
   }
 }
